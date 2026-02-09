@@ -105,14 +105,7 @@ const MobileMiniPlayer = ({
               </div>
               
               <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
-                <button 
-                  onClick={() => setShowMobileLyrics(!showMobileLyrics)} 
-                  className={`control-icon-btn p-0 ${showMobileLyrics ? 'text-primary' : ''}`}
-                  title="歌词"
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <FaSyncAlt size={20} className={showMobileLyrics ? 'fa-spin' : ''} />
-                </button>
+                <HeartButton track={currentTrack} size={24} variant="link" className="control-button accent-control p-0" />
               </div>
             </div>
             
