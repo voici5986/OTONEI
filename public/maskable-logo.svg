@@ -1,0 +1,12 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景填充白色，确保系统在裁剪时不会露出黑色方框 -->
+  <rect width="512" height="512" fill="#ffffff"/>
+  
+  <!-- 将原 logo (64x64) 缩放并居中放置在安全区内 -->
+  <!-- 安全区计算：512 * 0.8 = 409.6。原 logo 占据中心约 320x320 区域 -->
+  <g transform="translate(96, 96) scale(5)">
+    <path d="M 32 12 A 20 20 0 0 0 32 52" stroke="#000000" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 32 12 A 20 20 0 0 1 32 52" stroke="#000000" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <line x1="37" y1="14.5" x2="37" y2="49.5" stroke="#000000" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>
