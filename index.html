@@ -44,8 +44,10 @@
         z-index: 9999;
         background: #f5f5f7; /* 浅灰色背景 */
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        justify-content: flex-end;
         align-items: center;
+        padding-bottom: 60px;
         transition: opacity 0.3s;
       }
       
@@ -54,9 +56,19 @@
       }
       
       .splash-logo {
-        width: 120px;
-        height: 120px;
-        margin-bottom: 20px;
+        width: 100px;
+        height: 100px;
+        margin-bottom: 25px;
+      }
+      
+      .splash-text {
+        color: #000000;
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        font-weight: 600;
+        font-size: 24px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
       }
       
       @keyframes pulse {
@@ -67,11 +79,10 @@
     </style>
   </head>
   <body>
-    <!-- PWA启动屏幕 -->
     <div id="splash-screen">
       <div class="splash-container">
         <img src="/logo.svg" class="splash-logo" alt="OTONEI" />
-        <h2 style="color:#000000; font-family:'Montserrat',sans-serif; margin:0; font-weight:600;">OTONEI</h2>
+        <h2 class="splash-text">OTONEI</h2>
       </div>
     </div>
 
