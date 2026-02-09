@@ -1,6 +1,6 @@
 {
   "short_name": "OTONEI",
-  "name": " OTONEI ",
+  "name": " ",
   "description": "在线音乐搜索、播放和下载，支持多平台音乐资源",
   "icons": [
     {
@@ -21,13 +21,13 @@
       "purpose": "any"
     },
     {
-      "src": "maskable-logo-192.png",
+      "src": "logo192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "maskable"
     },
     {
-      "src": "maskable-logo-512.png",
+      "src": "logo512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
