@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
         };
 
         // 保存本地用户
-        saveLocalUser(localUser);
+        await saveLocalUser(localUser);
         setCurrentUser(localUser);
         return { success: true, user: localUser };
       } catch (err) {
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     // 如果处于离线模式，尝试获取本地用户
     if (isOfflineMode) {
       try {
-        const localUser = getLocalUser();
+        const localUser = await getLocalUser();
 
         // 检查本地用户是否存在且邮箱匹配
         if (localUser && localUser.email === email) {

@@ -211,9 +211,9 @@ export async function saveLocalUser(user) {
 }
 
 // 获取本地用户信息
-export function getLocalUser() {
+export async function getLocalUser() {
   try {
-    return userStore.getItem('localUser');
+    return await userStore.getItem('localUser');
   } catch (error) {
     console.error("获取本地用户信息失败:", error);
     return null;

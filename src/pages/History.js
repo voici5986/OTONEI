@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlay, FaPause, FaDownload, FaTrash } from 'react-icons/fa';
 import { getHistory } from '../services/storage';
 import { toast } from 'react-toastify';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
-import AlbumCover from '../components/AlbumCover';
-import HeartButton from '../components/HeartButton';
 import MusicCardActions from '../components/MusicCardActions';
 import './History.css';
 import { downloadTrack } from '../services/downloadService';

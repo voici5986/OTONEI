@@ -1,9 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense, useReducer } from 'react';
-import { FaPlay, FaPause, FaDownload } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import AlbumCover from './components/AlbumCover';
-import HeartButton from './components/HeartButton';
-import MusicCardActions from './components/MusicCardActions';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import Navigation from './components/Navigation';
 import DeviceDebugger from './components/DeviceDebugger';
 import OrientationPrompt from './components/OrientationPrompt';
@@ -11,25 +6,12 @@ import InstallPWA from './components/InstallPWA';
 import UpdateNotification from './components/UpdateNotification';
 import AudioPlayer from './components/AudioPlayer';
 import Header from './components/Header';
-import { useAuth } from './contexts/AuthContext';
 import { useDevice } from './contexts/DeviceContext';
-import PlayerProvider, { usePlayer } from './contexts/PlayerContext';
+import { usePlayer } from './contexts/PlayerContext';
 import { lockToPortrait } from './utils/orientationManager';
-import { downloadTrack } from './services/downloadService';
-import { searchMusic } from './services/musicApiService';
 import useNetworkStatus from './hooks/useNetworkStatus';
 import useFirebaseStatus from './hooks/useFirebaseStatus';
-import {
-  handleError,
-  ErrorTypes,
-  ErrorSeverity,
-  checkNetworkStatus,
-  validateSearchParams,
-  checkDownloadStatus
-} from './utils/errorHandler';
-import SyncProvider from './contexts/SyncContext';
-import FavoritesProvider from './contexts/FavoritesContext';
-import { DownloadProvider, useDownload } from './contexts/DownloadContext';
+import { useDownload } from './contexts/DownloadContext';
 import { clearExpiredCovers } from './services/storage';
 import useSearch from './hooks/useSearch';
 import SearchResultItem from './components/SearchResultItem';
@@ -526,19 +508,9 @@ const AppContent = () => {
   );
 };
 
-// 主App组件，只负责提供上下文
+// 主App组件
 const App = () => {
-  return (
-    <SyncProvider>
-      <PlayerProvider>
-        <FavoritesProvider>
-          <DownloadProvider>
-            <AppContent />
-          </DownloadProvider>
-        </FavoritesProvider>
-      </PlayerProvider>
-    </SyncProvider>
-  );
+  return <AppContent />;
 };
 
 export default App;

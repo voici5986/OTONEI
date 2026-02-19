@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { playMusic, forceGetCoverImage, getLyrics } from '../services/musicApiService';
 import { addToHistory, getCoverFromStorage, saveCoverToStorage } from '../services/storage';
 import { handleError, ErrorTypes, ErrorSeverity } from '../utils/errorHandler';

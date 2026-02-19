@@ -15,6 +15,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { DeviceProvider } from './contexts/DeviceContext';
+import SyncProvider from './contexts/SyncContext';
+import PlayerProvider from './contexts/PlayerContext';
+import FavoritesProvider from './contexts/FavoritesContext';
+import DownloadProvider from './contexts/DownloadContext';
 import * as serviceWorkerRegistration from './utils/serviceWorkerRegistration';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -25,19 +29,27 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <AuthProvider>
     <DeviceProvider>
-      <App />
-      <ToastContainer
-        position="bottom-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
+      <SyncProvider>
+        <PlayerProvider>
+          <FavoritesProvider>
+            <DownloadProvider>
+              <App />
+              <ToastContainer
+                position="bottom-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+              />
+            </DownloadProvider>
+          </FavoritesProvider>
+        </PlayerProvider>
+      </SyncProvider>
     </DeviceProvider>
   </AuthProvider>
 );
