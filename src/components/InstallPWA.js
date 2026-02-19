@@ -10,7 +10,7 @@ const InstallPWA = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallToast, setShowInstallToast] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
-  const { deviceType } = useDevice();
+  useDevice();
   
   // 检测是否为已安装的PWA
   useEffect(() => {

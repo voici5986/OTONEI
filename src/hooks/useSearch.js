@@ -35,7 +35,7 @@ function searchReducer(state, action) {
 
 export const useSearch = (isOnline) => {
   const [state, dispatch] = useReducer(searchReducer, searchInitialState);
-  const { query, results, source, quality, loading } = state;
+  const { query, results, source } = state;
 
   const handleSearch = useCallback(async (e) => {
     if (e) e.preventDefault();

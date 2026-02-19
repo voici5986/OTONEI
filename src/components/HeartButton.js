@@ -3,7 +3,7 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useFavorites } from '../contexts/FavoritesContext';
 
-const HeartButton = ({ track, className = '', size = 'sm', onToggle, variant = 'outline-danger' }) => {
+const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
   const [isToggling, setIsToggling] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -39,8 +39,6 @@ const HeartButton = ({ track, className = '', size = 'sm', onToggle, variant = '
 
   // 检查size是否为数字，用于图标尺寸
   const iconSize = typeof size === 'number' ? size : undefined;
-  const buttonSize = typeof size === 'string' ? size : 'sm';
-
   return (
     <button
       className={className}

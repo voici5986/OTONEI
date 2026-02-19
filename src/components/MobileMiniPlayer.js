@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaPlay, FaPause, FaRandom, FaRedoAlt, FaSyncAlt } from 'react-icons/fa';
+import { FaPlay, FaPause } from 'react-icons/fa';
 import { MdSkipPrevious, MdSkipNext } from 'react-icons/md';
 import MobileAlbumCover from './MobileAlbumCover';
 import HeartButton from './HeartButton';
@@ -17,12 +17,9 @@ const MobileMiniPlayer = ({
   togglePlay, 
   toggleLyric, 
   lyricExpanded, 
-  showMobileLyrics,
-  setShowMobileLyrics,
   handleTogglePlayMode,
   handlePrevious,
   handleNext,
-  playMode,
   getPlayModeTitle,
   renderPlayModeIcon
 }) => {

@@ -350,7 +350,8 @@ const incrementalSyncWithSubcollections = async (uid) => {
       // 更新/添加云端变更的收藏
       cloudFavorites.forEach(item => {
         // 确保docId不存储到本地
-        const { docId, ...itemData } = item;
+        const itemData = { ...item };
+        delete itemData.docId;
         
         const existingItem = favoritesMap.get(item.id);
         
@@ -386,7 +387,8 @@ const incrementalSyncWithSubcollections = async (uid) => {
       // 更新/添加云端变更的历史记录
       cloudHistory.forEach(item => {
         // 确保docId不存储到本地
-        const { docId, ...itemData } = item;
+        const itemData = { ...item };
+        delete itemData.docId;
         
         if (item.song && item.song.id) {
           const existingItem = historyMap.get(item.song.id);

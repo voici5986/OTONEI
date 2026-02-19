@@ -53,7 +53,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   };
   
   // 从PlayerContext获取状态和方法
-  const { handlePlay, currentTrack, isPlaying } = usePlayer();
+  const { handlePlay, currentTrack } = usePlayer();
   
   // 从AuthContext获取用户状态
   const { currentUser } = useAuth();
@@ -84,7 +84,6 @@ const History = ({ globalSearchQuery, onTabChange }) => {
 
   useEffect(() => {
     loadHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 监听收藏状态变化，同步更新历史记录中的心形图标

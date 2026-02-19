@@ -3,26 +3,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { 
   getFavorites, 
   getHistory, 
-  clearHistory, 
-  clearSearchHistory, 
-  resetPendingChanges,
   saveFavorites
 } from '../services/storage';
-import { clearSyncTimestamp } from '../services/syncService';
-import { clearMemoryCache } from '../services/memoryCache';
 import { 
   FaHeart, 
   FaHistory, 
   FaSignOutAlt, 
   FaCloud, 
   FaChevronRight, 
-  FaTrashAlt, 
   FaDatabase, 
   FaChevronDown, 
   FaChevronUp,
   FaFileExport,
   FaFileImport,
-  FaExchangeAlt,
   FaTimes
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -50,7 +43,6 @@ const UserProfile = ({ onTabChange }) => {
   
   // 使用同步上下文
   const { 
-    pendingChanges, 
     syncStatus, 
     startSync,
     handleSyncComplete,
@@ -161,66 +153,6 @@ const UserProfile = ({ onTabChange }) => {
 
   // --- 导入导出逻辑开始 ---
   
-  const isMatch = (text, query) => {
-    if (!text) return false;
-    const str = typeof text === 'string' ? text : String(text);
-    if (str === query) return true;
-    if (str.includes(query)) return true;
-    const lowerStr = str.toLowerCase();
-    const lowerQuery = query.toLowerCase();
-    if (lowerStr.includes(lowerQuery)) return true;
-    const words = query.split(/\s+/).filter(word => word.length > 0);
-    if (words.length > 1) {
-      return words.every(word => isMatch(str, word));
-    }
-    return false;
-  };
-
-  const searchInValue = (value, query) => {
-    if (typeof value === 'string') return isMatch(value, query);
-    if (Array.isArray(value)) return value.some(item => searchInValue(item, query));
-    if (value !== null && typeof value === 'object') {
-      return Object.values(value).some(propValue => searchInValue(propValue, query));
-    }
-    return false;
-  };
-
-  const isArtistMatch = (track, query) => {
-    if (typeof track.artist === 'string' && isMatch(track.artist, query)) return true;
-    if (track.artist !== null && typeof track.artist === 'object') {
-      if (track.artist.name && isMatch(track.artist.name, query)) return true;
-      if (searchInValue(track.artist, query)) return true;
-    }
-    if (Array.isArray(track.artists)) {
-      return track.artists.some(artist => {
-        if (typeof artist === 'string') return isMatch(artist, query);
-        if (artist && typeof artist === 'object') {
-          if (artist.name && isMatch(artist.name, query)) return true;
-          return searchInValue(artist, query);
-        }
-        return false;
-      });
-    }
-    if (Array.isArray(track.ar)) {
-      return track.ar.some(artist => {
-        if (typeof artist === 'string') return isMatch(artist, query);
-        if (artist && typeof artist === 'object') {
-          if (artist.name && isMatch(artist.name, query)) return true;
-          return searchInValue(artist, query);
-        }
-        return false;
-      });
-    }
-    if (track.al && typeof track.al === 'object') {
-      if (searchInValue(track.al, query)) return true;
-    }
-    const fieldsToSearch = ['artistsname', 'singer', 'author', 'composer'];
-    for (const field of fieldsToSearch) {
-      if (track[field] && isMatch(track[field], query)) return true;
-    }
-    return false;
-  };
-
   const searchTrack = async (trackInfo, source) => {
     try {
       const searchWithKeyword = async (keyword, source) => {
@@ -416,7 +348,7 @@ const UserProfile = ({ onTabChange }) => {
         } else {
           newStatus[i] = { status: 'fail', message: '未找到' };
         }
-      } catch (error) {
+      } catch {
         newStatus[i] = { status: 'error', message: '出错' };
       }
       setImportStatus([...newStatus]);

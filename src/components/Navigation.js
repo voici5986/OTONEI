@@ -4,7 +4,7 @@ import DesktopNavbar from './DesktopNavbar';
 import MobileBottomNav from './MobileBottomNav';
 import { useDevice } from '../contexts/DeviceContext';
 
-const Navigation = ({ activeTab, onTabChange, onAuthClick }) => {
+const Navigation = ({ activeTab, onTabChange }) => {
   const deviceInfo = useDevice();
   const {
     expanded,

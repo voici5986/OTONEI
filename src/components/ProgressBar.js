@@ -12,8 +12,6 @@ const ProgressBar = () => {
     setIsPlaying
   } = usePlayer();
 
-  const deviceType = 'desktop';
-
   const [isDragging, setIsDragging] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -42,10 +40,8 @@ const ProgressBar = () => {
       seekTo(position * totalSeconds);
     };
 
-    const handleDragEnd = (e) => {
+    const handleDragEnd = () => {
       // 兼容触摸结束
-      const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-
       setLastReleasedProgress(dragProgress);
       justReleasedRef.current = true;
 

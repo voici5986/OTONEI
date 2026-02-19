@@ -13,7 +13,7 @@ export async function onRequest(context) {
 
     // 1. 提取子路径和查询参数
     // 如果请求是 /api-v1/something?query=1，逻辑保持一致
-    let targetUrlString = '';
+    let targetUrlString;
 
     if (url.pathname === SOURCE_PATH_PREFIX || url.pathname === `${SOURCE_PATH_PREFIX}/`) {
         // 根路径转发：/api-v1 -> /api.php

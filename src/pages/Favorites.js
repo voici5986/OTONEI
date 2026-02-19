@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MusicCardActions from '../components/MusicCardActions';
 import { getFavorites } from '../services/storage';
 import { toast } from 'react-toastify';
@@ -23,30 +23,6 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
 
   const [filteredFavorites, setFilteredFavorites] = useState([]);
 
-  // 监听全局搜索
-  useEffect(() => {
-    if (globalSearchQuery !== undefined) {
-      performSearch(globalSearchQuery, favorites);
-    }
-  }, [globalSearchQuery, favorites]);
-
-  // 将搜索逻辑提取出来
-  const performSearch = (query, currentFavorites) => {
-    const trimmedQuery = query.trim();
-    if (!trimmedQuery) {
-      setFilteredFavorites(currentFavorites);
-      return;
-    }
-
-    const filtered = currentFavorites.filter(track => {
-      if (isMatch(track.name, trimmedQuery) || isMatch(track.album, trimmedQuery)) {
-        return true;
-      }
-      return isArtistMatch(track, trimmedQuery);
-    });
-    setFilteredFavorites(filtered);
-  };
-
   // 定义loadFavorites函数在useEffect之前
   const loadFavorites = async () => {
     setLoading(true);
@@ -64,7 +40,6 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
 
   useEffect(() => {
     loadFavorites();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 加载收藏时强制检查日文艺术家
@@ -99,31 +74,8 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
     }
   }, [favorites]);
 
-  // 递归搜索任何值是否匹配查询词
-  const searchInValue = (value, query) => {
-    // 处理字符串直接比较
-    if (typeof value === 'string') {
-      return isMatch(value, query);
-    }
-
-    // 处理数组 - 检查数组中的每个元素
-    if (Array.isArray(value)) {
-      return value.some(item => searchInValue(item, query));
-    }
-
-    // 处理对象 - 检查所有属性值
-    if (value !== null && typeof value === 'object') {
-      return Object.values(value).some(propValue =>
-        searchInValue(propValue, query)
-      );
-    }
-
-    // 其他类型无法搜索
-    return false;
-  };
-
   // 检查字符串是否匹配查询词
-  const isMatch = (text, query) => {
+  const isMatch = useCallback((text, query) => {
     // 处理null/undefined
     if (!text) return false;
 
@@ -148,10 +100,33 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
     }
 
     return false;
-  };
+  }, []);
+
+  // 递归搜索任何值是否匹配查询词
+  const searchInValue = useCallback((value, query) => {
+    // 处理字符串直接比较
+    if (typeof value === 'string') {
+      return isMatch(value, query);
+    }
+
+    // 处理数组 - 检查数组中的每个元素
+    if (Array.isArray(value)) {
+      return value.some(item => searchInValue(item, query));
+    }
+
+    // 处理对象 - 检查所有属性值
+    if (value !== null && typeof value === 'object') {
+      return Object.values(value).some(propValue =>
+        searchInValue(propValue, query)
+      );
+    }
+
+    // 其他类型无法搜索
+    return false;
+  }, [isMatch]);
 
   // 专门检查艺术家字段的匹配
-  const isArtistMatch = (track, query) => {
+  const isArtistMatch = useCallback((track, query) => {
     // 1. 检查artist字段（字符串形式）
     if (typeof track.artist === 'string' && isMatch(track.artist, query)) {
       return true;
@@ -229,7 +204,31 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
     }
 
     return false;
-  };
+  }, [isMatch, searchInValue]);
+
+  // 将搜索逻辑提取出来
+  const performSearch = useCallback((query, currentFavorites) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) {
+      setFilteredFavorites(currentFavorites);
+      return;
+    }
+
+    const filtered = currentFavorites.filter(track => {
+      if (isMatch(track.name, trimmedQuery) || isMatch(track.album, trimmedQuery)) {
+        return true;
+      }
+      return isArtistMatch(track, trimmedQuery);
+    });
+    setFilteredFavorites(filtered);
+  }, [isMatch, isArtistMatch]);
+
+  // 监听全局搜索
+  useEffect(() => {
+    if (globalSearchQuery !== undefined) {
+      performSearch(globalSearchQuery, favorites);
+    }
+  }, [globalSearchQuery, favorites, performSearch]);
 
   // 渲染登录提醒组件
   const renderLoginReminder = () => {

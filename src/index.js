@@ -65,8 +65,10 @@ root.render(
 //   }
 // });
 
-// 强制注销旧的 Service Worker
-serviceWorkerRegistration.unregister();
-console.log('✅ 已发起 Service Worker 注销请求');
+// 强制注销旧的 Service Worker（仅开发环境）
+if (process.env.NODE_ENV === 'development') {
+  serviceWorkerRegistration.unregister();
+  console.log('✅ 已发起 Service Worker 注销请求');
+}
 
 

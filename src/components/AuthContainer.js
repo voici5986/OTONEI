@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useDebounce } from '../utils/throttleDebounce';
-import { FaEnvelope, FaLock, FaUser, FaWaveSquare } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaUser } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 
 /**
@@ -26,12 +25,6 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
   const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const { login, register, signInWithGoogle, resetPassword } = useAuth();
-
-  // 防抖处理（用于表单提交验证，减少不必要的重新渲染）
-  const debouncedEmail = useDebounce(email, 300);
-  const debouncedPassword = useDebounce(password, 300);
-  const debouncedDisplayName = useDebounce(displayName, 300);
-  const debouncedConfirmPassword = useDebounce(confirmPassword, 300);
 
   // 切换模式
   const switchMode = (newMode) => {
@@ -98,7 +91,7 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
     try {
       const { success } = await resetPassword(email);
       if (success) setResetEmailSent(true);
-    } catch (err) {
+    } catch {
       setError('邮件发送失败，请稍后重试');
     } finally {
       setLoading(false);
@@ -112,7 +105,7 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
     try {
       const { success } = await signInWithGoogle();
       if (success) onAuthSuccess && onAuthSuccess();
-    } catch (err) {
+    } catch {
       setError('Google登录失败，请重试');
     } finally {
       setLoading(false);

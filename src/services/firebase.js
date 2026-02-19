@@ -108,7 +108,7 @@ export const checkFirebaseAvailability = async () => {
         try {
           // 测试auth服务连接
           const unsubscribe = auth.onAuthStateChanged(
-            (user) => {
+            () => {
               console.log("Firebase Auth连接成功");
               unsubscribe();
               resolve(true);

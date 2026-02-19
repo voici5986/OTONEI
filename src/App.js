@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import Navigation from './components/Navigation';
 import DeviceDebugger from './components/DeviceDebugger';
 import OrientationPrompt from './components/OrientationPrompt';
 import InstallPWA from './components/InstallPWA';
 import UpdateNotification from './components/UpdateNotification';
 import AudioPlayer from './components/AudioPlayer';
+import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import { useDevice } from './contexts/DeviceContext';
 import { usePlayer } from './contexts/PlayerContext';
 import { lockToPortrait } from './utils/orientationManager';
 import useNetworkStatus from './hooks/useNetworkStatus';
 import useFirebaseStatus from './hooks/useFirebaseStatus';
-import { useDownload } from './contexts/DownloadContext';
 import { clearExpiredCovers } from './services/storage';
 import useSearch from './hooks/useSearch';
 import SearchResultItem from './components/SearchResultItem';
@@ -79,8 +79,6 @@ const AppContent = () => {
   const [localSuggestionsLoading, setLocalSuggestionsLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const suggestionLimit = 5;
-
   // 获取搜索历史
   useEffect(() => {
     const fetchSearchHistory = async () => {
@@ -103,15 +101,13 @@ const AppContent = () => {
   }, [suggestionsOpen, query]);
 
   // 下载相关状态 - 使用全局 Context
-  const { downloading, currentDownloadingTrack, handleDownload } = useDownload();
-
   // 可选音乐源
-  const sources = [
+  const sources = useMemo(() => ([
     'netease', 'kuwo', 'joox', 'bilibili'
-  ];
+  ]), []);
 
   // 可选音质
-  const qualities = [128, 192, 320, 740, 999];
+  const qualities = useMemo(() => ([128, 192, 320, 740, 999]), []);
 
   // 从PlayerContext获取封面相关方法
   const { setCurrentPlaylist, handlePlay: playTrack } = usePlayer();
@@ -125,7 +121,7 @@ const AppContent = () => {
 
   const deviceInfo = useDevice();
 
-  const getTrackArtist = (track) => {
+  const getTrackArtist = useCallback((track) => {
     if (!track) return '';
     if (Array.isArray(track.ar)) return track.ar.map(a => a?.name || '').filter(Boolean).join(' / ');
     if (Array.isArray(track.artists)) return track.artists.map(a => a?.name || '').filter(Boolean).join(' / ');
@@ -133,7 +129,7 @@ const AppContent = () => {
       return typeof track.artist === 'string' ? track.artist : (track.artist.name || '');
     }
     return '';
-  };
+  }, []);
 
   useEffect(() => {
     const trimmedQuery = query.trim();
@@ -177,14 +173,17 @@ const AppContent = () => {
     }, 200);
   };
 
-  const buildSuggestionItems = (tracks) => {
-    return tracks.map((track, index) => ({
-      id: track?.id || `${track?.name || 'idx'}-${index}-${Date.now()}`,
-      name: track?.name || '未命名',
-      artist: getTrackArtist(track) || '未知歌手',
-      raw: track
-    }));
-  };
+  const buildSuggestionItems = useCallback((tracks) => {
+    return tracks.map((track, index) => {
+      const stableId = track?.id || `${track?.name || 'idx'}-${track?.source || 'unknown'}-${index}`;
+      return {
+        id: stableId,
+        name: track?.name || '未命名',
+        artist: getTrackArtist(track) || '未知歌手',
+        raw: track
+      };
+    });
+  }, [getTrackArtist]);
 
   const handleSuggestionPick = (item) => {
     // 处理“查看更多”跳转
@@ -227,21 +226,29 @@ const AppContent = () => {
     }
   };
 
-  const favoritesItems = buildSuggestionItems(localSuggestions.favorites || []);
-  const historyItems = buildSuggestionItems(localSuggestions.history || []);
+  const favoritesItems = useMemo(
+    () => buildSuggestionItems(localSuggestions.favorites || []),
+    [buildSuggestionItems, localSuggestions.favorites]
+  );
+  const historyItems = useMemo(
+    () => buildSuggestionItems(localSuggestions.history || []),
+    [buildSuggestionItems, localSuggestions.history]
+  );
 
   // 格式化搜索历史建议
-  const historySuggestionItems = searchHistory.slice(0, 5).map((item, index) => ({
-    id: `history-${index}-${item.timestamp}`,
-    name: item.query,
-    artist: `历史搜索 · ${item.source}`,
-    isSearchHistory: true,
-    rawQuery: item.query,
-    rawSource: item.source
-  }));
+  const historySuggestionItems = useMemo(() => (
+    searchHistory.slice(0, 5).map((item, index) => ({
+      id: `history-${index}-${item.timestamp}`,
+      name: item.query,
+      artist: `历史搜索 · ${item.source}`,
+      isSearchHistory: true,
+      rawQuery: item.query,
+      rawSource: item.source
+    }))
+  ), [searchHistory]);
 
   // 合并后的建议列表，用于键盘导航
-  const allLimitedItems = (() => {
+  const allLimitedItems = useMemo(() => {
     if (!query.trim()) return historySuggestionItems;
 
     const limit = 5;
@@ -266,7 +273,7 @@ const AppContent = () => {
     }
 
     return items;
-  })();
+  }, [query, historySuggestionItems, favoritesItems, historyItems]);
 
   const handleKeyDown = (e) => {
     if (!suggestionsOpen || allLimitedItems.length === 0) {
@@ -510,7 +517,11 @@ const AppContent = () => {
 
 // 主App组件
 const App = () => {
-  return <AppContent />;
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
 };
 
 export default App;

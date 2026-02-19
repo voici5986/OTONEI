@@ -4,7 +4,7 @@ import React from 'react';
  * 歌词切换按钮组件
  * 封装歌词展开/收起按钮的逻辑，减少代码重复
  */
-export const LyricToggleButton = ({ expanded, onToggle, className = '', variant = 'link', iconOnly = true, customIcon = null }) => {
+export const LyricToggleButton = ({ expanded, onToggle, className = '', iconOnly = true, customIcon = null }) => {
   return (
     <button
       onClick={onToggle}

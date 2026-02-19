@@ -29,7 +29,7 @@ class AudioEngine {
         });
 
         // 自动重连逻辑或错误处理增强
-        this.audio.addEventListener('error', (e) => {
+        this.audio.addEventListener('error', () => {
             console.error('[AudioEngine] 播放错误:', this.audio.error);
         });
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
 import { FaRandom, FaRedo } from 'react-icons/fa';
 import { MdRepeatOne } from 'react-icons/md';
@@ -29,7 +29,6 @@ export const useAudioPlayerViewState = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffsetY, setDragOffsetY] = useState(0);
   const [startY, setStartY] = useState(0);
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
 
   useEffect(() => {
     if (lyricExpanded) {
@@ -39,15 +38,6 @@ export const useAudioPlayerViewState = () => {
       document.body.classList.remove('player-expanded');
     }
   }, [lyricExpanded]);
-
-  useEffect(() => {
-    const handleFavoritesChanged = () => {
-      forceUpdate();
-    };
-
-    window.addEventListener('favorites_changed', handleFavoritesChanged);
-    return () => window.removeEventListener('favorites_changed', handleFavoritesChanged);
-  }, []);
 
   useEffect(() => {
     if (!currentTrack || !('mediaSession' in navigator)) return;

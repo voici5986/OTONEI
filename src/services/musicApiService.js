@@ -13,7 +13,6 @@ const API_BASE = '/api-v1/api.php';
 const REQUEST_TIMEOUT = 12000; // 12秒请求超时
 
 // 添加防重复请求映射
-const pendingPlayRequests = new Map();
 const pendingUrlRequests = new Map();
 const pendingLyricRequests = new Map();
 
@@ -88,7 +87,7 @@ export const searchMusic = async (query, source, count = 20, page = 1) => {
     return validatedData;
   } catch (error) {
     // 处理取消请求的情况
-    if (axios.isCancel(error)) {
+    if (axios.isCancel(error) || error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError') {
       console.error('[searchMusic] 搜索请求超时或被取消');
       throw new Error('搜索请求超时，请稍后重试');
     }
@@ -318,7 +317,7 @@ export const getCoverImage = async (source, picId, size = 500) => {
     // 只有在 playMusic 等核心流程明确需要时，才会考虑请求
     console.log(`[getCoverImage] 为节省额度，跳过主动请求: ${source}/${picId}`);
     return 'default_cover.svg';
-  } catch (error) {
+  } catch {
     return 'default_cover.svg';
   }
 };
@@ -344,7 +343,7 @@ export const forceGetCoverImage = async (source, picId, size = 500) => {
       return url;
     }
     return 'default_cover.svg';
-  } catch (e) {
+  } catch {
     return 'default_cover.svg';
   }
 };

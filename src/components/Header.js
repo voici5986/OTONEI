@@ -1,12 +1,10 @@
 import React from 'react';
 import { FaSearch, FaUser, FaTimesCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
-import { useDevice } from '../contexts/DeviceContext';
 import '../styles/Header.desktop.css';
 import '../styles/Header.mobile.css';
 
 const Header = ({
-  activeTab,
   onTabChange,
   searchQuery,
   onSearchChange,
@@ -18,11 +16,9 @@ const Header = ({
   onKeyDown,
   onSuggestionPick,
   onShowMore,
-  selectedIndex = -1,
-  loading
+  selectedIndex = -1
 }) => {
   const { currentUser } = useAuth();
-  const { isMobile } = useDevice();
 
   // 获取用户初始
   const getUserInitial = () => {
@@ -67,8 +63,6 @@ const Header = ({
     if (!suggestionsOpen) return null;
 
     const limit = 5; // 建议显示的条数
-    const favs = suggestionData.favorites || [];
-    const hists = suggestionData.history || [];
 
     // 当没有输入时，显示搜索内容（历史或引导）
     if (!hasQuery) {

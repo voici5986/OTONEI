@@ -10,7 +10,6 @@ import { LyricLine } from './PlayerSubComponents';
  */
 const DesktopExpandedView = ({
   currentTrack,
-  isPlaying,
   toggleLyric,
   lyricsContainerRef,
   processedLyrics,

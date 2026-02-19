@@ -19,10 +19,8 @@ const DesktopPlayerControl = ({
   handlePrevious,
   handleNext,
   handleTogglePlayMode,
-  playMode,
   getPlayModeTitle,
-  renderPlayModeIcon,
-  playerUrl
+  renderPlayModeIcon
 }) => {
   const { handleDownload } = useDownload();
 
