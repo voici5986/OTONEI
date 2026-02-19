@@ -11,6 +11,7 @@ import {
 } from '../services/storage';
 import { clearSyncTimestamp } from '../services/syncService';
 import { useAuth } from '../contexts/AuthContext';
+import logger from '../utils/logger.js';
 
 const ClearDataButton = ({ 
   onClick, 
@@ -101,7 +102,7 @@ const ClearDataButton = ({
       // 关闭模态框
       handleClose();
     } catch (error) {
-      console.error('清除数据失败:', error);
+      logger.error('清除数据失败:', error);
       toast.error('清除数据时发生错误');
     } finally {
       setLoading(false);

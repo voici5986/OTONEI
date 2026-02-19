@@ -1,3 +1,4 @@
+import logger from './logger.js';
 /**
  * 屏幕方向管理工具
  * 提供强制竖屏和屏幕方向变化监听功能
@@ -44,7 +45,7 @@ export const requestDeviceOrientationPermission = async () => {
     const permission = await DeviceOrientationEvent.requestPermission();
     return permission === 'granted';
   } catch (error) {
-    console.error('请求设备方向权限失败:', error);
+    logger.error('请求设备方向权限失败:', error);
     return false;
   }
 };
@@ -58,24 +59,24 @@ export const lockToPortrait = async () => {
   if (isDeviceOrientationPermissionRequired()) {
     const hasPermission = await requestDeviceOrientationPermission();
     if (!hasPermission) {
-      console.log('未获得设备方向权限，无法锁定屏幕方向');
+      logger.log('未获得设备方向权限，无法锁定屏幕方向');
       return false;
     }
   }
 
   // 检查是否支持Screen Orientation API
   if (!isOrientationApiSupported()) {
-    console.log('当前浏览器不支持Screen Orientation API，无法锁定屏幕方向');
+    logger.log('当前浏览器不支持Screen Orientation API，无法锁定屏幕方向');
     return false;
   }
 
   try {
     // 尝试锁定屏幕方向为竖屏
     await window.screen.orientation.lock('portrait');
-    console.log('已锁定屏幕方向为竖屏');
+    logger.log('已锁定屏幕方向为竖屏');
     return true;
   } catch (error) {
-    console.error('锁定屏幕方向失败:', error);
+    logger.error('锁定屏幕方向失败:', error);
     return false;
   }
 };
@@ -87,17 +88,17 @@ export const lockToPortrait = async () => {
 export const unlockOrientation = () => {
   // 检查是否支持Screen Orientation API
   if (!isOrientationApiSupported()) {
-    console.log('当前浏览器不支持Screen Orientation API，无需解锁屏幕方向');
+    logger.log('当前浏览器不支持Screen Orientation API，无需解锁屏幕方向');
     return false;
   }
 
   try {
     // 尝试解锁屏幕方向
     window.screen.orientation.unlock();
-    console.log('已解锁屏幕方向');
+    logger.log('已解锁屏幕方向');
     return true;
   } catch (error) {
-    console.error('解锁屏幕方向失败:', error);
+    logger.error('解锁屏幕方向失败:', error);
     return false;
   }
 };

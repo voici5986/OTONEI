@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import { getPendingSyncChanges, resetPendingChanges, getSyncStatus, saveSyncStatus } from '../services/storage';
 import { getLastSyncTime, getLocalChangesSince, addSyncListener, removeSyncListener, SyncEvents } from '../services/syncService';
+import logger from '../utils/logger.js';
 
 // 创建同步上下文
 const SyncContext = createContext();
@@ -60,7 +61,7 @@ export const SyncProvider = ({ children }) => {
         history: pendingCounter.history || localChanges.history.length
       });
     } catch (error) {
-      console.error('更新待同步数据失败:', error);
+      logger.error('更新待同步数据失败:', error);
     }
   }, [currentUser]);
   
@@ -116,7 +117,7 @@ export const SyncProvider = ({ children }) => {
             });
           }
         } catch (error) {
-          console.error('加载同步状态失败:', error);
+          logger.error('加载同步状态失败:', error);
         }
       }
     };

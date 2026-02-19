@@ -20,6 +20,7 @@ import SearchService from './services/SearchService';
 // 已移除旧的 Header.css 引用，样式现在由 Header 组件内部管理
 import './styles/AudioPlayer.css';
 import './styles/Orientation.css';
+import logger from './utils/logger.js';
 
 // 懒加载页面组件
 const Favorites = React.lazy(() => import('./pages/Favorites'));
@@ -87,7 +88,7 @@ const AppContent = () => {
         const history = await getSearchHistory();
         setSearchHistory(history || []);
       } catch (error) {
-        console.error('获取搜索历史失败:', error);
+        logger.error('获取搜索历史失败:', error);
       }
     };
 
@@ -145,7 +146,7 @@ const AppContent = () => {
       SearchService.searchLocal(trimmedQuery)
         .then((result) => {
           if (!active) return;
-          console.log(`[Search Debug] SearchService 返回结果: 收藏=${result.favorites.length}, 历史=${result.history.length}`);
+          logger.log(`[Search Debug] SearchService 返回结果: 收藏=${result.favorites.length}, 历史=${result.history.length}`);
           setLocalSuggestions(result);
           setLocalSuggestionsLoading(false);
         })
@@ -275,15 +276,29 @@ const AppContent = () => {
     return items;
   }, [query, historySuggestionItems, favoritesItems, historyItems]);
 
+  const handleSearchAction = useCallback((e) => {
+    handleSearch(e);
+    setSuggestionsOpen(false);
+    setSelectedIndex(-1);
+    // 关键修复：主动失去焦点，让 CSS :focus-within 状态消失，搜索框样式恢复
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    if (activeTab !== 'home') {
+      handleTabChange('home');
+    }
+  }, [handleSearch, activeTab, handleTabChange]);
+
   const handleKeyDown = (e) => {
+    // 处理输入法组合输入，避免误触发搜索
+    if (e.isComposing || e.nativeEvent?.isComposing) {
+      return;
+    }
     if (!suggestionsOpen || allLimitedItems.length === 0) {
       if (e.key === 'Enter') {
-        setSuggestionsOpen(false); // 即使没有建议，按回车搜索也应关闭弹窗
-        setSelectedIndex(-1);
-        // 主动失去焦点，恢复搜索框原本样式
-        if (document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur();
-        }
+        // 显式触发搜索逻辑，避免因 blur 导致 submit 事件丢失
+        e.preventDefault();
+        handleSearchAction(e);
       }
       return;
     }
@@ -298,6 +313,10 @@ const AppContent = () => {
       if (selectedIndex >= 0 && selectedIndex < allLimitedItems.length) {
         e.preventDefault();
         handleSuggestionPick(allLimitedItems[selectedIndex]);
+      } else {
+        // 如果没有选中项，也应该触发普通搜索
+        e.preventDefault();
+        handleSearchAction(e);
       }
     } else if (e.key === 'Escape') {
       setSuggestionsOpen(false);
@@ -422,7 +441,7 @@ const AppContent = () => {
     if (deviceInfo.isMobile || deviceInfo.isTablet) {
       lockToPortrait().then(success => {
         if (process.env.NODE_ENV === 'development') {
-          console.log(success ?
+          logger.log(success ?
             '成功锁定屏幕方向为竖屏' :
             '无法锁定屏幕方向，将使用备选方案'
           );
@@ -436,11 +455,11 @@ const AppContent = () => {
     const initialize = async () => {
       try {
         if (process.env.NODE_ENV === 'development') {
-          console.log("应用初始化中...");
+          logger.log("应用初始化中...");
         }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
-          console.error("初始化失败:", error);
+          logger.error("初始化失败:", error);
         }
       }
     };
@@ -453,10 +472,10 @@ const AppContent = () => {
     // 异步清理过期封面缓存，不阻塞主流程
     clearExpiredCovers()
       .then(count => {
-        console.log(`已清理 ${count} 个过期封面缓存`);
+        logger.log(`已清理 ${count} 个过期封面缓存`);
       })
       .catch(error => {
-        console.error('清理封面缓存失败:', error);
+        logger.error('清理封面缓存失败:', error);
       });
   }, []);
 
@@ -468,18 +487,7 @@ const AppContent = () => {
         onTabChange={handleTabChange}
         searchQuery={query}
         onSearchChange={setQuery}
-        onSearchSubmit={(e) => {
-          handleSearch(e);
-          setSuggestionsOpen(false); // 提交搜索后关闭建议弹窗
-          setSelectedIndex(-1);
-          // 关键修复：主动失去焦点，让 CSS :focus-within 状态消失，搜索框样式恢复
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-          }
-          if (activeTab !== 'home') {
-            handleTabChange('home');
-          }
-        }}
+        onSearchSubmit={handleSearchAction}
         suggestionsOpen={suggestionsOpen}
         suggestionsLoading={localSuggestionsLoading}
         suggestions={{

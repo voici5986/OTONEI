@@ -1,4 +1,5 @@
 import { getFavorites, getHistory } from './storage';
+import logger from '../utils/logger.js';
 
 /**
  * 本地搜索服务
@@ -48,7 +49,7 @@ const SearchService = {
         history: matchedHistory
       };
     } catch (error) {
-      console.error('SearchService.searchLocal error:', error);
+      logger.error('SearchService.searchLocal error:', error);
       return { favorites: [], history: [] };
     }
   },
@@ -99,7 +100,7 @@ const SearchService = {
 
       return false;
     } catch (e) {
-      console.warn('Match check failed for track:', track, e);
+      logger.warn('Match check failed for track:', track, e);
       return false;
     }
   }

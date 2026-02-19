@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
+import logger from '../utils/logger.js';
 
 const DEFAULT_COVER = '/default_cover.svg';
 
@@ -47,7 +48,7 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
         const coverUrl = await fetchCover(track.source, track.pic_id, imgSize);
         setImageUrl(coverUrl);
       } catch (error) {
-        console.error('[useAlbumCoverImage] 加载封面失败:', error);
+        logger.error('[useAlbumCoverImage] 加载封面失败:', error);
         setImageUrl(DEFAULT_COVER);
       }
     };
@@ -57,7 +58,7 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
 
   // 错误处理
   const handleImageError = () => {
-    console.warn(`[useAlbumCoverImage] 封面加载失败: ${imageUrl}`);
+    logger.warn(`[useAlbumCoverImage] 封面加载失败: ${imageUrl}`);
     setImageUrl(DEFAULT_COVER);
   };
 
@@ -80,7 +81,7 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
         setImageUrl(coverUrl);
         setIsLoaded(true);
       } catch (error) {
-        console.error('[useAlbumCoverImage] 强制加载封面失败:', error);
+        logger.error('[useAlbumCoverImage] 强制加载封面失败:', error);
         setImageUrl(DEFAULT_COVER);
       }
     }

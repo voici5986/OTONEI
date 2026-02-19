@@ -1,3 +1,4 @@
+import logger from './logger.js';
 /**
  * Service Worker注册工具
  * 用于注册、更新和管理Service Worker
@@ -21,7 +22,7 @@ export function register(config = {}) {
 
     // 如果我们的源与PUBLIC_URL的源不同，则PWA不会工作
     if (publicUrl.origin !== window.location.origin) {
-      console.log('PUBLIC_URL的源与页面源不匹配，Service Worker将不会被注册');
+      logger.log('PUBLIC_URL的源与页面源不匹配，Service Worker将不会被注册');
       return;
     }
 
@@ -35,7 +36,7 @@ export function register(config = {}) {
 
         // 添加一些额外的日志到本地主机
         navigator.serviceWorker.ready.then(() => {
-          console.log('Service Worker准备就绪');
+          logger.log('Service Worker准备就绪');
         });
       } else {
         // 不是本地主机，注册Service Worker
@@ -43,7 +44,7 @@ export function register(config = {}) {
       }
     });
   } else {
-    console.log('当前环境不支持Service Worker，或者不是生产环境');
+    logger.log('当前环境不支持Service Worker，或者不是生产环境');
   }
 }
 
@@ -66,7 +67,7 @@ function registerValidSW(swUrl, config) {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
               // 新内容可用，通知用户
-              console.log('新内容可用，请刷新页面');
+              logger.log('新内容可用，请刷新页面');
 
               // 执行回调
               if (config && config.onUpdate) {
@@ -74,7 +75,7 @@ function registerValidSW(swUrl, config) {
               }
             } else {
               // 一切都已缓存，内容离线可用
-              console.log('内容已缓存，可离线使用');
+              logger.log('内容已缓存，可离线使用');
 
               // 执行回调
               if (config && config.onSuccess) {
@@ -86,7 +87,7 @@ function registerValidSW(swUrl, config) {
       };
     })
     .catch((error) => {
-      console.error('Service Worker注册失败:', error);
+      logger.error('Service Worker注册失败:', error);
     });
 }
 
@@ -119,7 +120,7 @@ function checkValidServiceWorker(swUrl, config) {
       }
     })
     .catch(() => {
-      console.log('无法连接到网络，使用离线模式');
+      logger.log('无法连接到网络，使用离线模式');
     });
 }
 
@@ -133,7 +134,7 @@ export function unregister() {
         return registration.unregister();
       })
       .catch((error) => {
-        console.error('Service Worker注销失败:', error);
+        logger.error('Service Worker注销失败:', error);
       });
   }
   return Promise.resolve(false);
@@ -164,7 +165,7 @@ export function checkForUpdates() {
         return registration.update();
       })
       .catch((error) => {
-        console.error('检查更新失败:', error);
+        logger.error('检查更新失败:', error);
         return Promise.reject(error);
       });
   }

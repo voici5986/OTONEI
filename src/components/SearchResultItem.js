@@ -2,6 +2,8 @@ import React from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useDownload } from '../contexts/DownloadContext';
 import MusicCardActions from './MusicCardActions';
+import '../types';
+import logger from '../utils/logger.js';
 
 const SearchResultItem = ({ track, searchResults, quality }) => {
   const { handlePlay, currentTrack } = usePlayer();
@@ -12,7 +14,7 @@ const SearchResultItem = ({ track, searchResults, quality }) => {
 
   // 添加单独的播放处理函数
   const handleTrackPlay = (track) => {
-    console.log('从搜索结果播放曲目:', track.id, track.name, '音质:', activeQuality);
+    logger.log('从搜索结果播放曲目:', track.id, track.name, '音质:', activeQuality);
     // 使用当前搜索结果作为播放列表
     const trackIndex = searchResults.findIndex(item => item.id === track.id);
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, searchResults, activeQuality);

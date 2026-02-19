@@ -8,6 +8,7 @@ import './History.css';
 import { downloadTrack } from '../services/downloadService';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
+import logger from '../utils/logger.js';
 
 // 设置moment为中文
 moment.locale('zh-cn');
@@ -60,7 +61,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
 
   // 添加单独的播放处理函数
   const handleTrackPlay = (track) => {
-    console.log('从历史记录播放曲目:', track.id, track.name);
+    logger.log('从历史记录播放曲目:', track.id, track.name);
     // 创建纯歌曲列表作为播放列表
     const songsList = filteredHistory.map(item => item.song);
     const trackIndex = songsList.findIndex(item => item.id === track.id);
@@ -75,7 +76,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       setHistory(historyItems);
       setFilteredHistory(historyItems);
     } catch (error) {
-      console.error('加载历史记录失败:', error);
+      logger.error('加载历史记录失败:', error);
       toast.error('加载历史记录失败，请重试', { icon: '⚠️' });
     } finally {
       setLoading(false);
@@ -119,7 +120,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
         }
       );
     } catch (error) {
-      console.error('Download error:', error);
+      logger.error('Download error:', error);
       toast.error('下载失败，请稍后重试', {
         icon: '❌',
         duration: 3000

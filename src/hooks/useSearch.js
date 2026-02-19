@@ -1,6 +1,7 @@
 import { useReducer, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { searchMusic } from '../services/musicApiService';
+import logger from '../utils/logger';
 import { 
   handleError, 
   ErrorTypes, 
@@ -59,7 +60,7 @@ export const useSearch = (isOnline) => {
         const { addSearchHistory } = await import('../services/storage');
         addSearchHistory(query, source);
       } catch (error) {
-        console.error('添加搜索历史失败:', error);
+        logger.error('添加搜索历史失败:', error);
       }
     } catch (error) {
       dispatch({ type: 'SEARCH_FAILURE', payload: error });

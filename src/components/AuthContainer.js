@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaEnvelope, FaLock, FaUser } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
+import logger from '../utils/logger.js';
 
 /**
  * 统一的身份验证容器组件
@@ -44,7 +45,7 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
       await login(email, password);
       onAuthSuccess && onAuthSuccess();
     } catch (err) {
-      console.error('登录失败:', err);
+      logger.error('登录失败:', err);
       const msg = {
         'auth/user-not-found': '邮箱或密码错误',
         'auth/wrong-password': '邮箱或密码错误',
@@ -70,7 +71,7 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
       await register(email, password, displayName);
       onAuthSuccess && onAuthSuccess();
     } catch (err) {
-      console.error('注册失败:', err);
+      logger.error('注册失败:', err);
       const msg = {
         'auth/email-already-in-use': '该邮箱已被注册',
         'auth/invalid-email': '无效的邮箱格式',

@@ -1,4 +1,5 @@
 import localforage from 'localforage';
+import logger from '../utils/logger.js';
 
 // 配置并创建不同数据类型的存储实例
 export const favoritesStore = localforage.createInstance({
@@ -64,10 +65,10 @@ export async function saveCoverToStorage(key, imageUrl) {
       timestamp: Date.now()
     });
     
-    console.log(`[saveCoverToStorage] 封面已缓存至本地: ${key}`);
+    logger.log(`[saveCoverToStorage] 封面已缓存至本地: ${key}`);
     return true;
   } catch (error) {
-    console.error(`[saveCoverToStorage] 保存封面失败: ${key}`, error);
+    logger.error(`[saveCoverToStorage] 保存封面失败: ${key}`, error);
     return false;
   }
 }
@@ -88,16 +89,16 @@ export async function getCoverFromStorage(key) {
       // 如果数据已过期，删除它
       if (data) {
         await coverStore.removeItem(key);
-        console.log(`[getCoverFromStorage] 封面缓存已过期: ${key}`);
+        logger.log(`[getCoverFromStorage] 封面缓存已过期: ${key}`);
       }
       
       return null;
     }
     
-    console.log(`[getCoverFromStorage] 使用本地封面缓存: ${key}`);
+    logger.log(`[getCoverFromStorage] 使用本地封面缓存: ${key}`);
     return data.url;
   } catch (error) {
-    console.error(`[getCoverFromStorage] 获取封面失败: ${key}`, error);
+    logger.error(`[getCoverFromStorage] 获取封面失败: ${key}`, error);
     return null;
   }
 }
@@ -106,28 +107,36 @@ export async function getCoverFromStorage(key) {
  * 清除过期的封面缓存
  * @returns {Promise<number>} 清除的项目数量
  */
-export async function clearExpiredCovers() {
+export async function clearExpiredCovers(options = {}) {
   try {
+    const { maxKeys = 200, batchSize = 50 } = options;
     const now = Date.now();
     const expireThreshold = now - COVER_CACHE_TTL;
     let removedCount = 0;
     
     // 获取所有键
     const keys = await coverStore.keys();
+    const limitedKeys = keys.slice(0, Math.max(0, maxKeys));
     
     // 检查每个缓存项
-    for (const key of keys) {
+    for (let i = 0; i < limitedKeys.length; i++) {
+      const key = limitedKeys[i];
       const data = await coverStore.getItem(key);
       if (!data || !data.timestamp || data.timestamp < expireThreshold) {
         await coverStore.removeItem(key);
         removedCount++;
       }
+
+      if (batchSize > 0 && (i + 1) % batchSize === 0) {
+        // 分批让出主线程，避免启动时卡顿
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
     }
     
-    console.log(`[clearExpiredCovers] 已清除 ${removedCount} 个过期的封面缓存`);
+    logger.log(`[clearExpiredCovers] 已清除 ${removedCount} 个过期的封面缓存 (扫描 ${limitedKeys.length}/${keys.length})`);
     return removedCount;
   } catch (error) {
-    console.error('[clearExpiredCovers] 清除过期封面缓存失败:', error);
+    logger.error('[clearExpiredCovers] 清除过期封面缓存失败:', error);
     return 0;
   }
 }
@@ -143,7 +152,7 @@ export async function getFavorites() {
     const data = await favoritesStore.getItem('items');
     return data || []; // 如果没有数据，返回空数组
   } catch (error) {
-    console.error("Error getting favorites:", error);
+    logger.error("Error getting favorites:", error);
     return [];
   }
 }
@@ -153,7 +162,7 @@ export async function saveFavorites(favoritesArray) {
     await favoritesStore.setItem('items', favoritesArray);
     return true;
   } catch (error) {
-    console.error("保存收藏列表失败:", error);
+    logger.error("保存收藏列表失败:", error);
     return false;
   }
 }
@@ -205,7 +214,7 @@ export async function saveLocalUser(user) {
     await userStore.setItem('localUser', user);
     return true;
   } catch (error) {
-    console.error("保存本地用户信息失败:", error);
+    logger.error("保存本地用户信息失败:", error);
     return false;
   }
 }
@@ -215,7 +224,7 @@ export async function getLocalUser() {
   try {
     return await userStore.getItem('localUser');
   } catch (error) {
-    console.error("获取本地用户信息失败:", error);
+    logger.error("获取本地用户信息失败:", error);
     return null;
   }
 }
@@ -226,7 +235,7 @@ export async function removeLocalUser() {
     await userStore.removeItem('localUser');
     return true;
   } catch (error) {
-    console.error("删除本地用户信息失败:", error);
+    logger.error("删除本地用户信息失败:", error);
     return false;
   }
 }
@@ -247,7 +256,7 @@ export async function saveNetworkStatus(status) {
     await networkStore.setItem('status', completeStatus);
     return true;
   } catch (error) {
-    console.error("保存网络状态失败:", error);
+    logger.error("保存网络状态失败:", error);
     return false;
   }
 }
@@ -272,7 +281,7 @@ export async function getNetworkStatus() {
     
     return status;
   } catch (error) {
-    console.error("获取网络状态失败:", error);
+    logger.error("获取网络状态失败:", error);
     return { 
       online: navigator.onLine, 
       lastChecked: Date.now(),
@@ -299,7 +308,7 @@ async function getHistoryGeneric(store) {
     const data = await store.getItem('items');
     return data || [];
   } catch (error) {
-    console.error("Error getting history:", error);
+    logger.error("Error getting history:", error);
     return [];
   }
 }
@@ -318,7 +327,7 @@ async function saveHistoryGeneric(store, historyArray, maxItems) {
     await store.setItem('items', limitedHistory);
     return true;
   } catch (error) {
-    console.error("Error saving history:", error);
+    logger.error("Error saving history:", error);
     return false;
   }
 }
@@ -354,7 +363,7 @@ async function addToHistoryGeneric(store, item, maxItems, findExistingFn, create
     
     return await saveHistoryGeneric(store, history, maxItems);
   } catch (error) {
-    console.error("Error adding to history:", error);
+    logger.error("Error adding to history:", error);
     return false;
   }
 }
@@ -369,7 +378,7 @@ async function clearHistoryGeneric(store) {
     await store.setItem('items', []);
     return true;
   } catch (error) {
-    console.error("Error clearing history:", error);
+    logger.error("Error clearing history:", error);
     return false;
   }
 }
@@ -449,7 +458,7 @@ export async function getSyncStatus(userId) {
     const data = await syncStore.getItem(key);
     return data || { loading: false, success: null, message: '', timestamp: null };
   } catch (error) {
-    console.error("Error getting sync status:", error);
+    logger.error("Error getting sync status:", error);
     return { loading: false, success: null, message: '', timestamp: null };
   }
 }
@@ -461,7 +470,7 @@ export async function saveSyncStatus(status, userId) {
     await syncStore.setItem(key, status);
     return true;
   } catch (error) {
-    console.error("Error saving sync status:", error);
+    logger.error("Error saving sync status:", error);
     return false;
   }
 } 
@@ -484,7 +493,7 @@ export async function getPendingSyncChanges() {
       timestamp: timestamp || 0
     };
   } catch (error) {
-    console.error("获取待同步变更计数失败:", error);
+    logger.error("获取待同步变更计数失败:", error);
     return { favorites: 0, history: 0, timestamp: 0 };
   }
 }
@@ -496,7 +505,7 @@ export async function savePendingSyncChanges(counter) {
     await syncStore.setItem(CHANGES_TIMESTAMP_KEY, Date.now());
     return true;
   } catch (error) {
-    console.error("保存待同步变更计数失败:", error);
+    logger.error("保存待同步变更计数失败:", error);
     return false;
   }
 }
@@ -513,7 +522,7 @@ export async function incrementPendingChanges(type) {
     await savePendingSyncChanges(newCounter);
     return newCounter;
   } catch (error) {
-    console.error("增加待同步变更计数失败:", error);
+    logger.error("增加待同步变更计数失败:", error);
     return null;
   }
 }
@@ -525,7 +534,7 @@ export async function resetPendingChanges() {
     await syncStore.setItem(CHANGES_TIMESTAMP_KEY, Date.now());
     return true;
   } catch (error) {
-    console.error("重置待同步变更计数失败:", error);
+    logger.error("重置待同步变更计数失败:", error);
     return false;
   }
 } 

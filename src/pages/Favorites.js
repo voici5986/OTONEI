@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useDownload } from '../contexts/DownloadContext';
+import logger from '../utils/logger.js';
 
 const Favorites = ({ globalSearchQuery, onTabChange }) => {
   // 从PlayerContext获取状态和方法（防御性处理，避免上下文缺失导致崩溃）
@@ -31,7 +32,7 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
       setFavorites(favItems);
       setFilteredFavorites(favItems); // 初始化过滤结果
     } catch (error) {
-      console.error('加载收藏失败:', error);
+      logger.error('加载收藏失败:', error);
       toast.error('加载收藏失败，请重试', { icon: '⚠️' });
     } finally {
       setLoading(false);
@@ -41,38 +42,6 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   useEffect(() => {
     loadFavorites();
   }, []);
-
-  // 加载收藏时强制检查日文艺术家
-  useEffect(() => {
-    if (favorites.length > 0) {
-      // 检查是否有日文艺术家数据，并打印详细信息
-      const japaneseItems = favorites.filter(item =>
-        typeof item.artist === 'string' &&
-        /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(item.artist)
-      );
-      console.log(`日文艺术家测试 - 总数: ${japaneseItems.length}`);
-
-      if (japaneseItems.length > 0) {
-        // 测试一个已知的日文艺术家名称
-        const testArtist = "ずっと真夜中でいいのに。";
-        const testItem = japaneseItems.find(item => item.artist.includes(testArtist));
-
-        if (testItem) {
-          console.log(`找到艺术家"${testArtist}":`);
-          console.log(`- 完整艺术家名: ${testItem.artist}`);
-          // 测试子字符串搜索
-          console.log(`- 测试"ずっと"是否匹配: ${testItem.artist.includes("ずっと")}`);
-          console.log(`- 测试"真夜中"是否匹配: ${testItem.artist.includes("真夜中")}`);
-
-          // 字符编码测试
-          const artistChars = Array.from(testItem.artist);
-          const searchChars = Array.from("ずっと");
-          console.log(`- 艺术家编码: ${artistChars.map(c => c.charCodeAt(0).toString(16)).join(' ')}`);
-          console.log(`- 搜索词编码: ${searchChars.map(c => c.charCodeAt(0).toString(16)).join(' ')}`);
-        }
-      }
-    }
-  }, [favorites]);
 
   // 检查字符串是否匹配查询词
   const isMatch = useCallback((text, query) => {
@@ -247,7 +216,7 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
 
   // 添加单独的播放处理函数
   const handleTrackPlay = (track) => {
-    console.log('从收藏播放曲目:', track.id, track.name);
+    logger.log('从收藏播放曲目:', track.id, track.name);
     // 使用当前收藏列表作为播放列表，并找到当前曲目的索引
     const trackIndex = filteredFavorites.findIndex(item => item.id === track.id);
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, filteredFavorites);

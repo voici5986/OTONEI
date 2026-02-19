@@ -1,3 +1,4 @@
+import logger from '../utils/logger.js';
 /**
  * 内存级缓存系统
  * 只在当前会话中有效，不进行持久化存储
@@ -59,10 +60,10 @@ export const setMemoryCache = (type, key, data) => {
     // 存储到对应类型的缓存映射中
     memoryCache[type].set(key, cacheItem);
     
-    console.log(`[内存缓存] 已缓存: ${type}/${key}`);
+    logger.log(`[内存缓存] 已缓存: ${type}/${key}`);
     return data;
   } catch (error) {
-    console.warn(`[内存缓存] 设置缓存失败 (${type}/${key}):`, error);
+    logger.warn(`[内存缓存] 设置缓存失败 (${type}/${key}):`, error);
     return data; // 即使缓存失败，仍返回原始数据
   }
 };
@@ -78,19 +79,19 @@ export const getMemoryCache = (type, key) => {
     const cacheItem = memoryCache[type].get(key);
     
     if (cacheItem && !isExpired(cacheItem)) {
-      console.log(`[内存缓存] 命中: ${type}/${key}`);
+      logger.log(`[内存缓存] 命中: ${type}/${key}`);
       return cacheItem.data;
     }
     
     // 如果过期或不存在，移除并返回null
     if (cacheItem) {
       memoryCache[type].delete(key);
-      console.log(`[内存缓存] 过期已删除: ${type}/${key}`);
+      logger.log(`[内存缓存] 过期已删除: ${type}/${key}`);
     }
     
     return null;
   } catch (error) {
-    console.warn(`[内存缓存] 获取缓存失败 (${type}/${key}):`, error);
+    logger.warn(`[内存缓存] 获取缓存失败 (${type}/${key}):`, error);
     return null;
   }
 };
@@ -104,16 +105,16 @@ export const clearMemoryCache = (type) => {
     if (type && memoryCache[type]) {
       // 清除特定类型的缓存
       memoryCache[type].clear();
-      console.log(`[内存缓存] 已清除缓存类型: ${type}`);
+      logger.log(`[内存缓存] 已清除缓存类型: ${type}`);
     } else if (!type) {
       // 清除所有缓存
       Object.values(CACHE_TYPES).forEach(cacheType => {
         memoryCache[cacheType].clear();
       });
-      console.log('[内存缓存] 已清除所有缓存');
+      logger.log('[内存缓存] 已清除所有缓存');
     }
   } catch (error) {
-    console.warn('[内存缓存] 清除缓存失败:', error);
+    logger.warn('[内存缓存] 清除缓存失败:', error);
   }
 };
 
@@ -126,11 +127,11 @@ export const imageUrlToBase64 = async (imageUrl) => {
   try {
     // 验证URL
     if (!imageUrl || imageUrl.includes('default_cover') || !imageUrl.startsWith('http')) {
-      console.warn('[imageUrlToBase64] 无效的图片URL:', imageUrl);
+      logger.warn('[imageUrlToBase64] 无效的图片URL:', imageUrl);
       return null;
     }
     
-    console.log(`[imageUrlToBase64] 开始获取图片: ${imageUrl.substring(0, 50)}...`);
+    logger.log(`[imageUrlToBase64] 开始获取图片: ${imageUrl.substring(0, 50)}...`);
     
     const response = await fetch(imageUrl, {
       mode: 'cors',
@@ -146,24 +147,24 @@ export const imageUrlToBase64 = async (imageUrl) => {
     
     const blob = await response.blob();
     if (!blob || blob.size === 0) {
-      console.warn('[imageUrlToBase64] 图片内容为空');
+      logger.warn('[imageUrlToBase64] 图片内容为空');
       return null;
     }
     
     // 检查MIME类型
     if (!blob.type.startsWith('image/')) {
-      console.warn(`[imageUrlToBase64] 非图片类型: ${blob.type}`);
+      logger.warn(`[imageUrlToBase64] 非图片类型: ${blob.type}`);
       return null;
     }
     
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        console.log('[imageUrlToBase64] 图片转Base64成功');
+        logger.log('[imageUrlToBase64] 图片转Base64成功');
         resolve(reader.result);
       };
       reader.onerror = (error) => {
-        console.error('[imageUrlToBase64] 读取图片数据失败:', error);
+        logger.error('[imageUrlToBase64] 读取图片数据失败:', error);
         reject(error);
       };
       reader.readAsDataURL(blob);
@@ -171,9 +172,9 @@ export const imageUrlToBase64 = async (imageUrl) => {
   } catch (error) {
     // 捕获跨域错误
     if (error.message && error.message.includes('CORS')) {
-      console.warn(`[imageUrlToBase64] 跨域错误: ${imageUrl.substring(0, 50)}...`);
+      logger.warn(`[imageUrlToBase64] 跨域错误: ${imageUrl.substring(0, 50)}...`);
     } else {
-      console.error('[imageUrlToBase64] 图片转Base64失败:', error);
+      logger.error('[imageUrlToBase64] 图片转Base64失败:', error);
     }
     return null;
   }

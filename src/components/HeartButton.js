@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useFavorites } from '../contexts/FavoritesContext';
+import logger from '../utils/logger.js';
 
 const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
   const [isToggling, setIsToggling] = useState(false);
@@ -30,7 +31,7 @@ const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
         onToggle(result.added);
       }
     } catch (error) {
-      console.error('Toggle favorite error:', error);
+      logger.error('Toggle favorite error:', error);
       toast.error('操作失败，请重试');
     } finally {
       setIsToggling(false);

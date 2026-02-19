@@ -5,6 +5,7 @@ import {
 } from '../services/firebase';
 import useNetworkStatus from './useNetworkStatus';
 import { toast } from 'react-toastify';
+import logger from '../utils/logger';
 
 /**
  * Firebase状态管理Hook
@@ -33,7 +34,7 @@ export const useFirebaseStatus = (options = {}) => {
       detail: { available, lastChecked: Date.now() } 
     });
     window.dispatchEvent(event);
-    console.log(`[useFirebaseStatus] 已分发Firebase状态变化事件: ${available ? '可用' : '不可用'}`);
+    logger.log(`[useFirebaseStatus] 已分发Firebase状态变化事件: ${available ? '可用' : '不可用'}`);
   }, []);
   
   // 检查Firebase可用性
@@ -45,7 +46,7 @@ export const useFirebaseStatus = (options = {}) => {
     
     // 如果网络离线，Firebase必定不可用
     if (!isOnline) {
-      console.log("[useFirebaseStatus] 网络离线，Firebase不可用");
+      logger.log("[useFirebaseStatus] 网络离线，Firebase不可用");
       setIsAvailable(false);
       setLastChecked(Date.now());
       return false;
@@ -53,12 +54,12 @@ export const useFirebaseStatus = (options = {}) => {
     
     setIsChecking(true);
     try {
-      console.log("[useFirebaseStatus] 开始检查Firebase可用性...");
+      logger.log("[useFirebaseStatus] 开始检查Firebase可用性...");
       const available = await checkFirebaseAvailability();
       
       // 只有当状态有变化时才更新和通知
       if (available !== isAvailable) {
-        console.log(`[useFirebaseStatus] Firebase可用性变化: ${available ? '可用' : '不可用'}`);
+        logger.log(`[useFirebaseStatus] Firebase可用性变化: ${available ? '可用' : '不可用'}`);
         setIsAvailable(available);
         
         // 显示提示
@@ -73,7 +74,7 @@ export const useFirebaseStatus = (options = {}) => {
         // 分发Firebase状态变化事件
         dispatchFirebaseStatusChange(available);
       } else {
-        console.log(`[useFirebaseStatus] Firebase可用性未变化: ${available ? '可用' : '不可用'}`);
+        logger.log(`[useFirebaseStatus] Firebase可用性未变化: ${available ? '可用' : '不可用'}`);
       }
       
       const timestamp = Date.now();
@@ -81,7 +82,7 @@ export const useFirebaseStatus = (options = {}) => {
       
       return available;
     } catch (error) {
-      console.error("[useFirebaseStatus] Firebase可用性检查失败:", error);
+      logger.error("[useFirebaseStatus] Firebase可用性检查失败:", error);
       
       // 检查失败时，假定不可用
       if (isAvailable) {

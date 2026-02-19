@@ -11,6 +11,7 @@ import {
   GoogleAuthProvider
 } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import logger from '../utils/logger.js';
 
 // Firebase 配置
 // 工具函数：清洗环境变量，过滤掉字符串形式的 "undefined"
@@ -37,19 +38,19 @@ let firebaseInitError = null;
 let app, auth, db, googleProvider;
 
 if (isConfigInvalid) {
-  console.warn("Firebase 配置缺失或无效，将以离线/降级模式运行");
+  logger.warn("Firebase 配置缺失或无效，将以离线/降级模式运行");
   isFirebaseAvailable = false;
   firebaseInitError = new Error("Firebase config is missing or invalid");
 } else {
   try {
-    console.log("正在初始化Firebase...");
+    logger.log("正在初始化Firebase...");
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
     googleProvider = new GoogleAuthProvider();
-    console.log("Firebase初始化成功");
+    logger.log("Firebase初始化成功");
   } catch (error) {
-    console.error("Firebase初始化阶段捕获到硬错误:", error);
+    logger.error("Firebase初始化阶段捕获到硬错误:", error);
     firebaseInitError = error;
     isFirebaseAvailable = false;
   }
@@ -75,26 +76,26 @@ if (!isFirebaseAvailable) {
  * @returns {Promise<boolean>} Firebase服务是否可用
  */
 export const checkFirebaseAvailability = async () => {
-  console.log("开始检查Firebase可用性...");
+  logger.log("开始检查Firebase可用性...");
 
   // 如果初始化就失败了，直接返回false
   if (firebaseInitError) {
-    console.log("Firebase初始化已失败，不可用");
+    logger.log("Firebase初始化已失败，不可用");
     return false;
   }
 
   // 检查网络连接
   if (!navigator.onLine) {
-    console.log("网络离线，Firebase不可用");
+    logger.log("网络离线，Firebase不可用");
     return false;
   }
 
   try {
-    console.log("尝试连接Firebase服务...");
+    logger.log("尝试连接Firebase服务...");
 
     // 检查环境变量是否配置
     if (!process.env.REACT_APP_FIREBASE_API_KEY || !process.env.REACT_APP_FIREBASE_PROJECT_ID) {
-      console.warn("Firebase配置不完整，可能导致连接失败");
+      logger.warn("Firebase配置不完整，可能导致连接失败");
     }
 
     // 尝试轻量级操作以验证连接
@@ -109,28 +110,28 @@ export const checkFirebaseAvailability = async () => {
           // 测试auth服务连接
           const unsubscribe = auth.onAuthStateChanged(
             () => {
-              console.log("Firebase Auth连接成功");
+              logger.log("Firebase Auth连接成功");
               unsubscribe();
               resolve(true);
             },
             (error) => {
-              console.error("Firebase Auth连接失败:", error);
+              logger.error("Firebase Auth连接失败:", error);
               unsubscribe();
               reject(error);
             }
           );
         } catch (error) {
-          console.error("Firebase Auth测试过程中出错:", error);
+          logger.error("Firebase Auth测试过程中出错:", error);
           reject(error);
         }
       })
     ]);
 
-    console.log("Firebase服务可用");
+    logger.log("Firebase服务可用");
     isFirebaseAvailable = true;
     return true;
   } catch (error) {
-    console.warn("Firebase连接测试失败:", error);
+    logger.warn("Firebase连接测试失败:", error);
     isFirebaseAvailable = false;
     return false;
   }
@@ -232,7 +233,7 @@ export const createUserDocument = async (uid, userData) => {
 
     return userRef;
   } catch (error) {
-    console.error("创建用户文档失败:", error);
+    logger.error("创建用户文档失败:", error);
     return null;
   }
 };

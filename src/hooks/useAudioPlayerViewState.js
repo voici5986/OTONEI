@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
 import { FaRandom, FaRedo } from 'react-icons/fa';
 import { MdRepeatOne } from 'react-icons/md';
+import logger from '../utils/logger.js';
 
 export const useAudioPlayerViewState = () => {
   const {
@@ -80,7 +81,7 @@ export const useAudioPlayerViewState = () => {
           position: Math.min(playedSeconds, totalSeconds)
         });
       } catch (error) {
-        console.error('[MediaSession] setPositionState failed:', error);
+        logger.error('[MediaSession] setPositionState failed:', error);
       }
     }
   }, [playedSeconds, totalSeconds]);

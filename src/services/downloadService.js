@@ -4,6 +4,7 @@
  */
 import { toast } from 'react-toastify';
 import { getAudioUrl } from './musicApiService';
+import logger from '../utils/logger.js';
 
 /**
  * 获取文件扩展名
@@ -70,7 +71,7 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
     try {
       audioData = await getAudioUrl(track, quality);
     } catch (error) {
-      console.warn(`[downloadService] 音质 ${quality} 下载请求失败，尝试降级到 320:`, error);
+      logger.warn(`[downloadService] 音质 ${quality} 下载请求失败，尝试降级到 320:`, error);
       if (quality !== 320) {
         audioData = await getAudioUrl(track, 320);
         quality = 320; // 更新实际下载的音质
@@ -131,7 +132,7 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
       
       return true;
     } catch (fetchError) {
-      console.error('Fetch error:', fetchError);
+      logger.error('Fetch error:', fetchError);
       
       // 备用下载方法
       const link = document.createElement('a');
@@ -146,7 +147,7 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
       return true;
     }
   } catch (error) {
-    console.error('Download error:', error);
+    logger.error('Download error:', error);
     toast.error('下载失败，请稍后重试', {
       icon: '❌',
       duration: 3000
@@ -217,7 +218,7 @@ export const downloadTracks = async (tracks, quality = 999, callbacks = {}) => {
       try {
         audioData = await getAudioUrl(track, quality);
       } catch (error) {
-        console.warn(`[downloadService] 批量下载歌曲 "${track.name}" 音质 ${quality} 失败，尝试降级到 320:`, error);
+        logger.warn(`[downloadService] 批量下载歌曲 "${track.name}" 音质 ${quality} 失败，尝试降级到 320:`, error);
         if (quality !== 320) {
           audioData = await getAudioUrl(track, 320);
         } else {
@@ -272,7 +273,7 @@ export const downloadTracks = async (tracks, quality = 999, callbacks = {}) => {
         }, 100);
         
       } catch (fetchError) {
-        console.error('Fetch下载失败，尝试备用方法:', fetchError);
+        logger.error('Fetch下载失败，尝试备用方法:', fetchError);
         
         // 备用下载方法
         const link = document.createElement('a');
@@ -300,7 +301,7 @@ export const downloadTracks = async (tracks, quality = 999, callbacks = {}) => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
     } catch (error) {
-      console.error(`下载歌曲 "${tracks[i].name}" 失败:`, error);
+      logger.error(`下载歌曲 "${tracks[i].name}" 失败:`, error);
       
       if (typeof onTrackError === 'function') {
         onTrackError(tracks[i], i, error);

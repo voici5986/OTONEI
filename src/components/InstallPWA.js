@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaDownload, FaTimes } from 'react-icons/fa';
 import { useDevice } from '../contexts/DeviceContext';
+import logger from '../utils/logger.js';
 
 /**
  * PWA安装提示组件
@@ -68,7 +69,7 @@ const InstallPWA = () => {
   // 处理安装按钮点击
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      console.log('无法安装，安装提示不可用');
+      logger.log('无法安装，安装提示不可用');
       return;
     }
     
@@ -77,7 +78,7 @@ const InstallPWA = () => {
     
     // 等待用户响应
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`用户选择: ${outcome}`);
+    logger.log(`用户选择: ${outcome}`);
     
     // 无论结果如何，都清除保存的提示
     setDeferredPrompt(null);

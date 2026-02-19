@@ -3,6 +3,7 @@ import { getFavorites, toggleFavorite as toggleFavoriteStorage } from '../servic
 import { useAuth } from './AuthContext';
 import { useSync } from './SyncContext';
 import { triggerDelayedSync } from '../services/syncService';
+import logger from '../utils/logger.js';
 
 // 创建Context
 const FavoritesContext = createContext();
@@ -24,7 +25,7 @@ export const FavoritesProvider = ({ children }) => {
         const favList = await getFavorites();
         setFavorites(favList);
       } catch (error) {
-        console.error('加载收藏列表失败:', error);
+        logger.error('加载收藏列表失败:', error);
       } finally {
         setIsLoading(false);
       }
@@ -77,13 +78,13 @@ export const FavoritesProvider = ({ children }) => {
           // 触发30秒后的延迟同步
           triggerDelayedSync(currentUser.uid);
         } catch (error) {
-          console.error('更新待同步计数失败:', error);
+          logger.error('更新待同步计数失败:', error);
         }
       }
       
       return result;
     } catch (error) {
-      console.error('切换收藏状态失败:', error);
+      logger.error('切换收藏状态失败:', error);
       return { added: false, error: 'toggle_failed' };
     }
   }, [currentUser, updatePendingChanges]);

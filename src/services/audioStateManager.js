@@ -1,4 +1,5 @@
 import audioEngine from './AudioEngine';
+import logger from '../utils/logger.js';
 
 // 播放状态枚举 (保持兼容)
 export const AUDIO_STATES = {
@@ -80,7 +81,7 @@ class AudioStateManager {
 
   // 核心控制代理到引擎
   loadTrack(track, url) {
-    console.log('[AudioStateManager] 开始加载曲目:', track.name);
+    logger.log('[AudioStateManager] 开始加载曲目:', track.name);
     this.currentTrack = track;
     this.isLoading = true;
     this.error = null;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getNetworkStatus, saveNetworkStatus } from '../services/storage';
+import logger from '../utils/logger.js';
 
 /**
  * 网络状态管理Hook
@@ -29,7 +30,7 @@ export const useNetworkStatus = (options = {}) => {
     });
     window.dispatchEvent(event);
     setLastChecked(timestamp);
-    console.log(`[useNetworkStatus] 已分发网络状态变化事件: ${online ? '在线' : '离线'}`);
+    logger.log(`[useNetworkStatus] 已分发网络状态变化事件: ${online ? '在线' : '离线'}`);
   }, [dispatchEvents, connectionType]);
 
   // 检测网络连接类型
@@ -71,7 +72,7 @@ export const useNetworkStatus = (options = {}) => {
 
   // 处理网络在线事件
   const handleOnline = useCallback(() => {
-    console.log('[useNetworkStatus] 网络已恢复连接');
+    logger.log('[useNetworkStatus] 网络已恢复连接');
     setIsOnline(true);
 
     // 检测连接类型
@@ -90,7 +91,7 @@ export const useNetworkStatus = (options = {}) => {
 
   // 处理网络离线事件
   const handleOffline = useCallback(() => {
-    console.log('[useNetworkStatus] 网络连接已断开');
+    logger.log('[useNetworkStatus] 网络连接已断开');
     setIsOnline(false);
     setConnectionType('offline');
 
@@ -131,7 +132,7 @@ export const useNetworkStatus = (options = {}) => {
 
       return status;
     } catch (error) {
-      console.error('[useNetworkStatus] 获取网络状态失败:', error);
+      logger.error('[useNetworkStatus] 获取网络状态失败:', error);
       const online = navigator.onLine;
       return { online, lastChecked: Date.now(), connectionType: online ? 'unknown' : 'offline' };
     }

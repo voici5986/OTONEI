@@ -24,6 +24,7 @@ import { initialSync } from '../services/syncService';
 import { searchMusic } from '../services/musicApiService';
 import ClearDataButton from './ClearDataButton';
 import '../styles/User.mobile.css';
+import logger from '../utils/logger.js';
 
 const UserProfile = ({ onTabChange }) => {
   const { currentUser, signOut } = useAuth();
@@ -128,7 +129,7 @@ const UserProfile = ({ onTabChange }) => {
         toast.error(`同步失败: ${result.error || '未知错误'}`);
       }
     } catch (error) {
-      console.error('手动同步失败:', error);
+      logger.error('手动同步失败:', error);
       handleSyncComplete(false, `同步错误: ${error.message}`);
       toast.error(`同步错误: ${error.message}`);
     }
@@ -139,7 +140,7 @@ const UserProfile = ({ onTabChange }) => {
     try {
       await signOut();
     } catch (error) {
-      console.error('退出登录失败:', error);
+      logger.error('退出登录失败:', error);
     }
   };
   
@@ -160,7 +161,7 @@ const UserProfile = ({ onTabChange }) => {
           const results = await searchMusic(keyword, source, 15, 1);
           return { data: results };
         } catch (error) {
-          console.error(`搜索 "${keyword}" 在 ${source} 失败:`, error);
+          logger.error(`搜索 "${keyword}" 在 ${source} 失败:`, error);
           return null;
         }
       };
@@ -212,7 +213,7 @@ const UserProfile = ({ onTabChange }) => {
 
       return response.data[0];
     } catch (error) {
-      console.error(`在 ${source} 搜索 "${trackInfo.name}" 时发生错误:`, error);
+      logger.error(`在 ${source} 搜索 "${trackInfo.name}" 时发生错误:`, error);
       return null;
     }
   };
@@ -260,7 +261,7 @@ const UserProfile = ({ onTabChange }) => {
       document.body.removeChild(link);
       toast.success('收藏导出成功');
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       toast.error('导出失败，请重试');
     }
   };
@@ -281,7 +282,7 @@ const UserProfile = ({ onTabChange }) => {
         setImportStatus(data.favorites.map(() => ({ status: 'pending', message: '等待导入' })));
         toast.info(`找到 ${data.favorites.length} 首歌曲`);
       } catch (error) {
-        console.error('读取文件失败:', error);
+        logger.error('读取文件失败:', error);
         toast.error('无法读取文件或格式不正确');
       }
     };

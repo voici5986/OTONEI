@@ -3,6 +3,7 @@ import { FaSearch, FaUser, FaTimesCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/Header.desktop.css';
 import '../styles/Header.mobile.css';
+import logger from '../utils/logger.js';
 
 const Header = ({
   onTabChange,
@@ -50,7 +51,7 @@ const Header = ({
       // 但为了即时反馈，可以触发一个窗口事件或者由 App 传入清空回调
       window.dispatchEvent(new CustomEvent('search_history_cleared'));
     } catch (error) {
-      console.error('清空搜索历史失败:', error);
+      logger.error('清空搜索历史失败:', error);
     }
   };
 

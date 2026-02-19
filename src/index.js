@@ -20,6 +20,7 @@ import PlayerProvider from './contexts/PlayerContext';
 import FavoritesProvider from './contexts/FavoritesContext';
 import DownloadProvider from './contexts/DownloadContext';
 import * as serviceWorkerRegistration from './utils/serviceWorkerRegistration';
+import logger from './utils/logger.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -58,17 +59,17 @@ root.render(
 // ⚠️ 临时禁用: 先解决 API 问题,之后再启用
 // serviceWorkerRegistration.register({
 //   onUpdate: (registration) => {
-//     console.log('应用有新的更新可用');
+//     logger.log('应用有新的更新可用');
 //   },
 //   onSuccess: (registration) => {
-//     console.log('内容已成功缓存，可离线使用');
+//     logger.log('内容已成功缓存，可离线使用');
 //   }
 // });
 
 // 强制注销旧的 Service Worker（仅开发环境）
 if (process.env.NODE_ENV === 'development') {
   serviceWorkerRegistration.unregister();
-  console.log('✅ 已发起 Service Worker 注销请求');
+  logger.log('✅ 已发起 Service Worker 注销请求');
 }
 
 

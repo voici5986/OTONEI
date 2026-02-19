@@ -17,6 +17,7 @@ import {
 import { toast } from 'react-toastify';
 import { saveSyncStatus, getLocalUser, saveLocalUser, getNetworkStatus } from '../services/storage';
 import useFirebaseStatus from '../hooks/useFirebaseStatus';
+import logger from '../utils/logger.js';
 
 // 创建认证上下文
 export const AuthContext = createContext();
@@ -165,7 +166,7 @@ export const AuthProvider = ({ children }) => {
       // 在退出登录前执行一次同步，确保数据保存到云端
       if (currentUser && !isOfflineMode) {
         try {
-          console.log('退出登录前同步：检查数据变更');
+          logger.log('退出登录前同步：检查数据变更');
 
           // 检查网络状态
           const networkStatus = await getNetworkStatus();
@@ -177,7 +178,7 @@ export const AuthProvider = ({ children }) => {
               const syncCheck = await shouldSyncOnLogin(currentUser.uid);
 
               if (syncCheck.shouldSync) {
-                console.log(`退出前执行同步: ${syncCheck.reason}`);
+                logger.log(`退出前执行同步: ${syncCheck.reason}`);
 
                 // 触发同步开始事件
                 triggerEvent(SyncEvents.SYNC_STARTED, {
@@ -222,14 +223,14 @@ export const AuthProvider = ({ children }) => {
                   timestamp: new Date()
                 }, currentUser.uid);
 
-                console.log('退出前同步完成，状态:', result.success ? '成功' : '失败');
+                logger.log('退出前同步完成，状态:', result.success ? '成功' : '失败');
               } else {
-                console.log(`退出前同步跳过: ${syncCheck.reason}`);
+                logger.log(`退出前同步跳过: ${syncCheck.reason}`);
               }
             }
           }
         } catch (syncError) {
-          console.error('退出前同步失败:', syncError);
+          logger.error('退出前同步失败:', syncError);
 
           // 触发同步失败事件
           triggerEvent(SyncEvents.SYNC_FAILED, {
@@ -290,12 +291,12 @@ export const AuthProvider = ({ children }) => {
         setSyncComplete(false);
         try {
           // 先检查网络和Firebase可用性
-          console.log('登录后同步：检查网络和Firebase可用性');
+          logger.log('登录后同步：检查网络和Firebase可用性');
 
           // 检查网络状态
           const networkStatus = await getNetworkStatus();
           if (!networkStatus.online) {
-            console.warn('网络离线，跳过登录同步');
+            logger.warn('网络离线，跳过登录同步');
             setSyncComplete(true);
             await saveSyncStatus({
               loading: false,
@@ -310,7 +311,7 @@ export const AuthProvider = ({ children }) => {
           // 检查Firebase可用性，使用Hook提供的方法
           const firebaseAvailable = await checkAvailability();
           if (!firebaseAvailable) {
-            console.warn('Firebase不可用，跳过登录同步');
+            logger.warn('Firebase不可用，跳过登录同步');
             setSyncComplete(true);
             await saveSyncStatus({
               loading: false,
@@ -324,7 +325,7 @@ export const AuthProvider = ({ children }) => {
           // 新增：检查是否需要同步
           const syncCheck = await shouldSyncOnLogin(user.uid);
           if (!syncCheck.shouldSync) {
-            console.log(`跳过登录同步: ${syncCheck.reason}`);
+            logger.log(`跳过登录同步: ${syncCheck.reason}`);
             setSyncComplete(true);
             await saveSyncStatus({
               loading: false,
@@ -352,7 +353,7 @@ export const AuthProvider = ({ children }) => {
           // 使用Promise.race确保同步不会永久挂起
           const result = await Promise.race([syncPromise, timeoutPromise])
             .catch(error => {
-              console.error('登录同步失败:', error);
+              logger.error('登录同步失败:', error);
               return { success: false, error: error.message };
             });
 
@@ -367,12 +368,12 @@ export const AuthProvider = ({ children }) => {
           }, user.uid);
 
           if (result.success) {
-            console.log('登录同步成功');
+            logger.log('登录同步成功');
           } else {
-            console.warn('登录同步失败:', result.error);
+            logger.warn('登录同步失败:', result.error);
           }
         } catch (error) {
-          console.error('同步过程中发生错误:', error);
+          logger.error('同步过程中发生错误:', error);
           setSyncComplete(true);
 
           // 更新同步状态

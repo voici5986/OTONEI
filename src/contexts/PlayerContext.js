@@ -6,6 +6,8 @@ import { handleError, ErrorTypes, ErrorSeverity } from '../utils/errorHandler';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import audioStateManager from '../services/audioStateManager';
 import audioEngine from '../services/AudioEngine';
+import '../types';
+import logger from '../utils/logger';
 
 const DEFAULT_COVER = '/default_cover.svg';
 const PlayerContext = createContext();
@@ -27,6 +29,7 @@ export const PlayerProvider = ({ children }) => {
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1);
   const [lyricExpanded, setLyricExpanded] = useState(false);
   const [coverCache, setCoverCache] = useState({});
+  const coverCacheRef = useRef({});
   const retryCountRef = useRef(0); // 记录单曲播放重试次数
   const MAX_RETRIES = 1; // 每个曲目最多自动刷新一次 URL
 
@@ -77,7 +80,7 @@ export const PlayerProvider = ({ children }) => {
         });
       }
     } catch (error) {
-      console.error('[PlayerContext] 按需获取歌词失败:', error);
+      logger.error('[PlayerContext] 按需获取歌词失败:', error);
     }
   }, [parseLyric]);
 
@@ -103,33 +106,35 @@ export const PlayerProvider = ({ children }) => {
   const fetchCover = useCallback(async (source, picId, size = 500) => {
     const cacheKey = `${source}_${picId}_${size}`;
     
-    // 1. 检查内存缓存
-    if (coverCache[cacheKey]) return coverCache[cacheKey];
+    // 1. 检查内存缓存（使用ref避免频繁重建）
+    if (coverCacheRef.current[cacheKey]) return coverCacheRef.current[cacheKey];
 
     // 2. 检查本地存储
     try {
       const storedUrl = await getCoverFromStorage(cacheKey);
       if (storedUrl) {
+        coverCacheRef.current[cacheKey] = storedUrl;
         setCoverCache(prev => ({ ...prev, [cacheKey]: storedUrl }));
         return storedUrl;
       }
     } catch (e) {
-      console.warn('[PlayerContext] 从本地存储获取封面失败:', e);
+      logger.warn('[PlayerContext] 从本地存储获取封面失败:', e);
     }
 
     // 3. 强制获取并缓存
     try {
       const url = await forceGetCoverImage(source, picId, size);
       if (url && !url.includes('default_cover')) {
+        coverCacheRef.current[cacheKey] = url;
         setCoverCache(prev => ({ ...prev, [cacheKey]: url }));
         saveCoverToStorage(cacheKey, url).catch(() => {});
       }
       return url;
     } catch (e) {
-      console.error('[PlayerContext] fetchCover 失败:', e);
+      logger.error('[PlayerContext] fetchCover 失败:', e);
       return DEFAULT_COVER;
     }
-  }, [coverCache]);
+  }, []);
 
   const handlePlay = useCallback(async (track, index = -1, playlist = null, quality = 999, forceRefresh = false) => {
     try {
@@ -160,7 +165,7 @@ export const PlayerProvider = ({ children }) => {
       try {
         await playMusic(track, quality, forceRefresh);
       } catch (error) {
-        console.warn(`[PlayerContext] 音质 ${quality} 请求失败，尝试降级到 320:`, error);
+        logger.warn(`[PlayerContext] 音质 ${quality} 请求失败，尝试降级到 320:`, error);
         if (quality !== 320) {
           await playMusic(track, 320, forceRefresh);
         } else {
@@ -175,7 +180,7 @@ export const PlayerProvider = ({ children }) => {
       // 核心流程：仅请求并补全 500 尺寸的高清封面
       fetchCover(track.source, track.pic_id, 500).catch(() => {});
     } catch (error) {
-      console.error('[PlayerContext] handlePlay error:', error);
+      logger.error('[PlayerContext] handlePlay error:', error);
     }
   }, [isOnline, fetchCover]);
 
@@ -216,6 +221,10 @@ export const PlayerProvider = ({ children }) => {
   const seekTo = useCallback((seconds) => {
     audioEngine.seek(seconds);
   }, []);
+
+  useEffect(() => {
+    coverCacheRef.current = coverCache;
+  }, [coverCache]);
 
   // 1. 核心状态同步：从 AudioEngine 采集实时数据
   useEffect(() => {
@@ -259,7 +268,7 @@ export const PlayerProvider = ({ children }) => {
       if (state.error) {
         // 如果发生播放错误，尝试自动刷新 URL 并重试一次
         if (retryCountRef.current < MAX_RETRIES && currentTrack) {
-          console.warn(`[PlayerContext] 播放出错，尝试刷新 URL 并重试 (${retryCountRef.current + 1}/${MAX_RETRIES})`);
+          logger.warn(`[PlayerContext] 播放出错，尝试刷新 URL 并重试 (${retryCountRef.current + 1}/${MAX_RETRIES})`);
           retryCountRef.current += 1;
           handlePlay(currentTrack, currentIndex, currentPlaylist, 999, true); // 强制刷新重试
         } else {

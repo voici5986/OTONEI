@@ -1,3 +1,4 @@
+import logger from '../utils/logger.js';
 /**
  * AudioEngine.js
  * 核心音频引擎层，基于原生 HTML5 Audio 对象。
@@ -30,7 +31,7 @@ class AudioEngine {
 
         // 自动重连逻辑或错误处理增强
         this.audio.addEventListener('error', () => {
-            console.error('[AudioEngine] 播放错误:', this.audio.error);
+            logger.error('[AudioEngine] 播放错误:', this.audio.error);
         });
     }
 
@@ -58,7 +59,7 @@ class AudioEngine {
 
     // 播放控制
     async setSource(url, track) {
-        console.log('[AudioEngine] 设置音源:', url);
+        logger.log('[AudioEngine] 设置音源:', url);
         this.currentTrack = track;
 
         // 停止当前播放
@@ -73,7 +74,7 @@ class AudioEngine {
             await this.audio.play();
             return true;
         } catch (error) {
-            console.warn('[AudioEngine] 自动播放尝试失败 (通常是浏览器限制):', error);
+            logger.warn('[AudioEngine] 自动播放尝试失败 (通常是浏览器限制):', error);
             // 仍然标记为成功加载，等待用户交互触发 play()
             return false;
         }
@@ -81,7 +82,7 @@ class AudioEngine {
 
     play() {
         if (this.audio.src) {
-            return this.audio.play().catch(e => console.error('[AudioEngine] 播放失败:', e));
+            return this.audio.play().catch(e => logger.error('[AudioEngine] 播放失败:', e));
         }
     }
 

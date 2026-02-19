@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+import logger from './logger.js';
 
 // 用于跟踪最近显示的错误消息，防止短时间内重复显示
 const recentErrors = new Map();
@@ -40,7 +41,7 @@ export const ErrorSeverity = {
 export const handleError = (error, type = ErrorTypes.UNKNOWN, severity = ErrorSeverity.ERROR, customMessage = null, callback = null) => {
   // 记录错误到控制台
   if (process.env.NODE_ENV === 'development') {
-    console.error(`[${type.toUpperCase()}] Error:`, error);
+    logger.error(`[${type.toUpperCase()}] Error:`, error);
   }
   
   // 确定显示的错误消息
@@ -55,7 +56,7 @@ export const handleError = (error, type = ErrorTypes.UNKNOWN, severity = ErrorSe
   const lastShown = recentErrors.get(errorKey);
   
   if (lastShown && (now - lastShown) < ERROR_THROTTLE_TIME) {
-    console.log(`[ErrorHandler] 抑制重复错误通知: ${message} (${now - lastShown}ms内)`);
+    logger.log(`[ErrorHandler] 抑制重复错误通知: ${message} (${now - lastShown}ms内)`);
     
     // 执行回调但不显示Toast
     if (callback && typeof callback === 'function') {

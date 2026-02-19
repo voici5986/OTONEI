@@ -4,6 +4,7 @@ import {
   query, where, getDocs, writeBatch, orderBy, limit
 } from 'firebase/firestore';
 import { getFavorites, saveFavorites, getHistory, saveHistory, MAX_HISTORY_ITEMS, getNetworkStatus, getPendingSyncChanges, resetPendingChanges } from './storage';
+import logger from '../utils/logger.js';
 
 // 同步时间戳存储键
 const SYNC_TIMESTAMP_KEY = 'last_sync_timestamp';
@@ -65,7 +66,7 @@ const triggerEvent = (event, data) => {
     try {
       callback(data);
     } catch (error) {
-      console.error(`执行同步事件监听器错误 (${event}):`, error);
+      logger.error(`执行同步事件监听器错误 (${event}):`, error);
     }
   });
 };
@@ -81,7 +82,7 @@ const getLastSyncTime = async (uid) => {
     const timestamp = localStorage.getItem(key);
     return timestamp ? parseInt(timestamp) : 0;
   } catch (error) {
-    console.error('获取同步时间戳失败:', error);
+    logger.error('获取同步时间戳失败:', error);
     return 0;
   }
 };
@@ -96,7 +97,7 @@ const saveLastSyncTime = async (uid, timestamp) => {
     const key = `${SYNC_TIMESTAMP_KEY}_${uid}`;
     localStorage.setItem(key, timestamp.toString());
   } catch (error) {
-    console.error('保存同步时间戳失败:', error);
+    logger.error('保存同步时间戳失败:', error);
   }
 };
 
@@ -160,7 +161,7 @@ const getLocalChangesSince = async (lastSyncTime) => {
       hasChanges: changedFavorites.length > 0 || changedHistory.length > 0
     };
   } catch (error) {
-    console.error('获取本地变更数据失败:', error);
+    logger.error('获取本地变更数据失败:', error);
     return { favorites: [], history: [], hasChanges: false };
   }
 };
@@ -172,21 +173,21 @@ const getLocalChangesSince = async (lastSyncTime) => {
 const checkSyncAvailability = async () => {
   // 检查Firebase是否可用
   if (!isFirebaseAvailable) {
-    console.warn("同步检测: Firebase初始化不可用");
+    logger.warn("同步检测: Firebase初始化不可用");
     return { canSync: false, error: '当前处于离线模式，无法同步数据' };
   }
   
   // 进一步检查Firebase连接
   const firebaseAvailable = await checkFirebaseAvailability();
   if (!firebaseAvailable) {
-    console.warn("同步检测: Firebase连接测试失败");
+    logger.warn("同步检测: Firebase连接测试失败");
     return { canSync: false, error: 'Firebase服务连接失败，无法同步数据' };
   }
   
   // 检查网络连接状态
   const networkStatus = await getNetworkStatus();
   if (!networkStatus.online) {
-    console.warn("同步检测: 网络连接不可用");
+    logger.warn("同步检测: 网络连接不可用");
     return { canSync: false, error: '网络连接已断开，无法同步数据' };
   }
   
@@ -200,7 +201,7 @@ const checkSyncAvailability = async () => {
  */
 const incrementalSyncWithSubcollections = async (uid) => {
   try {
-    console.log('开始子集合增量同步...');
+    logger.log('开始子集合增量同步...');
     
     // 触发同步开始事件
     triggerEvent(SyncEvents.SYNC_STARTED, { uid, timestamp: Date.now() });
@@ -208,7 +209,7 @@ const incrementalSyncWithSubcollections = async (uid) => {
     // 检查同步可用性
     const { canSync, error } = await checkSyncAvailability();
     if (!canSync) {
-      console.warn(`子集合增量同步失败: ${error}`);
+      logger.warn(`子集合增量同步失败: ${error}`);
       
       // 触发同步失败事件
       triggerEvent(SyncEvents.SYNC_FAILED, { uid, error, timestamp: Date.now() });
@@ -217,7 +218,7 @@ const incrementalSyncWithSubcollections = async (uid) => {
     }
     
     if (!uid) {
-      console.warn('子集合增量同步失败: 用户未登录');
+      logger.warn('子集合增量同步失败: 用户未登录');
       
       // 触发同步失败事件
       triggerEvent(SyncEvents.SYNC_FAILED, { 
@@ -232,7 +233,7 @@ const incrementalSyncWithSubcollections = async (uid) => {
     // 获取上次同步时间
     const lastSyncTime = await getLastSyncTime(uid);
     const now = Date.now();
-    console.log(`上次同步时间: ${new Date(lastSyncTime).toLocaleString()}`);
+    logger.log(`上次同步时间: ${new Date(lastSyncTime).toLocaleString()}`);
     
     // 触发同步进度事件
     triggerEvent(SyncEvents.SYNC_PROGRESS, { 
@@ -244,7 +245,7 @@ const incrementalSyncWithSubcollections = async (uid) => {
     
     // 获取本地变更数据
     const localChanges = await getLocalChangesSince(lastSyncTime);
-    console.log(`本地变更: 收藏=${localChanges.favorites.length}条, 历史=${localChanges.history.length}条`);
+    logger.log(`本地变更: 收藏=${localChanges.favorites.length}条, 历史=${localChanges.history.length}条`);
     
     // 获取用户文档
     const userRef = getUserDocRef(uid);
@@ -256,18 +257,18 @@ const incrementalSyncWithSubcollections = async (uid) => {
         lastUpdated: now,
         createdAt: now
       });
-      console.log('已创建新的用户基本文档');
+      logger.log('已创建新的用户基本文档');
     }
     
     const userData = userDoc.exists() ? userDoc.data() : {};
     
     // 获取云端最后更新时间
     const cloudLastUpdated = userData.lastUpdated || 0;
-    console.log(`云端最后更新时间: ${new Date(cloudLastUpdated).toLocaleString()}`);
+    logger.log(`云端最后更新时间: ${new Date(cloudLastUpdated).toLocaleString()}`);
     
     // 如果本地没有变化且云端没有更新，跳过同步
     if (!localChanges.hasChanges && cloudLastUpdated <= lastSyncTime) {
-      console.log('没有变化，跳过同步');
+      logger.log('没有变化，跳过同步');
       
       // 更新同步时间戳为当前时间，即使没有实际同步
       await saveLastSyncTime(uid, now);
@@ -315,13 +316,13 @@ const incrementalSyncWithSubcollections = async (uid) => {
     
     // 同步收藏数据 - 本地到云端
     if (localChanges.favorites.length > 0) {
-      console.log(`同步${localChanges.favorites.length}条本地收藏到云端...`);
+      logger.log(`同步${localChanges.favorites.length}条本地收藏到云端...`);
       await saveCloudFavoritesToSubcollection(uid, localChanges.favorites);
     }
     
     // 同步历史记录 - 本地到云端
     if (localChanges.history.length > 0) {
-      console.log(`同步${localChanges.history.length}条本地历史记录到云端...`);
+      logger.log(`同步${localChanges.history.length}条本地历史记录到云端...`);
       await saveCloudHistoryToSubcollection(uid, localChanges.history);
     }
     
@@ -367,7 +368,7 @@ const incrementalSyncWithSubcollections = async (uid) => {
       if (localDataUpdated) {
         const mergedFavorites = Array.from(favoritesMap.values());
         await saveFavorites(mergedFavorites);
-        console.log(`已更新本地收藏数据，总数: ${mergedFavorites.length}条`);
+        logger.log(`已更新本地收藏数据，总数: ${mergedFavorites.length}条`);
       }
     }
     
@@ -408,13 +409,13 @@ const incrementalSyncWithSubcollections = async (uid) => {
           .slice(0, MAX_HISTORY_ITEMS); // 限制数量
         
         await saveHistory(mergedHistory);
-        console.log(`已更新本地历史记录，总数: ${mergedHistory.length}条`);
+        logger.log(`已更新本地历史记录，总数: ${mergedHistory.length}条`);
       }
     }
     
     // 更新同步时间戳
     await saveLastSyncTime(uid, now);
-    console.log(`同步完成，新的同步时间: ${new Date(now).toLocaleString()}`);
+    logger.log(`同步完成，新的同步时间: ${new Date(now).toLocaleString()}`);
     
     // 触发同步完成事件
     triggerEvent(SyncEvents.SYNC_COMPLETED, { 
@@ -438,7 +439,7 @@ const incrementalSyncWithSubcollections = async (uid) => {
       localHistory: localChanges.history.length
     };
   } catch (error) {
-    console.error('子集合增量同步失败:', error);
+    logger.error('子集合增量同步失败:', error);
     
     // 触发同步失败事件
     triggerEvent(SyncEvents.SYNC_FAILED, { 
@@ -538,17 +539,17 @@ const incrementalSync = incrementalSyncWithSubcollections;
  */
 const syncData = async (uid, dataType, direction) => {
   try {
-    console.log(`开始${dataType}同步，方向: ${direction}`);
+    logger.log(`开始${dataType}同步，方向: ${direction}`);
     
     // 检查同步可用性
     const { canSync, error } = await checkSyncAvailability();
     if (!canSync) {
-      console.warn(`${dataType}同步失败: ${error}`);
+      logger.warn(`${dataType}同步失败: ${error}`);
       return { success: false, error };
     }
     
     if (!uid) {
-      console.warn(`${dataType}同步失败: 用户未登录`);
+      logger.warn(`${dataType}同步失败: 用户未登录`);
       return { success: false, error: '用户未登录' };
     }
 
@@ -558,10 +559,10 @@ const syncData = async (uid, dataType, direction) => {
       return await incrementalSync(uid);
     }
     
-    console.warn(`无效的同步方向: ${direction}`);
+    logger.warn(`无效的同步方向: ${direction}`);
     return { success: false, error: '无效的同步方向' };
   } catch (error) {
-    console.error(`同步${dataType}失败:`, error);
+    logger.error(`同步${dataType}失败:`, error);
     return { success: false, error };
   }
 };
@@ -582,7 +583,7 @@ export const mergeHistory = async (uid) => {
  */
 export const initialSync = async (uid) => {
   try {
-    console.log("开始初始同步操作");
+    logger.log("开始初始同步操作");
     
     // 触发同步开始事件
     triggerEvent(SyncEvents.SYNC_STARTED, { uid, timestamp: Date.now(), syncType: 'initial' });
@@ -592,7 +593,7 @@ export const initialSync = async (uid) => {
     
     // 如果没有变化，也算成功
     if (result.unchanged) {
-      console.log("初始同步：没有变化需要同步");
+      logger.log("初始同步：没有变化需要同步");
       
       // 触发同步完成事件（虽然incrementalSync中已触发，但这里再次触发，带上更多上下文）
       triggerEvent(SyncEvents.SYNC_COMPLETED, { 
@@ -609,10 +610,10 @@ export const initialSync = async (uid) => {
       };
     }
     
-    console.log(`初始同步${result.success ? '成功' : '失败'}`);
+    logger.log(`初始同步${result.success ? '成功' : '失败'}`);
     return result;
   } catch (error) {
-    console.error("初始同步失败:", error);
+    logger.error("初始同步失败:", error);
     
     // 触发同步失败事件
     triggerEvent(SyncEvents.SYNC_FAILED, { 
@@ -636,7 +637,7 @@ export const shouldSyncOnLogin = async (uid) => {
     // 检查同步可用性
     const { canSync, error } = await checkSyncAvailability();
     if (!canSync) {
-      console.log('同步预检查: 同步条件不满足 -', error);
+      logger.log('同步预检查: 同步条件不满足 -', error);
       return { shouldSync: false, reason: error };
     }
     
@@ -662,7 +663,7 @@ export const shouldSyncOnLogin = async (uid) => {
     
     // 如果本地和云端都没有变化，不需要同步
     if (!hasLocalChanges && !hasCloudChanges) {
-      console.log('同步预检查: 本地和云端数据均无变化，跳过同步');
+      logger.log('同步预检查: 本地和云端数据均无变化，跳过同步');
       return { shouldSync: false, reason: '数据无变化' };
     }
     
@@ -673,7 +674,7 @@ export const shouldSyncOnLogin = async (uid) => {
       cloudLastUpdated: cloudLastUpdated
     };
   } catch (error) {
-    console.error('同步预检查失败:', error);
+    logger.error('同步预检查失败:', error);
     // 出错时保守处理，默认需要同步
     return { shouldSync: true, reason: '预检查失败，默认执行同步' };
   }
@@ -692,7 +693,7 @@ export const triggerDelayedSync = async (uid) => {
     clearTimeout(delayedSyncTimer);
   }
   
-  console.log('设置延迟同步定时器...');
+  logger.log('设置延迟同步定时器...');
   
   // 设置新的延迟同步定时器
   delayedSyncTimer = setTimeout(async () => {
@@ -700,7 +701,7 @@ export const triggerDelayedSync = async (uid) => {
       // 检查同步可用性
       const { canSync, error } = await checkSyncAvailability();
       if (!canSync) {
-        console.warn(`延迟同步取消: ${error}`);
+        logger.warn(`延迟同步取消: ${error}`);
         
         // 触发同步失败事件
         triggerEvent(SyncEvents.SYNC_FAILED, { 
@@ -715,7 +716,7 @@ export const triggerDelayedSync = async (uid) => {
       
       // 获取变更计数
       const changes = await getPendingSyncChanges();
-      console.log('延迟同步检查变更:', changes);
+      logger.log('延迟同步检查变更:', changes);
       
       // 检查是否有足够的变更触发同步
       const shouldSync = 
@@ -723,7 +724,7 @@ export const triggerDelayedSync = async (uid) => {
         changes.history >= DELAYED_SYNC_CONFIG.historyThreshold;
       
       if (shouldSync) {
-        console.log('延迟同步开始执行...');
+        logger.log('延迟同步开始执行...');
         
         // 触发同步开始事件
         triggerEvent(SyncEvents.SYNC_STARTED, { 
@@ -740,7 +741,7 @@ export const triggerDelayedSync = async (uid) => {
         const result = await incrementalSync(uid);
         
         if (result.success) {
-          console.log('延迟同步成功');
+          logger.log('延迟同步成功');
           // 重置变更计数
           await resetPendingChanges();
           
@@ -755,7 +756,7 @@ export const triggerDelayedSync = async (uid) => {
             }
           });
         } else {
-          console.warn('延迟同步失败:', result.error);
+          logger.warn('延迟同步失败:', result.error);
           
           // 触发同步失败事件
           triggerEvent(SyncEvents.SYNC_FAILED, { 
@@ -766,7 +767,7 @@ export const triggerDelayedSync = async (uid) => {
           });
         }
       } else {
-        console.log('变更不足，跳过延迟同步');
+        logger.log('变更不足，跳过延迟同步');
         
         // 即使跳过同步，也触发一个"同步成功"事件，类似于无变化的情况
         const currentTime = Date.now();
@@ -782,7 +783,7 @@ export const triggerDelayedSync = async (uid) => {
         });
       }
     } catch (error) {
-      console.error('延迟同步失败:', error);
+      logger.error('延迟同步失败:', error);
       
       // 触发同步失败事件
       triggerEvent(SyncEvents.SYNC_FAILED, { 
@@ -830,10 +831,10 @@ const getCloudFavoritesFromSubcollection = async (uid, lastSyncTime = 0) => {
       });
     });
     
-    console.log(`从云端获取到${favorites.length}条收藏数据`);
+    logger.log(`从云端获取到${favorites.length}条收藏数据`);
     return favorites;
   } catch (error) {
-    console.error('从子集合获取收藏数据失败:', error);
+    logger.error('从子集合获取收藏数据失败:', error);
     return [];
   }
 };
@@ -877,10 +878,10 @@ const getCloudHistoryFromSubcollection = async (uid, lastSyncTime = 0, maxItems 
       });
     });
     
-    console.log(`从云端获取到${history.length}条历史记录数据`);
+    logger.log(`从云端获取到${history.length}条历史记录数据`);
     return history;
   } catch (error) {
-    console.error('从子集合获取历史记录数据失败:', error);
+    logger.error('从子集合获取历史记录数据失败:', error);
     return [];
   }
 };
@@ -923,17 +924,17 @@ const saveCloudFavoritesToSubcollection = async (uid, favorites) => {
       }
       
       await batch.commit();
-      console.log(`保存了收藏批次 ${i/BATCH_SIZE + 1}/${Math.ceil(favorites.length/BATCH_SIZE)}`);
+      logger.log(`保存了收藏批次 ${i/BATCH_SIZE + 1}/${Math.ceil(favorites.length/BATCH_SIZE)}`);
     }
     
     // 更新用户文档的lastUpdated字段
     const userRef = getUserDocRef(uid);
     await updateDoc(userRef, { lastUpdated: now });
     
-    console.log(`成功保存${modifiedCount}条收藏数据到云端子集合`);
+    logger.log(`成功保存${modifiedCount}条收藏数据到云端子集合`);
     return { success: true };
   } catch (error) {
-    console.error('保存收藏数据到子集合失败:', error);
+    logger.error('保存收藏数据到子集合失败:', error);
     return { success: false, error };
   }
 };
@@ -971,17 +972,17 @@ const saveCloudHistoryToSubcollection = async (uid, history) => {
       }
       
       await batch.commit();
-      console.log(`保存了历史记录批次 ${i/BATCH_SIZE + 1}/${Math.ceil(history.length/BATCH_SIZE)}`);
+      logger.log(`保存了历史记录批次 ${i/BATCH_SIZE + 1}/${Math.ceil(history.length/BATCH_SIZE)}`);
     }
     
     // 更新用户文档的lastUpdated字段
     const userRef = getUserDocRef(uid);
     await updateDoc(userRef, { lastUpdated: now });
     
-    console.log(`成功保存${modifiedCount}条历史记录到云端子集合`);
+    logger.log(`成功保存${modifiedCount}条历史记录到云端子集合`);
     return { success: true };
   } catch (error) {
-    console.error('保存历史记录到子集合失败:', error);
+    logger.error('保存历史记录到子集合失败:', error);
     return { success: false, error };
   }
 };
@@ -1011,10 +1012,10 @@ export const clearSyncTimestamp = async (uid) => {
         localStorage.removeItem(key);
       });
     }
-    console.log(`同步时间戳已清除${uid ? '(用户ID: ' + uid + ')' : '(所有用户)'}`);
+    logger.log(`同步时间戳已清除${uid ? '(用户ID: ' + uid + ')' : '(所有用户)'}`);
     return true;
   } catch (error) {
-    console.error('清除同步时间戳失败:', error);
+    logger.error('清除同步时间戳失败:', error);
     return false;
   }
 };
