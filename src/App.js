@@ -80,6 +80,7 @@ const AppContent = () => {
   const [localSuggestionsLoading, setLocalSuggestionsLoading] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [swRegistration, setSwRegistration] = useState(null);
   // 获取搜索历史
   useEffect(() => {
     const fetchSearchHistory = async () => {
@@ -100,6 +101,22 @@ const AppContent = () => {
     window.addEventListener('search_history_cleared', handleCleared);
     return () => window.removeEventListener('search_history_cleared', handleCleared);
   }, [suggestionsOpen, query]);
+
+  // 监听 Service Worker 更新事件
+  useEffect(() => {
+    const handleUpdate = (event) => {
+      setSwRegistration(event.detail);
+    };
+    const handleReady = (event) => {
+      setSwRegistration(event.detail);
+    };
+    window.addEventListener('sw:update', handleUpdate);
+    window.addEventListener('sw:ready', handleReady);
+    return () => {
+      window.removeEventListener('sw:update', handleUpdate);
+      window.removeEventListener('sw:ready', handleReady);
+    };
+  }, []);
 
   // 下载相关状态 - 使用全局 Context
   // 可选音乐源
@@ -517,7 +534,7 @@ const AppContent = () => {
       <AudioPlayer />
 
       <InstallPWA />
-      <UpdateNotification />
+      <UpdateNotification registration={swRegistration} />
       {process.env.NODE_ENV === 'development' && <DeviceDebugger />}
     </div>
   );

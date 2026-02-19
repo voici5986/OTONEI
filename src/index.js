@@ -55,6 +55,23 @@ root.render(
   </AuthProvider>
 );
 
+// 生产环境注册 Service Worker 并派发更新事件
+if (process.env.NODE_ENV === 'production') {
+  serviceWorkerRegistration.register({
+    onUpdate: (registration) => {
+      window.dispatchEvent(new CustomEvent('sw:update', { detail: registration }));
+    },
+    onSuccess: (registration) => {
+      window.dispatchEvent(new CustomEvent('sw:ready', { detail: registration }));
+    }
+  });
+
+  // 周期性检查更新
+  setInterval(() => {
+    serviceWorkerRegistration.checkForUpdates();
+  }, 60 * 60 * 1000);
+}
+
 // 注册Service Worker，启用PWA功能
 // ⚠️ 临时禁用: 先解决 API 问题,之后再启用
 // serviceWorkerRegistration.register({

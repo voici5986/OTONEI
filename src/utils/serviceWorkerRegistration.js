@@ -57,6 +57,10 @@ function registerValidSW(swUrl, config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
+      // 立即回传registration，便于UI获取
+      if (config && config.onSuccess) {
+        config.onSuccess(registration);
+      }
       // 检查更新
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
@@ -77,10 +81,7 @@ function registerValidSW(swUrl, config) {
               // 一切都已缓存，内容离线可用
               logger.log('内容已缓存，可离线使用');
 
-              // 执行回调
-              if (config && config.onSuccess) {
-                config.onSuccess(registration);
-              }
+              // 已在注册时回传，无需重复
             }
           }
         };

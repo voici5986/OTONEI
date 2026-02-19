@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FaSync, FaTimes } from 'react-icons/fa';
-import { sendMessageToSW } from '../utils/serviceWorkerRegistration';
 
 /**
  * 应用更新通知组件
@@ -38,6 +37,18 @@ const UpdateNotification = ({ registration }) => {
       registration.removeEventListener('updatefound', handleUpdate);
     };
   }, [registration]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handleControllerChange = () => {
+      // 新的 Service Worker 接管后刷新页面
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+    };
+  }, []);
   
   // 处理更新应用按钮点击
   const handleUpdateClick = () => {
@@ -45,12 +56,9 @@ const UpdateNotification = ({ registration }) => {
     
     if (registration && registration.waiting) {
       // 发送消息给等待中的Service Worker，通知它接管并刷新页面
-      sendMessageToSW('SKIP_WAITING');
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       
-      // 延迟刷新页面，确保Service Worker有时间处理消息
-      setTimeout(() => {
-        window.location.reload();
-      }, 300);
+      // 控制权切换后由 controllerchange 触发刷新
     }
   };
   
