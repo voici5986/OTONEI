@@ -8,7 +8,7 @@
 - 🎧 **无损音质体验** - 支持最高 999k FLAC 无损音质在线播放及直接下载
 - ☁️ **云端数据同步** - 基于 Firebase 实现多设备间的收藏夹和播放历史无感同步
 
-- 📱 **PWA 支持** - 可作为本地应用安装，支持离线访问核心功能
+- 📱 **PWA 支持** - 可作为本地应用安装，支持离线访问核心功能，具备自动更新检查与通知机制
 - 🎨 **现代化 UI** - 沉浸式播放器、双语歌词（支持滚动与预览）、响应式设计
 
 
@@ -20,6 +20,7 @@ OTONEI 采用现代化的前端技术栈构建：
 - **前端框架**: React 19 + Vite 7
 - **UI 组件库**: React Bootstrap + React Icons
 - **状态管理**: React Context API + 自定义 Hooks
+- **离线支持**: Service Worker (Workbox)
 - **数据存储**: Localforage (IndexedDB) + Firebase
 - **音频处理**: Native HTML5 Audio API
 - **构建工具**: Vite + Cloudflare Pages Functions
@@ -144,7 +145,7 @@ SonicFlow/
 │   ├── pages/              # 页面组件 (收藏、历史、用户页面)
 │   ├── services/           # 服务层 (API、Firebase、音频管理)
 │   ├── hooks/              # 自定义 React Hooks
-│   ├── utils/              # 工具函数 (数据校验、错误处理、设备检测)
+│   ├── utils/              # 工具函数 (Logger、Service Worker 注册、设备检测等)
 │   ├── styles/             # CSS 样式文件
 │   ├── constants/          # 常量定义
 │   └── App.js              # 主应用组件
