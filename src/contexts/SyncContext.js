@@ -57,8 +57,8 @@ export const SyncProvider = ({ children }) => {
       
       // 更新状态
       setPendingChanges({
-        favorites: pendingCounter.favorites || localChanges.favorites.length,
-        history: pendingCounter.history || localChanges.history.length
+        favorites: pendingCounter.favorites ?? localChanges.favorites.length,
+        history: pendingCounter.history ?? localChanges.history.length
       });
     } catch (error) {
       logger.error('更新待同步数据失败:', error);

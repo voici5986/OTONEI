@@ -20,13 +20,14 @@ export const useNetworkStatus = (options = {}) => {
   const [connectionType, setConnectionType] = useState('unknown');
 
   // 发送网络状态变化的自定义事件
-  const dispatchNetworkStatusChange = useCallback((online) => {
+  const dispatchNetworkStatusChange = useCallback((online, typeOverride = null) => {
     if (!dispatchEvents) return;
 
     // 创建并分发自定义事件，带有网络状态信息
     const timestamp = Date.now();
+    const type = typeOverride ?? connectionType;
     const event = new CustomEvent('networkStatusChange', {
-      detail: { online, lastChecked: timestamp, connectionType }
+      detail: { online, lastChecked: timestamp, connectionType: type }
     });
     window.dispatchEvent(event);
     setLastChecked(timestamp);
@@ -84,7 +85,7 @@ export const useNetworkStatus = (options = {}) => {
     setLastChecked(timestamp);
 
     // 分发网络状态变化事件
-    dispatchNetworkStatusChange(true);
+    dispatchNetworkStatusChange(true, type);
 
     // 不显示网络恢复提示
   }, [dispatchNetworkStatusChange, detectConnectionType]);
@@ -101,7 +102,7 @@ export const useNetworkStatus = (options = {}) => {
     setLastChecked(timestamp);
 
     // 分发网络状态变化事件
-    dispatchNetworkStatusChange(false);
+    dispatchNetworkStatusChange(false, 'offline');
 
     // 不显示网络断开提示
   }, [dispatchNetworkStatusChange]);
@@ -125,7 +126,7 @@ export const useNetworkStatus = (options = {}) => {
         saveNetworkStatus(newStatus);
 
         // 分发网络状态变化事件
-        dispatchNetworkStatusChange(online);
+        dispatchNetworkStatusChange(online, type);
 
         return newStatus;
       }

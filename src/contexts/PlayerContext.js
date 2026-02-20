@@ -30,6 +30,7 @@ export const PlayerProvider = ({ children }) => {
   const [lyricExpanded, setLyricExpanded] = useState(false);
   const [coverCache, setCoverCache] = useState({});
   const coverCacheRef = useRef({});
+  const lyricIndexRef = useRef(-1);
   const retryCountRef = useRef(0); // 记录单曲播放重试次数
   const MAX_RETRIES = 1; // 每个曲目最多自动刷新一次 URL
 
@@ -226,6 +227,10 @@ export const PlayerProvider = ({ children }) => {
     coverCacheRef.current = coverCache;
   }, [coverCache]);
 
+  useEffect(() => {
+    lyricIndexRef.current = currentLyricIndex;
+  }, [currentLyricIndex]);
+
   // 1. 核心状态同步：从 AudioEngine 采集实时数据
   useEffect(() => {
     const updateProgress = () => {
@@ -241,7 +246,7 @@ export const PlayerProvider = ({ children }) => {
       if (lyricData.parsedLyric.length > 0) {
         let index = lyricData.parsedLyric.findIndex(line => line.time > current);
         index = index === -1 ? lyricData.parsedLyric.length - 1 : Math.max(0, index - 1);
-        if (index !== currentLyricIndex) {
+        if (index !== lyricIndexRef.current) {
           setCurrentLyricIndex(index);
         }
       }
@@ -258,7 +263,7 @@ export const PlayerProvider = ({ children }) => {
       cleanupPause();
       cleanupEnded();
     };
-  }, [lyricData.parsedLyric, currentLyricIndex, handleEnded]);
+  }, [lyricData.parsedLyric, handleEnded]);
 
   // 处理状态管理器的状态变化（主要用于切歌和URL更新）
   useEffect(() => {

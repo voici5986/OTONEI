@@ -248,9 +248,9 @@ export async function saveNetworkStatus(status) {
   try {
     // 确保包含所有必要的字段
     const completeStatus = {
-      online: status.online || navigator.onLine,
-      lastChecked: status.lastChecked || Date.now(),
-      connectionType: status.connectionType || 'unknown'
+      online: status.online ?? navigator.onLine,
+      lastChecked: status.lastChecked ?? Date.now(),
+      connectionType: status.connectionType ?? 'unknown'
     };
     
     await networkStore.setItem('status', completeStatus);

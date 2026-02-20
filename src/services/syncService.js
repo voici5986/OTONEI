@@ -143,11 +143,11 @@ const getLocalChangesSince = async (lastSyncTime) => {
     // 注意：由于当前数据结构可能没有修改时间戳，我们添加一个检测逻辑
     const changedFavorites = allFavorites.filter(item => {
       // 如果项目有modifiedAt字段，使用它判断
-      if (item.modifiedAt) {
+      if (item.modifiedAt != null) {
         return item.modifiedAt > lastSyncTime;
       }
-      // 否则，我们无法确定是否变更，默认包含所有项
-      return true;
+      // 没有modifiedAt时，仅在首次同步时作为变更处理
+      return lastSyncTime === 0;
     });
     
     const changedHistory = allHistory.filter(item => {
@@ -357,8 +357,8 @@ const incrementalSyncWithSubcollections = async (uid) => {
         const existingItem = favoritesMap.get(item.id);
         
         // 如果本地没有该项，或者云端项更新，则使用云端项
-        if (!existingItem || (item.modifiedAt && existingItem.modifiedAt && 
-            item.modifiedAt > existingItem.modifiedAt)) {
+        if (!existingItem || (item.modifiedAt && (!existingItem.modifiedAt || 
+            item.modifiedAt > existingItem.modifiedAt))) {
           favoritesMap.set(item.id, itemData);
           localDataUpdated = true;
         }
