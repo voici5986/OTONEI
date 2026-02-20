@@ -19,8 +19,6 @@ import SyncProvider from './contexts/SyncContext';
 import PlayerProvider from './contexts/PlayerContext';
 import FavoritesProvider from './contexts/FavoritesContext';
 import DownloadProvider from './contexts/DownloadContext';
-import * as serviceWorkerRegistration from './utils/serviceWorkerRegistration';
-import logger from './utils/logger.js';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
@@ -55,38 +53,6 @@ root.render(
   </AuthProvider>
 );
 
-// 生产环境注册 Service Worker 并派发更新事件
-if (process.env.NODE_ENV === 'production') {
-  serviceWorkerRegistration.register({
-    onUpdate: (registration) => {
-      window.dispatchEvent(new CustomEvent('sw:update', { detail: registration }));
-    },
-    onSuccess: (registration) => {
-      window.dispatchEvent(new CustomEvent('sw:ready', { detail: registration }));
-    }
-  });
 
-  // 周期性检查更新
-  setInterval(() => {
-    serviceWorkerRegistration.checkForUpdates();
-  }, 60 * 60 * 1000);
-}
-
-// 注册Service Worker，启用PWA功能
-// ⚠️ 临时禁用: 先解决 API 问题,之后再启用
-// serviceWorkerRegistration.register({
-//   onUpdate: (registration) => {
-//     logger.log('应用有新的更新可用');
-//   },
-//   onSuccess: (registration) => {
-//     logger.log('内容已成功缓存，可离线使用');
-//   }
-// });
-
-// 强制注销旧的 Service Worker（仅开发环境）
-if (process.env.NODE_ENV === 'development') {
-  serviceWorkerRegistration.unregister();
-  logger.log('✅ 已发起 Service Worker 注销请求');
-}
 
 
