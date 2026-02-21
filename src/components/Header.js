@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaSearch, FaUser, FaTimesCircle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
+import AvatarImage from './AvatarImage';
 import '../styles/Header.desktop.css';
 import '../styles/Header.mobile.css';
 import logger from '../utils/logger.js';
@@ -264,28 +265,28 @@ const Header = ({
             </div>
 
             <div className="header-avatar-wrapper">
-              {currentUser && currentUser.photoURL ? (
-                <img
-                  src={currentUser.photoURL}
-                  alt="Profile"
-                  className="rounded-circle shadow-sm"
-                  style={{ width: '32px', height: '32px', objectFit: 'cover' }}
-                />
-              ) : userInitial ? (
-                <div
-                  className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
-                  style={{ width: '32px', height: '32px', fontSize: '0.9rem', backgroundColor: 'var(--color-text-primary)', color: 'var(--card-background)' }}
-                >
-                  {userInitial}
-                </div>
-              ) : (
-                <div
-                  className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
-                  style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-background-alt)', color: 'var(--color-text-tertiary)' }}
-                >
-                  <FaUser size={14} />
-                </div>
-              )}
+              <AvatarImage
+                src={currentUser?.photoURL || null}
+                cacheKey={currentUser?.uid || currentUser?.email || 'guest'}
+                alt="Profile"
+                className="rounded-circle shadow-sm"
+                style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+                fallback={userInitial ? (
+                  <div
+                    className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
+                    style={{ width: '32px', height: '32px', fontSize: '0.9rem', backgroundColor: 'var(--color-text-primary)', color: 'var(--card-background)' }}
+                  >
+                    {userInitial}
+                  </div>
+                ) : (
+                  <div
+                    className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
+                    style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-background-alt)', color: 'var(--color-text-tertiary)' }}
+                  >
+                    <FaUser size={14} />
+                  </div>
+                )}
+              />
             </div>
           </div>
         </div>

@@ -23,6 +23,7 @@ import { useSync } from '../contexts/SyncContext';
 import { initialSync } from '../services/syncService';
 import { searchMusic } from '../services/musicApiService';
 import ClearDataButton from './ClearDataButton';
+import AvatarImage from './AvatarImage';
 import '../styles/User.mobile.css';
 import logger from '../utils/logger.js';
 
@@ -411,15 +412,13 @@ const UserProfile = ({ onTabChange }) => {
       {/* 1. 用户信息头部 */}
       <div className="user-header">
         <div className="avatar-rect">
-          {currentUser.photoURL ? (
-            <img 
-              src={currentUser.photoURL} 
-              alt="Avatar"
-              className="avatar-image"
-            />
-          ) : (
-            userInitial
-          )}
+          <AvatarImage
+            src={currentUser?.photoURL || null}
+            cacheKey={currentUser?.uid || currentUser?.email || 'guest'}
+            alt="Avatar"
+            className="avatar-image"
+            fallback={userInitial}
+          />
         </div>
         <h3 className="user-name-large">{currentUser.displayName || '用户'}</h3>
         <p className="user-email-text">{currentUser.email}</p>

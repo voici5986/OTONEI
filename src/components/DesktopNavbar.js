@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaUser } from 'react-icons/fa';
 import { useDevice } from '../contexts/DeviceContext';
+import AvatarImage from './AvatarImage';
 
 const DesktopNavbar = ({
   activeTab,
@@ -54,23 +55,23 @@ const DesktopNavbar = ({
                 className={`d-flex align-items-center justify-content-center nav-link nav-item ${activeTab === 'user' ? 'active' : ''}`}
                 style={{ width: '40px', height: '40px', cursor: 'pointer' }}
               >
-                {currentUser.photoURL ? (
-                  <img
-                    src={currentUser.photoURL}
-                    alt="Profile"
-                    className="rounded-circle shadow-sm"
-                    style={{ width: '32px', height: '32px', objectFit: 'cover' }}
-                  />
-                ) : userInitial ? (
-                  <div
-                    className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
-                    style={{ width: '32px', height: '32px', fontSize: '1rem', backgroundColor: 'var(--color-text-primary)', color: 'var(--card-background)' }}
-                  >
-                    {userInitial}
-                  </div>
-                ) : (
-                  <FaUser />
-                )}
+                <AvatarImage
+                  src={currentUser?.photoURL || null}
+                  cacheKey={currentUser?.uid || currentUser?.email || 'guest'}
+                  alt="Profile"
+                  className="rounded-circle shadow-sm"
+                  style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+                  fallback={userInitial ? (
+                    <div
+                      className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
+                      style={{ width: '32px', height: '32px', fontSize: '1rem', backgroundColor: 'var(--color-text-primary)', color: 'var(--card-background)' }}
+                    >
+                      {userInitial}
+                    </div>
+                  ) : (
+                    <FaUser />
+                  )}
+                />
               </div>
             ) : (
               <button
