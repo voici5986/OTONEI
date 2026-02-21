@@ -107,7 +107,7 @@ const InstallPWA = () => {
         position: 'fixed', 
         bottom: '100px', 
         right: '20px', 
-        zIndex: 'var(--z-index-modal)'
+        zIndex: 'var(--z-index-notification)'
       }}
     >
       <div className="toast-custom">

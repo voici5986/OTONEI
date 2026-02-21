@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { FaSync, FaTimes } from 'react-icons/fa';
 import logger from '../utils/logger.js';
@@ -10,6 +10,7 @@ import { useDevice } from '../contexts/DeviceContext';
  */
 const UpdateNotification = () => {
   const { isMobile, isTablet } = useDevice();
+  const isMobileModal = isMobile || isTablet;
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -32,8 +33,17 @@ const UpdateNotification = () => {
     return null;
   }
 
+  useEffect(() => {
+    if (!needRefresh || !isMobileModal) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [needRefresh, isMobileModal]);
+
   // 移动端（手机和平板）使用居中遮罩弹窗 (Modal)
-  if (isMobile || isTablet) {
+  if (isMobileModal) {
     return (
       <div
         style={{
@@ -46,7 +56,7 @@ const UpdateNotification = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 'var(--z-index-modal)',
+          zIndex: 'var(--z-index-notification)',
           padding: '20px'
         }}
       >
@@ -107,7 +117,7 @@ const UpdateNotification = () => {
         position: 'fixed', 
         bottom: '20px', 
         right: '20px', 
-        zIndex: 'var(--z-index-modal)'
+        zIndex: 'var(--z-index-notification)'
       }}
     >
       <div className="toast-custom">
