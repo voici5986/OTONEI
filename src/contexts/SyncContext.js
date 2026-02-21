@@ -202,4 +202,3 @@ export const SyncProvider = ({ children }) => {
   );
 };
 
-export default SyncProvider; 

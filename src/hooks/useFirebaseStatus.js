@@ -15,7 +15,7 @@ import logger from '../utils/logger';
  * @param {boolean} options.manualCheck 是否仅在手动调用时进行检测
  * @returns {Object} Firebase状态相关数据和方法
  */
-export const useFirebaseStatus = (options = {}) => {
+const useFirebaseStatus = (options = {}) => {
   const { 
     showToasts = false, 
     manualCheck = false 

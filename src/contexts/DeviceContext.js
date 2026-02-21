@@ -87,4 +87,3 @@ export const useDevice = () => {
   return context;
 };
 
-export default DeviceContext; 

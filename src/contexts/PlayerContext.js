@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { playMusic, forceGetCoverImage, getLyrics } from '../services/musicApiService';
 import { addToHistory, getCoverFromStorage, saveCoverToStorage } from '../services/storage';
 import { handleError, ErrorTypes, ErrorSeverity } from '../utils/errorHandler';
-import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import useNetworkStatus from '../hooks/useNetworkStatus';
 import audioStateManager from '../services/audioStateManager';
 import audioEngine from '../services/AudioEngine';
 import '../types';
@@ -296,5 +296,3 @@ export const PlayerProvider = ({ children }) => {
 
   return <PlayerContext.Provider value={contextValue}>{children}</PlayerContext.Provider>;
 };
-
-export default PlayerProvider;

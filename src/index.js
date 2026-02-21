@@ -15,10 +15,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { DeviceProvider } from './contexts/DeviceContext';
-import SyncProvider from './contexts/SyncContext';
-import PlayerProvider from './contexts/PlayerContext';
-import FavoritesProvider from './contexts/FavoritesContext';
-import DownloadProvider from './contexts/DownloadContext';
+import { SyncProvider } from './contexts/SyncContext';
+import { PlayerProvider } from './contexts/PlayerContext';
+import { FavoritesProvider } from './contexts/FavoritesContext';
+import { DownloadProvider } from './contexts/DownloadContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

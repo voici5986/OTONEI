@@ -92,7 +92,7 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
  * 虚拟滚动歌词组件
  * 封装虚拟滚动歌词的渲染逻辑，减少代码重复
  */
-export const VirtualizedLyrics = ({ processedLyrics, visibleRange, lyricLineHeight, currentLyricIndex }) => {
+const VirtualizedLyrics = ({ processedLyrics, visibleRange, lyricLineHeight, currentLyricIndex }) => {
   // 如果没有歌词，显示提示
   if (!processedLyrics || processedLyrics.length === 0) {
     return <div className="text-center text-muted py-5">暂无歌词</div>;
@@ -135,7 +135,7 @@ export const VirtualizedLyrics = ({ processedLyrics, visibleRange, lyricLineHeig
  * 播放控制按钮组件
  * 封装播放控制按钮的通用逻辑，减少代码重复
  */
-export const PlayerControlButton = ({
+const PlayerControlButton = ({
   onClick,
   disabled = false,
   className = '',

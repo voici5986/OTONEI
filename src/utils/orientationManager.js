@@ -8,7 +8,7 @@ import logger from './logger.js';
  * 检查浏览器是否支持Screen Orientation API
  * @returns {boolean} 是否支持Screen Orientation API
  */
-export const isOrientationApiSupported = () => {
+const isOrientationApiSupported = () => {
   // 检查window对象是否存在（服务器端渲染兼容）
   if (typeof window === 'undefined') return false;
   
@@ -25,7 +25,7 @@ export const isOrientationApiSupported = () => {
  * 检查是否需要请求iOS设备方向权限
  * @returns {boolean} 是否需要请求权限
  */
-export const isDeviceOrientationPermissionRequired = () => {
+const isDeviceOrientationPermissionRequired = () => {
   return (
     typeof DeviceOrientationEvent !== 'undefined' &&
     typeof DeviceOrientationEvent.requestPermission === 'function'
@@ -36,7 +36,7 @@ export const isDeviceOrientationPermissionRequired = () => {
  * 请求iOS设备方向权限
  * @returns {Promise<boolean>} 是否获得权限
  */
-export const requestDeviceOrientationPermission = async () => {
+const requestDeviceOrientationPermission = async () => {
   if (!isDeviceOrientationPermissionRequired()) {
     return true; // 不需要权限的设备默认返回true
   }
@@ -85,7 +85,7 @@ export const lockToPortrait = async () => {
  * 解锁屏幕方向
  * @returns {boolean} 是否成功解锁
  */
-export const unlockOrientation = () => {
+const unlockOrientation = () => {
   // 检查是否支持Screen Orientation API
   if (!isOrientationApiSupported()) {
     logger.log('当前浏览器不支持Screen Orientation API，无需解锁屏幕方向');
@@ -163,15 +163,3 @@ export const addOrientationChangeListener = (callback) => {
   };
 };
 
-// 创建一个命名对象，代替匿名导出
-const orientationManager = {
-  isOrientationApiSupported,
-  isDeviceOrientationPermissionRequired,
-  requestDeviceOrientationPermission,
-  lockToPortrait,
-  unlockOrientation,
-  getCurrentOrientation,
-  addOrientationChangeListener
-};
-
-export default orientationManager; 

@@ -123,7 +123,7 @@ export const clearMemoryCache = (type) => {
  * @param {string} imageUrl 图片URL
  * @returns {Promise<string|null>} Base64编码的图片数据
  */
-export const imageUrlToBase64 = async (imageUrl) => {
+const imageUrlToBase64 = async (imageUrl) => {
   try {
     // 验证URL
     if (!imageUrl || imageUrl.includes('default_cover') || !imageUrl.startsWith('http')) {

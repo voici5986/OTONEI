@@ -104,4 +104,3 @@ export const FavoritesProvider = ({ children }) => {
   );
 };
 
-export default FavoritesProvider; 

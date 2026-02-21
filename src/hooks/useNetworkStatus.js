@@ -10,7 +10,7 @@ import logger from '../utils/logger.js';
  * @param {boolean} options.dispatchEvents 是否分发自定义事件
  * @returns {Object} 网络状态相关数据和方法
  */
-export const useNetworkStatus = (options = {}) => {
+const useNetworkStatus = (options = {}) => {
   const {
     dispatchEvents = true
   } = options;

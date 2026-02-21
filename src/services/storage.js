@@ -2,42 +2,42 @@ import localforage from 'localforage';
 import logger from '../utils/logger.js';
 
 // 配置并创建不同数据类型的存储实例
-export const favoritesStore = localforage.createInstance({
+const favoritesStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'favorites'
 });
 
-export const historyStore = localforage.createInstance({
+const historyStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'history'
 });
 
 // 添加搜索历史存储实例
-export const searchHistoryStore = localforage.createInstance({
+const searchHistoryStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'searchHistory'
 });
 
 // 添加同步状态存储实例
-export const syncStore = localforage.createInstance({
+const syncStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'syncStatus'
 });
 
 // 添加本地用户存储实例
-export const userStore = localforage.createInstance({
+const userStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'localUser'
 });
 
 // 网络状态存储实例
-export const networkStore = localforage.createInstance({
+const networkStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'networkStatus'
 });
 
 // 添加封面图片缓存存储实例
-export const coverStore = localforage.createInstance({
+const coverStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'coverCache',
   driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE]
@@ -145,7 +145,7 @@ export async function clearExpiredCovers(options = {}) {
  * 收藏歌曲操作
  */
 // 设置收藏上限为500条
-export const MAX_FAVORITES_ITEMS = 500;
+const MAX_FAVORITES_ITEMS = 500;
 
 export async function getFavorites() {
   try {
@@ -168,13 +168,13 @@ export async function saveFavorites(favoritesArray) {
 }
 
 // 检查歌曲是否已收藏
-export async function isFavorite(trackId) {
+async function isFavorite(trackId) {
   const favorites = await getFavorites();
   return favorites.some(item => item.id === trackId);
 }
 
 // 检查收藏是否已满
-export async function isFavoritesFull() {
+async function isFavoritesFull() {
   const favorites = await getFavorites();
   return favorites.length >= MAX_FAVORITES_ITEMS;
 }
@@ -230,7 +230,7 @@ export async function getLocalUser() {
 }
 
 // 删除本地用户信息
-export async function removeLocalUser() {
+async function removeLocalUser() {
   try {
     await userStore.removeItem('localUser');
     return true;
@@ -296,7 +296,7 @@ export async function getNetworkStatus() {
  */
 // 定义最大记录数
 export const MAX_HISTORY_ITEMS = 100; // 播放历史记录数量
-export const MAX_SEARCH_HISTORY_ITEMS = 20; // 搜索历史记录数量
+const MAX_SEARCH_HISTORY_ITEMS = 20; // 搜索历史记录数量
 
 /**
  * 获取历史记录
@@ -424,7 +424,7 @@ export async function getSearchHistory() {
 }
 
 // 保存搜索历史
-export async function saveSearchHistory(historyArray) {
+async function saveSearchHistory(historyArray) {
   return saveHistoryGeneric(searchHistoryStore, historyArray, MAX_SEARCH_HISTORY_ITEMS);
 }
 
@@ -499,7 +499,7 @@ export async function getPendingSyncChanges() {
 }
 
 // 保存待同步变更计数
-export async function savePendingSyncChanges(counter) {
+async function savePendingSyncChanges(counter) {
   try {
     await syncStore.setItem(CHANGES_COUNTER_KEY, counter);
     await syncStore.setItem(CHANGES_TIMESTAMP_KEY, Date.now());

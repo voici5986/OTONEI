@@ -34,7 +34,7 @@ function searchReducer(state, action) {
   }
 }
 
-export const useSearch = (isOnline) => {
+const useSearch = (isOnline) => {
   const [state, dispatch] = useReducer(searchReducer, searchInitialState);
   const { query, results, source } = state;
 

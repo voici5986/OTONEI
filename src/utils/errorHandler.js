@@ -237,7 +237,7 @@ export const checkDownloadStatus = (downloading) => {
  * @param {string} type - 错误类型
  * @returns {string} - 恢复建议
  */
-export const getRecoverySuggestion = (type) => {
+const getRecoverySuggestion = (type) => {
   switch (type) {
     case ErrorTypes.NETWORK:
       return '请检查您的网络连接，然后刷新页面重试';
@@ -266,7 +266,7 @@ export const getRecoverySuggestion = (type) => {
  * @param {string} type - 错误类型
  * @returns {boolean} - 是否可以自动恢复
  */
-export const canAutoRecover = (error, type) => {
+const canAutoRecover = (error, type) => {
   // 网络错误通常可以通过重试来恢复
   if (type === ErrorTypes.NETWORK || 
       ((error.message && error.message.includes('Network Error')) || 
@@ -290,7 +290,7 @@ export const canAutoRecover = (error, type) => {
  * @param {number} delay - 重试延迟(毫秒)
  * @returns {Promise} - 恢复结果
  */
-export const autoRecover = async (recoveryFn, maxRetries = 3, delay = 1000) => {
+const autoRecover = async (recoveryFn, maxRetries = 3, delay = 1000) => {
   let retries = 0;
   let lastError = null;
   

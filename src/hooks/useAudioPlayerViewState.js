@@ -4,7 +4,7 @@ import { FaRandom, FaRedo } from 'react-icons/fa';
 import { MdRepeatOne } from 'react-icons/md';
 import logger from '../utils/logger.js';
 
-export const useAudioPlayerViewState = () => {
+const useAudioPlayerViewState = () => {
   const {
     currentTrack,
     isPlaying,

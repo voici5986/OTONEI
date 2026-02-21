@@ -8,7 +8,7 @@
  * @param {any} track - 从API获取的原始音轨对象
  * @returns {object} - 经过校验和清洗的音轨对象
  */
-export const validateTrack = (track) => {
+const validateTrack = (track) => {
   if (!track || typeof track !== 'object') {
     return null; // 如果track无效，则返回null
   }

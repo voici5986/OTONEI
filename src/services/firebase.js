@@ -213,7 +213,7 @@ export const logout = async () => {
 };
 
 // 创建用户文档
-export const createUserDocument = async (uid, userData) => {
+const createUserDocument = async (uid, userData) => {
   if (!isFirebaseAvailable) {
     return null;
   }
@@ -239,7 +239,7 @@ export const createUserDocument = async (uid, userData) => {
 };
 
 // 验证用户是否登录
-export const getCurrentUser = () => {
+const getCurrentUser = () => {
   if (!isFirebaseAvailable) {
     return Promise.resolve(null);
   }

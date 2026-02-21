@@ -75,5 +75,3 @@ export const DownloadProvider = ({ children }) => {
     </DownloadContext.Provider>
   );
 };
-
-export default DownloadProvider;

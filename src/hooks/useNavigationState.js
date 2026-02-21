@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaSearch, FaHeart, FaHistory } from 'react-icons/fa';
 
-export const NAV_ITEMS = [
+const NAV_ITEMS = [
   { id: 'home', title: '搜索', icon: FaSearch },
   { id: 'favorites', title: '收藏', icon: FaHeart },
   { id: 'history', title: '历史记录', icon: FaHistory },
 ];
 
-export const useNavigationState = ({ activeTab, onTabChange }) => {
+const useNavigationState = ({ activeTab, onTabChange }) => {
   const [expanded, setExpanded] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { currentUser } = useAuth();

@@ -132,7 +132,7 @@ export const detectDevice = () => {
  * 获取当前设备类型
  * @returns {string} 设备类型 ('mobile', 'tablet', 或 'desktop')
  */
-export const getDeviceType = () => {
+const getDeviceType = () => {
   const { deviceType } = detectDevice();
   return deviceType;
 };
@@ -141,7 +141,7 @@ export const getDeviceType = () => {
  * 检查是否为移动设备
  * @returns {boolean} 是否为移动设备
  */
-export const isMobile = () => {
+const isMobile = () => {
   const { isMobile } = detectDevice();
   return isMobile;
 };
@@ -150,7 +150,7 @@ export const isMobile = () => {
  * 检查是否为平板设备
  * @returns {boolean} 是否为平板设备
  */
-export const isTablet = () => {
+const isTablet = () => {
   const { isTablet } = detectDevice();
   return isTablet;
 };
@@ -159,7 +159,7 @@ export const isTablet = () => {
  * 检查是否为桌面设备
  * @returns {boolean} 是否为桌面设备
  */
-export const isDesktop = () => {
+const isDesktop = () => {
   const { isDesktop } = detectDevice();
   return isDesktop;
 };
@@ -168,7 +168,7 @@ export const isDesktop = () => {
  * 获取设备方向
  * @returns {string} 设备方向 ('portrait' 或 'landscape')
  */
-export const getOrientation = () => {
+const getOrientation = () => {
   const { orientation } = detectDevice();
   return orientation;
 };
@@ -177,7 +177,7 @@ export const getOrientation = () => {
  * 强制刷新设备缓存
  * 当明确知道设备信息可能发生变化时调用
  */
-export const refreshDeviceInfo = () => {
+const refreshDeviceInfo = () => {
   deviceInfoCache = null;
   return detectDevice();
 };
@@ -212,16 +212,3 @@ export const addDeviceChangeListener = (callback) => {
   };
 };
 
-// 创建一个命名对象，代替匿名导出
-const deviceDetector = {
-  detectDevice,
-  getDeviceType,
-  isMobile,
-  isTablet,
-  isDesktop,
-  getOrientation,
-  refreshDeviceInfo,
-  addDeviceChangeListener
-};
-
-export default deviceDetector; 

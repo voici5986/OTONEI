@@ -293,7 +293,7 @@ export const getLyrics = async (track) => {
  * @param {number} size - 封面尺寸（只支持300和500）
  * @returns {Promise<string>} - 封面URL或默认封面路径
  */
-export const getCoverImage = async (source, picId, size = 500) => {
+const getCoverImage = async (source, picId, size = 500) => {
   try {
     // 验证参数
     if (!picId || picId === 'undefined' || picId === 'null') {

@@ -12,7 +12,7 @@ import logger from '../utils/logger.js';
  * @param {number|string} quality - 音质参数
  * @returns {string} - 文件扩展名
  */
-export const getFileExtension = (url, quality = 999) => {
+const getFileExtension = (url, quality = 999) => {
   try {
     // 处理可能包含反斜杠的URL
     const cleanUrl = url.replace(/\\/g, '');
@@ -38,7 +38,7 @@ export const getFileExtension = (url, quality = 999) => {
  * @param {number|string} quality - 音质参数
  * @returns {string} - 音质描述文字
  */
-export const getQualityDescription = (quality) => {
+const getQualityDescription = (quality) => {
   quality = Number(quality);
   if (quality >= 999) {
     return "无损音质";
@@ -174,7 +174,7 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
  * @param {Function} callbacks.onFinish - 批量下载完成的回调 (successCount, totalCount)
  * @returns {Promise<Object>} - 下载结果统计
  */
-export const downloadTracks = async (tracks, quality = 999, callbacks = {}) => {
+const downloadTracks = async (tracks, quality = 999, callbacks = {}) => {
   const { 
     onStart, 
     onProgress, 

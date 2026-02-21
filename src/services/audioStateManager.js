@@ -2,7 +2,7 @@ import audioEngine from './AudioEngine';
 import logger from '../utils/logger.js';
 
 // 播放状态枚举 (保持兼容)
-export const AUDIO_STATES = {
+const AUDIO_STATES = {
   IDLE: 'idle',
   LOADING: 'loading',
   PLAYING: 'playing',

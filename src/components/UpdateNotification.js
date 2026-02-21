@@ -28,11 +28,6 @@ const UpdateNotification = () => {
     setNeedRefresh(false);
   };
 
-  // 如果不需要更新，不渲染任何内容
-  if (!needRefresh) {
-    return null;
-  }
-
   useEffect(() => {
     if (!needRefresh || !isMobileModal) return;
     const previousOverflow = document.body.style.overflow;
@@ -41,6 +36,11 @@ const UpdateNotification = () => {
       document.body.style.overflow = previousOverflow;
     };
   }, [needRefresh, isMobileModal]);
+
+  // 如果不需要更新，不渲染任何内容
+  if (!needRefresh) {
+    return null;
+  }
 
   // 移动端（手机和平板）使用居中遮罩弹窗 (Modal)
   if (isMobileModal) {
