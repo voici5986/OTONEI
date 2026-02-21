@@ -2,12 +2,14 @@ import React from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { FaSync, FaTimes } from 'react-icons/fa';
 import logger from '../utils/logger.js';
+import { useDevice } from '../contexts/DeviceContext';
 
 /**
  * 应用更新通知组件 (重构版 - 使用 vite-plugin-pwa)
  * 当检测到应用有新版本时，提示用户刷新
  */
 const UpdateNotification = () => {
+  const { isMobile, isTablet } = useDevice();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -30,6 +32,75 @@ const UpdateNotification = () => {
     return null;
   }
 
+  // 移动端（手机和平板）使用居中遮罩弹窗 (Modal)
+  if (isMobile || isTablet) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 'var(--z-index-modal)',
+          padding: '20px'
+        }}
+      >
+        <div 
+          className="toast-custom"
+          style={{
+            width: '100%',
+            maxWidth: '320px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+            animation: 'zoomIn 0.3s ease-out'
+          }}
+        >
+          <div className="toast-header-custom" style={{ padding: '15px' }}>
+            <span style={{ fontSize: '1.1rem' }}>发现新版本</span>
+            <button 
+              onClick={close}
+              style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '5px' }}
+              aria-label="关闭"
+            >
+              <FaTimes />
+            </button>
+          </div>
+          <div className="toast-body-custom" style={{ padding: '20px' }}>
+            <p className="mb-4" style={{ fontSize: '1rem', lineHeight: '1.5' }}>
+              OTONEI 有重要的更新可用。为了获得最佳体验，建议您立即更新。
+            </p>
+            <div className="d-grid">
+              <button 
+                onClick={() => updateServiceWorker(true)}
+                className="d-flex align-items-center justify-content-center btn-primary-custom"
+                style={{ 
+                  padding: '12px', 
+                  fontSize: '1rem',
+                  width: '100%',
+                  fontWeight: '600'
+                }}
+              >
+                <FaSync className="me-2" />
+                <span>立即更新</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <style>{`
+          @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // 桌面端保持原有右下角 Toast 样式
   return (
     <div 
       style={{ 
