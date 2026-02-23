@@ -3,6 +3,7 @@ import { usePlayer } from '../contexts/PlayerContext';
 import { FaRandom, FaRedo } from 'react-icons/fa';
 import { MdRepeatOne } from 'react-icons/md';
 import logger from '../utils/logger.js';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 const useAudioPlayerViewState = () => {
   const {
@@ -45,7 +46,7 @@ const useAudioPlayerViewState = () => {
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.name,
-      artist: currentTrack.artist,
+      artist: getTrackArtist(currentTrack) || '',
       album: currentTrack.album || '',
       artwork: [
         {

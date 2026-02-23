@@ -252,4 +252,4 @@ const getCurrentUser = () => {
   });
 };
 
-export { auth, db, isFirebaseAvailable, firebaseInitError }; 
+export { auth, db, isFirebaseAvailable, firebaseInitError, getCurrentUser }; 

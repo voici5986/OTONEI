@@ -35,8 +35,10 @@ const SearchService = {
 
       const uniqueHistoryMap = new Map();
       historyTracks.forEach(track => {
-        if (track && track.id && !uniqueHistoryMap.has(track.id)) {
-          uniqueHistoryMap.set(track.id, track);
+        if (!track || !track.id) return;
+        const uniqueKey = `${track.source || 'unknown'}_${track.id}`;
+        if (!uniqueHistoryMap.has(uniqueKey)) {
+          uniqueHistoryMap.set(uniqueKey, track);
         }
       });
 

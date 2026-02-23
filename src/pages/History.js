@@ -9,6 +9,7 @@ import { downloadTrack } from '../services/downloadService';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
 import logger from '../utils/logger.js';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 // 设置moment为中文
 moment.locale('zh-cn');
@@ -123,7 +124,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       logger.error('Download error:', error);
       toast.error('下载失败，请稍后重试', {
         icon: '❌',
-        duration: 3000
+        autoClose: 3000
       });
       setDownloading(false);
       setCurrentDownloadingTrack(null);
@@ -176,7 +177,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
                         <h6 className="mb-0 text-truncate">{track.name}</h6>
                         <span className="ms-2 badge-time">{formatCompactTimestamp(item.timestamp)}</span>
                       </div>
-                      <small className="text-truncate">{track.artist}</small>
+                      <small className="text-truncate">{getTrackArtist(track) || '未知歌手'}</small>
                     </div>
 
                     <MusicCardActions 

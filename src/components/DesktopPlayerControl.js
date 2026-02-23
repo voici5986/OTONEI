@@ -5,6 +5,7 @@ import DesktopAlbumCover from './DesktopAlbumCover';
 import HeartButton from './HeartButton';
 import { LyricToggleButton } from './PlayerSubComponents';
 import { useDownload } from '../contexts/DownloadContext';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 /**
  * 桌面端播放控制组件
@@ -31,7 +32,7 @@ const DesktopPlayerControl = ({
         <DesktopAlbumCover track={currentTrack} size="small" onClick={toggleLyric} imgSize={500} />
         <div className="track-info-container ms-3">
           <h6 className="mb-0 text-truncate track-name">{currentTrack.name}</h6>
-          <small className="text-muted text-truncate track-artist">{currentTrack.artist}</small>
+          <small className="text-muted text-truncate track-artist">{getTrackArtist(currentTrack) || '未知歌手'}</small>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useDownload } from '../contexts/DownloadContext';
 import logger from '../utils/logger.js';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 const Favorites = ({ globalSearchQuery, onTabChange }) => {
   // 从PlayerContext获取状态和方法（防御性处理，避免上下文缺失导致崩溃）
@@ -249,10 +250,10 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
                 onClick={() => handleTrackPlay(track)}
               >
                 <div className="music-card-row">
-                  <div className="music-card-info">
-                    <h6>{track.name}</h6>
-                    <small>{track.artist}</small>
-                  </div>
+                <div className="music-card-info">
+                  <h6>{track.name}</h6>
+                  <small>{getTrackArtist(track) || '未知歌手'}</small>
+                </div>
 
                   <MusicCardActions 
                     track={track}

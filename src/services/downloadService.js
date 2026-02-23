@@ -4,6 +4,7 @@
  */
 import { toast } from 'react-toastify';
 import { getAudioUrl } from './musicApiService';
+import { getTrackArtist } from '../utils/trackFormatter';
 import logger from '../utils/logger.js';
 
 /**
@@ -51,15 +52,75 @@ const getQualityDescription = (quality) => {
   }
 };
 
+// 下载队列管理
+const downloadQueue = [];
+let isProcessingQueue = false;
+const MIN_DOWNLOAD_INTERVAL = 5000; // 5秒间隔
+
 /**
- * 下载单首歌曲
+ * 处理下载队列
+ */
+const processQueue = async () => {
+  if (isProcessingQueue || downloadQueue.length === 0) return;
+  
+  isProcessingQueue = true;
+  
+  while (downloadQueue.length > 0) {
+    const { track, quality, onStartDownload, onFinishDownload, resolve } = downloadQueue[0];
+    
+    try {
+      const result = await _processDownload(track, quality, onStartDownload, onFinishDownload);
+      resolve(result);
+    } catch (error) {
+      logger.error('Queue processing error:', error);
+      resolve(false);
+    }
+    
+    // 移除已处理的任务
+    downloadQueue.shift();
+    
+    // 如果队列中还有任务，等待间隔时间
+    if (downloadQueue.length > 0) {
+      await new Promise(r => setTimeout(r, MIN_DOWNLOAD_INTERVAL));
+    }
+  }
+  
+  isProcessingQueue = false;
+};
+
+/**
+ * 下载单首歌曲 (加入队列)
  * @param {Object} track - 歌曲信息
- * @param {number|string} quality - 音质参数，999为无损，320为高音质
- * @param {Function} onStartDownload - 下载开始回调，用于更新UI状态
- * @param {Function} onFinishDownload - 下载结束回调，用于更新UI状态
+ * @param {number|string} quality - 音质参数
+ * @param {Function} onStartDownload - 下载开始回调
+ * @param {Function} onFinishDownload - 下载结束回调
  * @returns {Promise<boolean>} - 下载是否成功
  */
-export const downloadTrack = async (track, quality = 999, onStartDownload, onFinishDownload) => {
+export const downloadTrack = (track, quality = 999, onStartDownload, onFinishDownload) => {
+  return new Promise((resolve) => {
+    downloadQueue.push({
+      track,
+      quality,
+      onStartDownload,
+      onFinishDownload,
+      resolve
+    });
+    
+    if (isProcessingQueue) {
+      toast.info(`已加入下载队列，前方还有 ${downloadQueue.length - 1} 首任务`, {
+        icon: '⏳',
+        autoClose: 2000
+      });
+    }
+    
+    processQueue();
+  });
+};
+
+/**
+ * 内部下载处理函数
+ */
+const _processDownload = async (track, quality = 999, onStartDownload, onFinishDownload) => {
   try {
     // 调用下载开始回调
     if (typeof onStartDownload === 'function') {
@@ -88,7 +149,7 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
     
     // 设置下载文件名
     const extension = getFileExtension(downloadUrl, quality);
-    const fileName = `${track.name} - ${track.artist}.${extension}`;
+    const fileName = `${track.name} - ${getTrackArtist(track) || '未知歌手'}.${extension}`;
     
     // 确定音质描述
     const qualityDesc = getQualityDescription(quality);
@@ -102,13 +163,20 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
     
     toast.info(`正在准备下载${qualityDesc}音频: ${fileName}${fileSizeMsg}`, {
       icon: '⏬',
-      duration: 2000
+      autoClose: 2000
     });
     
     // 直接下载
     try {
       // 使用fetch获取音频内容
       const audioResponse = await fetch(downloadUrl);
+      if (!audioResponse.ok) {
+        throw new Error(`下载失败: ${audioResponse.status} ${audioResponse.statusText}`);
+      }
+      const contentType = audioResponse.headers.get('content-type') || '';
+      if (contentType && !contentType.startsWith('audio/')) {
+        throw new Error(`下载内容类型异常: ${contentType}`);
+      }
       const blob = await audioResponse.blob();
       
       // 创建blob URL
@@ -150,7 +218,7 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
     logger.error('Download error:', error);
     toast.error('下载失败，请稍后重试', {
       icon: '❌',
-      duration: 3000
+      autoClose: 3000
     });
     return false;
   } finally {
@@ -161,174 +229,3 @@ export const downloadTrack = async (track, quality = 999, onStartDownload, onFin
   }
 };
 
-/**
- * 批量下载多首歌曲
- * @param {Array} tracks - 要下载的歌曲列表
- * @param {number|string} quality - 音质参数
- * @param {Object} callbacks - 回调函数对象
- * @param {Function} callbacks.onStart - 开始批量下载时的回调
- * @param {Function} callbacks.onProgress - 下载进度更新的回调 (index, progress, status)
- * @param {Function} callbacks.onTrackStart - 单首歌曲开始下载的回调 (track, index)
- * @param {Function} callbacks.onTrackSuccess - 单首歌曲下载成功的回调 (track, index, info)
- * @param {Function} callbacks.onTrackError - 单首歌曲下载失败的回调 (track, index, error)
- * @param {Function} callbacks.onFinish - 批量下载完成的回调 (successCount, totalCount)
- * @returns {Promise<Object>} - 下载结果统计
- */
-const downloadTracks = async (tracks, quality = 999, callbacks = {}) => {
-  const { 
-    onStart, 
-    onProgress, 
-    onTrackStart, 
-    onTrackSuccess, 
-    onTrackError, 
-    onFinish 
-  } = callbacks;
-  
-  // 如果没有歌曲，直接返回
-  if (!tracks || tracks.length === 0) {
-    return { success: false, message: '没有可下载的歌曲' };
-  }
-  
-  // 调用开始回调
-  if (typeof onStart === 'function') {
-    onStart(tracks.length);
-  }
-  
-  let successCount = 0;
-  const qualityName = getQualityDescription(quality);
-  
-  // 对每首歌曲进行下载
-  for (let i = 0; i < tracks.length; i++) {
-    try {
-      const track = tracks[i];
-      const progress = Math.floor((i / tracks.length) * 100);
-      
-      // 更新进度
-      if (typeof onProgress === 'function') {
-        onProgress(i, progress, { status: 'downloading', message: `获取${qualityName}...` });
-      }
-      
-      // 通知开始下载这首歌曲
-      if (typeof onTrackStart === 'function') {
-        onTrackStart(track, i);
-      }
-      
-      // 获取下载链接，使用新的musicApiService
-      let audioData;
-      try {
-        audioData = await getAudioUrl(track, quality);
-      } catch (error) {
-        logger.warn(`[downloadService] 批量下载歌曲 "${track.name}" 音质 ${quality} 失败，尝试降级到 320:`, error);
-        if (quality !== 320) {
-          audioData = await getAudioUrl(track, 320);
-        } else {
-          throw error;
-        }
-      }
-      
-      const downloadUrl = audioData.url.replace(/\\/g, '');
-      if (!downloadUrl) {
-        throw new Error('无效的下载链接');
-      }
-      
-      // 确定文件扩展名
-      const extension = getFileExtension(downloadUrl, quality);
-      const fileName = `${track.name} - ${track.artist}.${extension}`;
-      
-      // 准备文件大小信息（如果API返回）
-      let fileSize = '';
-      if (audioData.size) {
-        const sizeMB = (parseInt(audioData.size) / 1024).toFixed(2);
-        fileSize = ` (${sizeMB} MB)`;
-        
-        if (typeof onProgress === 'function') {
-          onProgress(i, progress, { status: 'downloading', message: `下载中${fileSize}...` });
-        }
-      }
-      
-      // 下载文件
-      try {
-        if (typeof onProgress === 'function') {
-          onProgress(i, progress, { status: 'downloading', message: `准备下载${fileSize}...` });
-        }
-        
-        const audioResponse = await fetch(downloadUrl);
-        const blob = await audioResponse.blob();
-        
-        // 创建下载链接
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        link.style.display = 'none';
-        
-        // 下载文件
-        document.body.appendChild(link);
-        link.click();
-        
-        // 清理
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(blobUrl);
-        }, 100);
-        
-      } catch (fetchError) {
-        logger.error('Fetch下载失败，尝试备用方法:', fetchError);
-        
-        // 备用下载方法
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.setAttribute('download', fileName);
-        link.setAttribute('target', '_blank');
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-      
-      // 更新成功状态
-      successCount++;
-      
-      if (typeof onTrackSuccess === 'function') {
-        onTrackSuccess(track, i, { fileSize });
-      }
-      
-      if (typeof onProgress === 'function') {
-        onProgress(i, progress, { status: 'success', message: `下载成功${fileSize}` });
-      }
-      
-      // 在处理之间添加延迟，避免浏览器拦截
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-    } catch (error) {
-      logger.error(`下载歌曲 "${tracks[i].name}" 失败:`, error);
-      
-      if (typeof onTrackError === 'function') {
-        onTrackError(tracks[i], i, error);
-      }
-      
-      if (typeof onProgress === 'function') {
-        onProgress(i, Math.floor((i / tracks.length) * 100), { status: 'error', message: '下载失败' });
-      }
-    }
-  }
-  
-  // 完成下载
-  if (typeof onProgress === 'function') {
-    onProgress(tracks.length - 1, 100, { status: 'complete', message: '下载完成' });
-  }
-  
-  if (typeof onFinish === 'function') {
-    onFinish(successCount, tracks.length);
-  }
-  
-
-  
-  return {
-    success: true,
-    totalCount: tracks.length,
-    successCount: successCount,
-    quality: quality,
-    qualityName: qualityName
-  };
-}; 

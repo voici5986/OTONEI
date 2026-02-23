@@ -77,6 +77,7 @@ desktop.ini
 *.tmp
 *.temp
 /temp_icons/
+dev-dist/
 
 # 缓存文件
 .cache/
@@ -98,27 +99,3 @@ firebase.json
 # PWA相关
 **/public/workbox-*.js
 **/public/sw.js
-**/public/service-worker.js.map
-**/public/workbox-*.js.map
-
-# 分析报告
-/bundle-stats.html
-/report.html
-/stats.json
-
-# 性能分析文件
-.lighthouse/
-.webhint/
-
-# 其他工具生成文件
-.history/
-.next/
-out/
-jspm_packages/
-web_modules/
-.trae/rules/project_rules.md
-.gemini/
-brain/
-*.bak
-*~
-pre.html

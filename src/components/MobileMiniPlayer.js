@@ -5,6 +5,7 @@ import MobileAlbumCover from './MobileAlbumCover';
 import HeartButton from './HeartButton';
 import ProgressBar from './ProgressBar';
 import { FaChevronDown } from 'react-icons/fa';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 /**
  * 移动端迷你播放器组件
@@ -31,7 +32,7 @@ const MobileMiniPlayer = ({
           <MobileAlbumCover track={currentTrack} size="small" imgSize={500} />
           <div className="track-info-container flex-grow-1 ms-2" style={{ minWidth: 0, paddingRight: '10px' }}>
             <h6 className="mb-0 text-truncate track-name" style={{ width: '100%' }}>{currentTrack.name}</h6>
-            <small className="text-muted text-truncate track-artist d-block" style={{ width: '100%' }}>{currentTrack.artist}</small>
+            <small className="text-muted text-truncate track-artist d-block" style={{ width: '100%' }}>{getTrackArtist(currentTrack) || '未知歌手'}</small>
           </div>
         </div>
         <div className="col-3 d-flex justify-content-end align-items-center p-0" style={{ paddingRight: '12px !important' }}>
@@ -51,7 +52,7 @@ const MobileMiniPlayer = ({
             {/* 歌曲信息：移至播放控制上方，作为模块的一部分 */}
             <div className="mobile-track-info-expanded d-md-none">
               <h5 className="track-name">{currentTrack.name}</h5>
-              <div className="track-artist">{currentTrack.artist}</div>
+              <div className="track-artist">{getTrackArtist(currentTrack) || '未知歌手'}</div>
             </div>
 
             {/* 移动端专用的进度条容器：放在歌曲信息和控制按钮之间 */}

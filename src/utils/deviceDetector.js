@@ -132,7 +132,7 @@ export const detectDevice = () => {
  * 获取当前设备类型
  * @returns {string} 设备类型 ('mobile', 'tablet', 或 'desktop')
  */
-const getDeviceType = () => {
+export const getDeviceType = () => {
   const { deviceType } = detectDevice();
   return deviceType;
 };
@@ -141,7 +141,7 @@ const getDeviceType = () => {
  * 检查是否为移动设备
  * @returns {boolean} 是否为移动设备
  */
-const isMobile = () => {
+export const isMobile = () => {
   const { isMobile } = detectDevice();
   return isMobile;
 };
@@ -150,7 +150,7 @@ const isMobile = () => {
  * 检查是否为平板设备
  * @returns {boolean} 是否为平板设备
  */
-const isTablet = () => {
+export const isTablet = () => {
   const { isTablet } = detectDevice();
   return isTablet;
 };
@@ -159,7 +159,7 @@ const isTablet = () => {
  * 检查是否为桌面设备
  * @returns {boolean} 是否为桌面设备
  */
-const isDesktop = () => {
+export const isDesktop = () => {
   const { isDesktop } = detectDevice();
   return isDesktop;
 };
@@ -168,7 +168,7 @@ const isDesktop = () => {
  * 获取设备方向
  * @returns {string} 设备方向 ('portrait' 或 'landscape')
  */
-const getOrientation = () => {
+export const getOrientation = () => {
   const { orientation } = detectDevice();
   return orientation;
 };

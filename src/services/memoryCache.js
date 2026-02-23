@@ -31,6 +31,26 @@ const CACHE_CONFIG = {
   [CACHE_TYPES.LYRICS]: { ttl: 30 * 60 * 1000 },        // 30分钟
 };
 
+// 缓存容量上限（条目数）
+const CACHE_MAX_ENTRIES = {
+  [CACHE_TYPES.SEARCH_RESULTS]: 200,
+  [CACHE_TYPES.COVER_IMAGES]: 300,
+  [CACHE_TYPES.AUDIO_URLS]: 200,
+  [CACHE_TYPES.AUDIO_METADATA]: 200,
+  [CACHE_TYPES.LYRICS]: 300
+};
+
+const enforceCacheLimit = (type) => {
+  const maxEntries = CACHE_MAX_ENTRIES[type];
+  if (!maxEntries) return;
+  const cache = memoryCache[type];
+  while (cache.size > maxEntries) {
+    const oldestKey = cache.keys().next().value;
+    cache.delete(oldestKey);
+    logger.log(`[内存缓存] 超出上限，已淘汰最旧项: ${type}/${oldestKey}`);
+  }
+};
+
 /**
  * 检查缓存项是否过期
  * @param {Object} cacheItem 缓存项
@@ -59,6 +79,7 @@ export const setMemoryCache = (type, key, data) => {
     
     // 存储到对应类型的缓存映射中
     memoryCache[type].set(key, cacheItem);
+    enforceCacheLimit(type);
     
     logger.log(`[内存缓存] 已缓存: ${type}/${key}`);
     return data;
@@ -79,6 +100,9 @@ export const getMemoryCache = (type, key) => {
     const cacheItem = memoryCache[type].get(key);
     
     if (cacheItem && !isExpired(cacheItem)) {
+      // 刷新LRU顺序
+      memoryCache[type].delete(key);
+      memoryCache[type].set(key, cacheItem);
       logger.log(`[内存缓存] 命中: ${type}/${key}`);
       return cacheItem.data;
     }
@@ -117,65 +141,4 @@ export const clearMemoryCache = (type) => {
     logger.warn('[内存缓存] 清除缓存失败:', error);
   }
 };
-
-/**
- * 将图片URL转换为Base64数据
- * @param {string} imageUrl 图片URL
- * @returns {Promise<string|null>} Base64编码的图片数据
- */
-const imageUrlToBase64 = async (imageUrl) => {
-  try {
-    // 验证URL
-    if (!imageUrl || imageUrl.includes('default_cover') || !imageUrl.startsWith('http')) {
-      logger.warn('[imageUrlToBase64] 无效的图片URL:', imageUrl);
-      return null;
-    }
-    
-    logger.log(`[imageUrlToBase64] 开始获取图片: ${imageUrl.substring(0, 50)}...`);
-    
-    const response = await fetch(imageUrl, {
-      mode: 'cors',
-      cache: 'force-cache',
-      headers: {
-        'Referrer-Policy': 'no-referrer-when-downgrade'
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`获取图片失败: ${response.status} ${response.statusText}`);
-    }
-    
-    const blob = await response.blob();
-    if (!blob || blob.size === 0) {
-      logger.warn('[imageUrlToBase64] 图片内容为空');
-      return null;
-    }
-    
-    // 检查MIME类型
-    if (!blob.type.startsWith('image/')) {
-      logger.warn(`[imageUrlToBase64] 非图片类型: ${blob.type}`);
-      return null;
-    }
-    
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        logger.log('[imageUrlToBase64] 图片转Base64成功');
-        resolve(reader.result);
-      };
-      reader.onerror = (error) => {
-        logger.error('[imageUrlToBase64] 读取图片数据失败:', error);
-        reject(error);
-      };
-      reader.readAsDataURL(blob);
-    });
-  } catch (error) {
-    // 捕获跨域错误
-    if (error.message && error.message.includes('CORS')) {
-      logger.warn(`[imageUrlToBase64] 跨域错误: ${imageUrl.substring(0, 50)}...`);
-    } else {
-      logger.error('[imageUrlToBase64] 图片转Base64失败:', error);
-    }
-    return null;
-  }
-}; 
+ 

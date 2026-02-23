@@ -272,10 +272,10 @@ export const PlayerProvider = ({ children }) => {
       if (state.url) setPlayerUrl(state.url);
       if (state.error) {
         // 如果发生播放错误，尝试自动刷新 URL 并重试一次
-        if (retryCountRef.current < MAX_RETRIES && currentTrack) {
+        if (retryCountRef.current < MAX_RETRIES && state.track) {
           logger.warn(`[PlayerContext] 播放出错，尝试刷新 URL 并重试 (${retryCountRef.current + 1}/${MAX_RETRIES})`);
           retryCountRef.current += 1;
-          handlePlay(currentTrack, currentIndex, currentPlaylist, 999, true); // 强制刷新重试
+          handlePlay(state.track, currentIndex, currentPlaylist, 999, true); // 强制刷新重试
         } else {
           handleError(state.error, ErrorTypes.PLAYBACK, ErrorSeverity.ERROR, '播放器引擎错误');
           retryCountRef.current = 0; // 超过最大重试次数，重置

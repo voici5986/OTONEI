@@ -26,6 +26,7 @@ import ClearDataButton from './ClearDataButton';
 import AvatarImage from './AvatarImage';
 import '../styles/User.mobile.css';
 import logger from '../utils/logger.js';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 const UserProfile = ({ onTabChange }) => {
   const { currentUser, signOut } = useAuth();
@@ -181,7 +182,7 @@ const UserProfile = ({ onTabChange }) => {
         }
       }
       if (!response || !response.data || response.data.length === 0) {
-        const shortQuery = `${trackInfo.artist} ${trackInfo.name.substring(0, 5)}`;
+        const shortQuery = `${getTrackArtist(trackInfo) || ''} ${trackInfo.name.substring(0, 5)}`;
         response = await searchWithKeyword(shortQuery, source);
       }
 
@@ -195,9 +196,10 @@ const UserProfile = ({ onTabChange }) => {
         const urlMatch = response.data.find(item => item.url === trackInfo.url);
         if (urlMatch) return urlMatch;
       }
+      const targetArtist = (getTrackArtist(trackInfo) || '').toLowerCase();
       const exactMatch = response.data.find(item =>
         item.name.toLowerCase() === trackInfo.name.toLowerCase() &&
-        item.artist.toLowerCase() === trackInfo.artist.toLowerCase()
+        (getTrackArtist(item) || '').toLowerCase() === targetArtist
       );
       if (exactMatch) return exactMatch;
 
@@ -313,8 +315,9 @@ const UserProfile = ({ onTabChange }) => {
           continue;
         }
 
+        const trackArtist = getTrackArtist(track);
         const existingByNameIndex = currentFavorites.findIndex(item =>
-          item.name === track.name && item.artist === track.artist
+          item.name === track.name && getTrackArtist(item) === trackArtist
         );
         if (existingByNameIndex >= 0) {
           newStatus[i] = { status: 'exists', message: '已存在' };
@@ -564,7 +567,7 @@ const UserProfile = ({ onTabChange }) => {
 
                       return (
                         <div key={index} className={`d-flex align-items-center mb-1 small ${statusColor}`} style={{ fontSize: '0.8rem' }}>
-                          <span className="text-truncate" style={{ maxWidth: '70%' }}>{track.name} - {track.artist}</span>
+                          <span className="text-truncate" style={{ maxWidth: '70%' }}>{track.name} - {getTrackArtist(track) || '未知歌手'}</span>
                           <span className="ms-auto flex-shrink-0 opacity-75">{status.message}</span>
                         </div>
                       );

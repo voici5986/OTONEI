@@ -4,6 +4,7 @@ import { useDownload } from '../contexts/DownloadContext';
 import MusicCardActions from './MusicCardActions';
 import '../types';
 import logger from '../utils/logger.js';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 const SearchResultItem = ({ track, searchResults, quality }) => {
   const { handlePlay, currentTrack } = usePlayer();
@@ -33,7 +34,7 @@ const SearchResultItem = ({ track, searchResults, quality }) => {
       <div className="music-card-row">
         <div className="music-card-info">
           <h6>{track.name}</h6>
-          <small>{track.artist}</small>
+          <small>{getTrackArtist(track) || '未知歌手'}</small>
         </div>
         <MusicCardActions 
           track={track}

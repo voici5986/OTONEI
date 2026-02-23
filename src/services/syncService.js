@@ -568,12 +568,12 @@ const syncData = async (uid, dataType, direction) => {
 };
 
 // 合并本地和云端收藏数据
-const mergeFavorites = async (uid) => {
+export const mergeFavorites = async (uid) => {
   return syncData(uid, 'favorites', 'merge');
 };
 
 // 合并历史记录数据
-const mergeHistory = async (uid) => {
+export const mergeHistory = async (uid) => {
   return syncData(uid, 'history', 'merge');
 };
 

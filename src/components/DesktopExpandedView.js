@@ -2,6 +2,7 @@ import React from 'react';
 import { FaTimes } from 'react-icons/fa';
 import DesktopAlbumCover from './DesktopAlbumCover';
 import { LyricLine } from './PlayerSubComponents';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 /**
  * 桌面端全屏展开视图组件
@@ -39,7 +40,7 @@ const DesktopExpandedView = ({
           </div>
           <div className="track-details mt-4">
             <h2 className="track-title">{currentTrack.name}</h2>
-            <p className="track-artist-album">{currentTrack.artist}</p>
+            <p className="track-artist-album">{getTrackArtist(currentTrack) || '未知歌手'}</p>
           </div>
         </div>
 

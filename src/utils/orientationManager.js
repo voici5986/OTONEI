@@ -85,7 +85,7 @@ export const lockToPortrait = async () => {
  * 解锁屏幕方向
  * @returns {boolean} 是否成功解锁
  */
-const unlockOrientation = () => {
+export const unlockOrientation = () => {
   // 检查是否支持Screen Orientation API
   if (!isOrientationApiSupported()) {
     logger.log('当前浏览器不支持Screen Orientation API，无需解锁屏幕方向');

@@ -167,17 +167,6 @@ export async function saveFavorites(favoritesArray) {
   }
 }
 
-// 检查歌曲是否已收藏
-async function isFavorite(trackId) {
-  const favorites = await getFavorites();
-  return favorites.some(item => item.id === trackId);
-}
-
-// 检查收藏是否已满
-async function isFavoritesFull() {
-  const favorites = await getFavorites();
-  return favorites.length >= MAX_FAVORITES_ITEMS;
-}
 
 // 添加或移除收藏
 export async function toggleFavorite(track) {
@@ -226,17 +215,6 @@ export async function getLocalUser() {
   } catch (error) {
     logger.error("获取本地用户信息失败:", error);
     return null;
-  }
-}
-
-// 删除本地用户信息
-async function removeLocalUser() {
-  try {
-    await userStore.removeItem('localUser');
-    return true;
-  } catch (error) {
-    logger.error("删除本地用户信息失败:", error);
-    return false;
   }
 }
 
@@ -424,7 +402,7 @@ export async function getSearchHistory() {
 }
 
 // 保存搜索历史
-async function saveSearchHistory(historyArray) {
+export async function saveSearchHistory(historyArray) {
   return saveHistoryGeneric(searchHistoryStore, historyArray, MAX_SEARCH_HISTORY_ITEMS);
 }
 
