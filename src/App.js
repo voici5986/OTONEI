@@ -16,6 +16,7 @@ import { clearExpiredCovers } from './services/storage';
 import useSearch from './hooks/useSearch';
 import SearchResultItem from './components/SearchResultItem';
 import SearchService from './services/SearchService';
+import { getTrackArtist } from './utils/trackFormatter';
 // 导入样式文件
 // 已移除旧的 Header.css 引用，样式现在由 Header 组件内部管理
 import './styles/AudioPlayer.css';
@@ -121,16 +122,6 @@ const AppContent = () => {
   }, [results, setCurrentPlaylist]);
 
   const deviceInfo = useDevice();
-
-  const getTrackArtist = useCallback((track) => {
-    if (!track) return '';
-    if (Array.isArray(track.ar)) return track.ar.map(a => a?.name || '').filter(Boolean).join(' / ');
-    if (Array.isArray(track.artists)) return track.artists.map(a => a?.name || '').filter(Boolean).join(' / ');
-    if (track.artist) {
-      return typeof track.artist === 'string' ? track.artist : (track.artist.name || '');
-    }
-    return '';
-  }, []);
 
   useEffect(() => {
     const trimmedQuery = query.trim();

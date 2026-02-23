@@ -128,6 +128,12 @@ export default defineConfig({
     build: {
         outDir: 'build',
     },
+    test: {
+        environment: 'jsdom',
+        setupFiles: './src/test/setupTests.js',
+        globals: true,
+        css: true
+    },
     server: {
         host: true, // 开启局域网访问
         port: 3000,
