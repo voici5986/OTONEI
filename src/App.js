@@ -175,7 +175,7 @@ const AppContent = () => {
         raw: track
       };
     });
-  }, [getTrackArtist]);
+  }, []);
 
   const handleSuggestionPick = (item) => {
     // 处理“查看更多”跳转

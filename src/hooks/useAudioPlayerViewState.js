@@ -4,6 +4,7 @@ import { FaRandom, FaRedo } from 'react-icons/fa';
 import { MdRepeatOne } from 'react-icons/md';
 import logger from '../utils/logger.js';
 import { getTrackArtist } from '../utils/trackFormatter';
+import { getTrackCoverUrl } from '../utils/trackCover';
 
 const useAudioPlayerViewState = () => {
   const {
@@ -44,13 +45,16 @@ const useAudioPlayerViewState = () => {
   useEffect(() => {
     if (!currentTrack || !('mediaSession' in navigator)) return;
 
+    const directCoverUrl = getTrackCoverUrl(currentTrack);
+
     navigator.mediaSession.metadata = new MediaMetadata({
       title: currentTrack.name,
       artist: getTrackArtist(currentTrack) || '',
       album: currentTrack.album || '',
       artwork: [
         {
-          src: coverCache[`${currentTrack.source}_${currentTrack.pic_id}_500`] || 
+          src: directCoverUrl ||
+               coverCache[`${currentTrack.source}_${currentTrack.pic_id}_500`] || 
                coverCache[`${currentTrack.source}_${currentTrack.pic_id}_300`] || 
                '/default_cover.svg',
           sizes: '500x500',

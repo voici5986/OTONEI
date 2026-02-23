@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
 import logger from '../utils/logger.js';
+import { getTrackCoverUrl } from '../utils/trackCover';
 
 const DEFAULT_COVER = '/default_cover.svg';
 
@@ -28,6 +29,13 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
     }
 
     const loadCover = async () => {
+      // 优先使用track自带的封面URL
+      const directCoverUrl = getTrackCoverUrl(track);
+      if (directCoverUrl) {
+        setImageUrl(directCoverUrl);
+        return;
+      }
+
       // 如果没有track或pic_id，使用默认封面
       if (!track || !track.pic_id) {
         setImageUrl(DEFAULT_COVER);
@@ -66,6 +74,13 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
   const forceLoadCover = async () => {
     if (lazy && !isLoaded && track && track.pic_id) {
       try {
+        const directCoverUrl = getTrackCoverUrl(track);
+        if (directCoverUrl) {
+          setImageUrl(directCoverUrl);
+          setIsLoaded(true);
+          return;
+        }
+
         // 生成缓存键
         const cacheKey = `${track.source}_${track.pic_id}_${imgSize}`;
         
