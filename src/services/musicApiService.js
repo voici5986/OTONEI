@@ -209,6 +209,7 @@ export const getLyrics = async (track) => {
     // 生成缓存键
     const cacheKey = `${track.source}_${track.lyric_id}`;
     const STORAGE_KEY_PREFIX = 'sonicflow_lyric_';
+    const LYRIC_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
     // 创建一个Promise并存储到映射中
     const lyricPromise = (async () => {
@@ -225,10 +226,18 @@ export const getLyrics = async (track) => {
           const storedLyrics = localStorage.getItem(`${STORAGE_KEY_PREFIX}${cacheKey}`);
           if (storedLyrics) {
             const parsedLyrics = JSON.parse(storedLyrics);
-            logger.log(`[getLyrics] 使用 LocalStorage 缓存的歌词: ${requestId}`);
-            // 同时更新到内存缓存，提高下次访问速度
-            setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, parsedLyrics);
-            return parsedLyrics;
+            // 兼容旧格式（直接存歌词对象）
+            const payload = parsedLyrics?.data ? parsedLyrics.data : parsedLyrics;
+            const timestamp = parsedLyrics?.timestamp || 0;
+            const isExpired = timestamp && (Date.now() - timestamp > LYRIC_CACHE_TTL);
+            if (isExpired) {
+              localStorage.removeItem(`${STORAGE_KEY_PREFIX}${cacheKey}`);
+            } else if (payload) {
+              logger.log(`[getLyrics] 使用 LocalStorage 缓存的歌词: ${requestId}`);
+              // 同时更新到内存缓存，提高下次访问速度
+              setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, payload);
+              return payload;
+            }
           }
         } catch (e) {
           logger.warn('[getLyrics] 读取 LocalStorage 缓存失败:', e);
@@ -253,9 +262,12 @@ export const getLyrics = async (track) => {
         // 3. 缓存结果到内存
         setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, lyrics);
 
-        // 4. 持久化到 LocalStorage
+        // 4. 持久化到 LocalStorage（带时间戳，便于过期清理）
         try {
-          localStorage.setItem(`${STORAGE_KEY_PREFIX}${cacheKey}`, JSON.stringify(lyrics));
+          localStorage.setItem(
+            `${STORAGE_KEY_PREFIX}${cacheKey}`,
+            JSON.stringify({ timestamp: Date.now(), data: lyrics })
+          );
         } catch (e) {
           logger.warn('[getLyrics] 写入 LocalStorage 缓存失败:', e);
         }

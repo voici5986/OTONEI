@@ -14,12 +14,13 @@ const validateTrack = (track) => {
   }
   return {
     id: track.id || `unknown-${Date.now()}-${Math.random()}`,
-    name: String(track.name || '未知歌曲'),
-    artist: String(track.artist || '未知艺术家'),
-    album: String(track.album || '未知专辑'),
-    pic_id: track.pic_id || null,
-    lyric_id: track.lyric_id || null,
-    source: track.source || 'unknown',
+    name: track.name ?? '未知歌曲',
+    // 保留原始结构，避免把数组/对象强制字符串化
+    artist: track.artist ?? '未知艺术家',
+    album: track.album ?? '未知专辑',
+    pic_id: track.pic_id ?? null,
+    lyric_id: track.lyric_id ?? null,
+    source: track.source ?? 'unknown',
   };
 };
 
