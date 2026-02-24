@@ -1,10 +1,7 @@
 #!/usr/bin/env sh
-set -e
 husky_sh="$(dirname -- "$0")/_/husky.sh"
 if [ -f "$husky_sh" ]; then
   . "$husky_sh"
 fi
 
-pnpm format
-pnpm lint
-pnpm test
+npx --no -- commitlint --edit "$1"
