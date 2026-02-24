@@ -1,5 +1,5 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/h"
 
 staged_files=$(git diff --cached --name-only)
 
@@ -18,12 +18,23 @@ fi
 pnpm format
 pnpm lint
 pnpm test
-pnpm changeset
+
+staged_files=$(git diff --cached --name-only)
+has_staged_changeset=0
+echo "$staged_files" | grep -E "^\.changeset/.*\.md$" >/dev/null 2>&1 && has_staged_changeset=1
+
+has_working_changeset=0
+ls .changeset/*.md >/dev/null 2>&1 && has_working_changeset=1
+
+if [ "$has_staged_changeset" -eq 0 ] && [ "$has_working_changeset" -eq 0 ]; then
+  node scripts/auto-changeset.js
+fi
+
 git add -A
 
 staged_files=$(git diff --cached --name-only)
 echo "$staged_files" | grep -E "^\.changeset/.*\.md$" >/dev/null 2>&1
 if [ $? -ne 0 ]; then
-  echo "ERROR: No .changeset/*.md found. Please create a changeset."
+  echo "ERROR: No .changeset/*.md found after auto-generation."
   exit 1
 fi
