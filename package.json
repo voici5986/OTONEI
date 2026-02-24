@@ -24,17 +24,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "prepare": "husky",
-    "commit": "git add . && pnpm format && pnpm lint && pnpm test && standard-version -a",
-    "release": "pnpm commit"
-  },
-  "lint-staged": {
-    "*.{js,jsx}": [
-      "npx --no-install eslint --fix",
-      "npx --no-install prettier --write"
-    ],
-    "*.{css,json,md}": [
-      "npx --no-install prettier --write"
-    ]
+    "changeset": "changeset",
+    "release": "pnpm changeset version && node scripts/release-commit.js"
   },
   "browserslist": {
     "production": [
@@ -59,11 +50,10 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.3.0",
+    "@changesets/cli": "^2.28.1",
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
-    "lint-staged": "^16.2.7",
     "prettier": "^3.8.1",
-    "standard-version": "^9.5.0",
     "vite": "^7.3.1",
     "vite-plugin-env-compatible": "^2.0.1",
     "vite-plugin-pwa": "^1.2.0",
