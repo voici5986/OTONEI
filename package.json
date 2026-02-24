@@ -25,7 +25,8 @@
     "test": "vitest run",
     "prepare": "husky",
     "changeset": "changeset",
-    "release": "pnpm changeset version"
+    "version-packages": "changeset version",
+    "release": "git add . && node scripts/auto-changeset.js && pnpm version-packages && git add . && (git commit -m \"chore(release): cut new version\" || true)"
   },
   "browserslist": {
     "production": [

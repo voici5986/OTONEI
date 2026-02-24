@@ -1,40 +1,5 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/h"
-
-staged_files=$(git diff --cached --name-only)
-
-is_release_commit=1
-for file in $staged_files; do
-  case "$file" in
-    CHANGELOG.md|package.json|pnpm-lock.yaml) ;;
-    *) is_release_commit=0 ;;
-  esac
-done
-
-if [ "$is_release_commit" -eq 1 ] && [ -n "$staged_files" ]; then
-  exit 0
-fi
-
 pnpm format
 pnpm lint
 pnpm test
-
-staged_files=$(git diff --cached --name-only)
-has_staged_changeset=0
-echo "$staged_files" | grep -E "^\.changeset/.*\.md$" >/dev/null 2>&1 && has_staged_changeset=1
-
-has_working_changeset=0
-ls .changeset/*.md >/dev/null 2>&1 && has_working_changeset=1
-
-if [ "$has_staged_changeset" -eq 0 ] && [ "$has_working_changeset" -eq 0 ]; then
-  node scripts/auto-changeset.js
-fi
-
-git add -A
-
-staged_files=$(git diff --cached --name-only)
-echo "$staged_files" | grep -E "^\.changeset/.*\.md$" >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-  echo "ERROR: No .changeset/*.md found after auto-generation."
-  exit 1
-fi
+node scripts/auto-changeset.js
+git add .

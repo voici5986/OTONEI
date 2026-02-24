@@ -1,15 +1,15 @@
-const fs = require("node:fs");
-const path = require("node:path");
+const fs = require('node:fs');
+const path = require('node:path');
 
-const pkg = require("../package.json");
-const packageName = pkg.name || "package";
-const changesetDir = path.resolve(__dirname, "..", ".changeset");
+const pkg = require('../package.json');
+const packageName = pkg.name || 'package';
+const changesetDir = path.resolve(__dirname, '..', '.changeset');
 
 if (!fs.existsSync(changesetDir)) {
   fs.mkdirSync(changesetDir, { recursive: true });
 }
 
-const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 const filename = `auto-${timestamp}.md`;
 const filepath = path.join(changesetDir, filename);
 
@@ -23,5 +23,5 @@ const content = `---
 Auto changeset.
 `;
 
-fs.writeFileSync(filepath, content, "utf8");
+fs.writeFileSync(filepath, content, 'utf8');
 console.log(`Auto-created changeset: ${path.relative(process.cwd(), filepath)}`);
