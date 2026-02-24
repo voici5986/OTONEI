@@ -1,5 +1,7 @@
 # 更新日志 (CHANGELOG)
 
+### [1.6.2](https://github.com/voici5986/OTONEI/compare/v1.6.1...v1.6.2) (2026-02-24)
+
 ### [1.6.1](https://github.com/voici5986/OTONEI/compare/v1.6.0...v1.6.1) (2026-02-24)
 
 ### 🔨 辅助任务
