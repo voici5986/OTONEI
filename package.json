@@ -25,7 +25,7 @@
     "test": "vitest run",
     "prepare": "husky",
     "commit": "cz",
-    "release": "standard-version"
+    "release": "pnpm format && pnpm lint && pnpm test && standard-version -a"
   },
   "config": {
     "commitizen": {
