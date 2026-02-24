@@ -20,21 +20,18 @@ const SearchService = {
 
     try {
       // 并行获取数据
-      const [favorites, historyData] = await Promise.all([
-        getFavorites(),
-        getHistory()
-      ]);
+      const [favorites, historyData] = await Promise.all([getFavorites(), getHistory()]);
 
       // 1. 匹配收藏
-      const matchedFavorites = (favorites || []).filter(track =>
+      const matchedFavorites = (favorites || []).filter((track) =>
         this._isMatch(track, normalizedQuery)
       );
 
       // 2. 匹配历史
-      const historyTracks = (historyData || []).map(item => item.song).filter(Boolean);
+      const historyTracks = (historyData || []).map((item) => item.song).filter(Boolean);
 
       const uniqueHistoryMap = new Map();
-      historyTracks.forEach(track => {
+      historyTracks.forEach((track) => {
         if (!track || !track.id) return;
         const uniqueKey = `${track.source || 'unknown'}_${track.id}`;
         if (!uniqueHistoryMap.has(uniqueKey)) {
@@ -42,13 +39,13 @@ const SearchService = {
         }
       });
 
-      const matchedHistory = Array.from(uniqueHistoryMap.values()).filter(track =>
+      const matchedHistory = Array.from(uniqueHistoryMap.values()).filter((track) =>
         this._isMatch(track, normalizedQuery)
       );
 
       return {
         favorites: matchedFavorites,
-        history: matchedHistory
+        history: matchedHistory,
       };
     } catch (error) {
       logger.error('SearchService.searchLocal error:', error);
@@ -75,28 +72,34 @@ const SearchService = {
         track.artistsname,
         track.author,
         // 深度提取 ar 数组
-        ...(Array.isArray(track.ar) ? track.ar.map(a => [a.name, a.tns, a.alias]) : []),
+        ...(Array.isArray(track.ar) ? track.ar.map((a) => [a.name, a.tns, a.alias]) : []),
         // 深度提取 artists 数组
-        ...(Array.isArray(track.artists) ? track.artists.map(a => [a.name, a.alias]) : []),
+        ...(Array.isArray(track.artists) ? track.artists.map((a) => [a.name, a.alias]) : []),
         // 专辑信息
         track.al?.name,
         track.al?.tns,
-        track.album?.name
-      ].flat().filter(Boolean).map(s => s.toString().toLowerCase().replace(/\s+/g, ''));
+        track.album?.name,
+      ]
+        .flat()
+        .filter(Boolean)
+        .map((s) => s.toString().toLowerCase().replace(/\s+/g, ''));
 
       // 2. 处理搜索词：支持空格分隔的“且”匹配，同时支持整体模糊匹配
       const cleanQuery = query.toLowerCase().replace(/\s+/g, '');
-      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+      const queryWords = query
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 0);
 
       // 检查整体包含（专治日文中间带标点或空格搜不到的情况）
-      const isOverallMatch = searchTargets.some(target => target.includes(cleanQuery));
+      const isOverallMatch = searchTargets.some((target) => target.includes(cleanQuery));
       if (isOverallMatch) return true;
 
       // 如果有多个词，检查是否每个词都命中（增强逻辑）
       if (queryWords.length > 1) {
-        return queryWords.every(word => {
+        return queryWords.every((word) => {
           const w = word.replace(/\s+/g, '');
-          return searchTargets.some(target => target.includes(w));
+          return searchTargets.some((target) => target.includes(w));
         });
       }
 
@@ -105,7 +108,7 @@ const SearchService = {
       logger.warn('Match check failed for track:', track, e);
       return false;
     }
-  }
+  },
 };
 
 export default SearchService;

@@ -8,7 +8,7 @@
   .navbar {
     padding: 0.3rem 1rem !important;
   }
-  
+
   /* 搜索框在横屏时的特殊处理 */
   .search-form {
     max-width: 50% !important;

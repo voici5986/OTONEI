@@ -10,7 +10,7 @@ export const CACHE_TYPES = {
   AUDIO_URLS: 'audioUrls',
   AUDIO_METADATA: 'audioMetadata',
   LYRICS: 'lyrics',
-  SEARCH_RESULTS: 'searchResults'
+  SEARCH_RESULTS: 'searchResults',
 };
 
 // 内存缓存存储对象
@@ -19,16 +19,16 @@ const memoryCache = {
   [CACHE_TYPES.AUDIO_URLS]: new Map(),
   [CACHE_TYPES.AUDIO_METADATA]: new Map(),
   [CACHE_TYPES.LYRICS]: new Map(),
-  [CACHE_TYPES.SEARCH_RESULTS]: new Map()
+  [CACHE_TYPES.SEARCH_RESULTS]: new Map(),
 };
 
 // 缓存配置（过期时间，单位毫秒）
 const CACHE_CONFIG = {
   [CACHE_TYPES.SEARCH_RESULTS]: { ttl: 5 * 60 * 1000 }, // 5分钟
-  [CACHE_TYPES.COVER_IMAGES]: { ttl: 72 * 60 * 60 * 1000 },  // 72小时
-  [CACHE_TYPES.AUDIO_URLS]: { ttl: 10 * 60 * 1000 },    // 10分钟
-  [CACHE_TYPES.AUDIO_METADATA]: { ttl: 10 * 60 * 1000 },// 10分钟
-  [CACHE_TYPES.LYRICS]: { ttl: 30 * 60 * 1000 },        // 30分钟
+  [CACHE_TYPES.COVER_IMAGES]: { ttl: 72 * 60 * 60 * 1000 }, // 72小时
+  [CACHE_TYPES.AUDIO_URLS]: { ttl: 10 * 60 * 1000 }, // 10分钟
+  [CACHE_TYPES.AUDIO_METADATA]: { ttl: 10 * 60 * 1000 }, // 10分钟
+  [CACHE_TYPES.LYRICS]: { ttl: 30 * 60 * 1000 }, // 30分钟
 };
 
 // 缓存容量上限（条目数）
@@ -37,7 +37,7 @@ const CACHE_MAX_ENTRIES = {
   [CACHE_TYPES.COVER_IMAGES]: 300,
   [CACHE_TYPES.AUDIO_URLS]: 200,
   [CACHE_TYPES.AUDIO_METADATA]: 200,
-  [CACHE_TYPES.LYRICS]: 300
+  [CACHE_TYPES.LYRICS]: 300,
 };
 
 const enforceCacheLimit = (type) => {
@@ -57,8 +57,7 @@ const enforceCacheLimit = (type) => {
  * @returns {boolean} 是否过期
  */
 const isExpired = (cacheItem) => {
-  return !cacheItem || !cacheItem.timestamp || 
-    (Date.now() - cacheItem.timestamp > cacheItem.ttl);
+  return !cacheItem || !cacheItem.timestamp || Date.now() - cacheItem.timestamp > cacheItem.ttl;
 };
 
 /**
@@ -74,13 +73,13 @@ export const setMemoryCache = (type, key, data) => {
     const cacheItem = {
       data,
       timestamp: Date.now(),
-      ttl: config.ttl
+      ttl: config.ttl,
     };
-    
+
     // 存储到对应类型的缓存映射中
     memoryCache[type].set(key, cacheItem);
     enforceCacheLimit(type);
-    
+
     logger.log(`[内存缓存] 已缓存: ${type}/${key}`);
     return data;
   } catch (error) {
@@ -98,7 +97,7 @@ export const setMemoryCache = (type, key, data) => {
 export const getMemoryCache = (type, key) => {
   try {
     const cacheItem = memoryCache[type].get(key);
-    
+
     if (cacheItem && !isExpired(cacheItem)) {
       // 刷新LRU顺序
       memoryCache[type].delete(key);
@@ -106,13 +105,13 @@ export const getMemoryCache = (type, key) => {
       logger.log(`[内存缓存] 命中: ${type}/${key}`);
       return cacheItem.data;
     }
-    
+
     // 如果过期或不存在，移除并返回null
     if (cacheItem) {
       memoryCache[type].delete(key);
       logger.log(`[内存缓存] 过期已删除: ${type}/${key}`);
     }
-    
+
     return null;
   } catch (error) {
     logger.warn(`[内存缓存] 获取缓存失败 (${type}/${key}):`, error);
@@ -132,7 +131,7 @@ export const clearMemoryCache = (type) => {
       logger.log(`[内存缓存] 已清除缓存类型: ${type}`);
     } else if (!type) {
       // 清除所有缓存
-      Object.values(CACHE_TYPES).forEach(cacheType => {
+      Object.values(CACHE_TYPES).forEach((cacheType) => {
         memoryCache[cacheType].clear();
       });
       logger.log('[内存缓存] 已清除所有缓存');
@@ -141,4 +140,3 @@ export const clearMemoryCache = (type) => {
     logger.warn('[内存缓存] 清除缓存失败:', error);
   }
 };
- 

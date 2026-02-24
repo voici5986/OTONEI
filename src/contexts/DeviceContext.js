@@ -12,14 +12,14 @@ const DeviceContext = createContext({
     width: 0,
     height: 0,
     ratio: 0,
-    pixelRatio: 1
+    pixelRatio: 1,
   },
   viewportInfo: {
     width: 0,
     height: 0,
-    ratio: 0
+    ratio: 0,
   },
-  hasTouchScreen: false
+  hasTouchScreen: false,
 });
 
 // 设备上下文提供程序组件
@@ -38,17 +38,17 @@ export const DeviceProvider = ({ children }) => {
           width: 0,
           height: 0,
           ratio: 0,
-          pixelRatio: 1
+          pixelRatio: 1,
         },
         viewportInfo: {
           width: 0,
           height: 0,
-          ratio: 0
+          ratio: 0,
         },
-        hasTouchScreen: false
+        hasTouchScreen: false,
       };
     }
-    
+
     // 客户端渲染时检测设备
     return detectDevice();
   });
@@ -57,33 +57,28 @@ export const DeviceProvider = ({ children }) => {
   useEffect(() => {
     // 服务器端渲染时不执行
     if (typeof window === 'undefined') return;
-    
+
     // 添加设备变化监听器
     const removeListener = addDeviceChangeListener((newDeviceInfo) => {
       setDeviceInfo(newDeviceInfo);
     });
-    
+
     // 清理函数
     return () => {
       removeListener();
     };
   }, []);
 
-  return (
-    <DeviceContext.Provider value={deviceInfo}>
-      {children}
-    </DeviceContext.Provider>
-  );
+  return <DeviceContext.Provider value={deviceInfo}>{children}</DeviceContext.Provider>;
 };
 
 // 自定义钩子，用于访问设备信息
 export const useDevice = () => {
   const context = useContext(DeviceContext);
-  
+
   if (context === undefined) {
     throw new Error('useDevice must be used within a DeviceProvider');
   }
-  
+
   return context;
 };
-

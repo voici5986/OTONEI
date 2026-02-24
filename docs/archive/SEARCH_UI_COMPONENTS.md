@@ -7,6 +7,7 @@
 ## 1. 核心渲染逻辑 (React - Header.js)
 
 ### 桌面端结构
+
 桌面端搜索框位于顶部 Header 中，使用了一个 `header-search-container` 容器，内部包含输入框组和绝对定位的建议面板。
 
 ```javascript
@@ -39,6 +40,7 @@
 ```
 
 ### 移动端结构
+
 移动端采用全宽设计，点击时通过 `focus-within` 触发阴影和背景变化。
 
 ```javascript
@@ -69,6 +71,7 @@
 ```
 
 ### 悬浮卡片 (Suggestions)
+
 渲染逻辑统一封装在 `renderSuggestions` 函数中，根据 `hasQuery` 状态展示“最近搜索”或“匹配结果”。
 
 ```javascript
@@ -92,6 +95,7 @@ const renderSuggestions = (extraClass) => {
 ## 2. 样式定义 (CSS - Header.css)
 
 ### 桌面端搜索框 (一体化阴影效果)
+
 通过 `:focus-within` 实现输入框与下方卡片的“无缝衔接”感。
 
 ```css
@@ -112,6 +116,7 @@ const renderSuggestions = (extraClass) => {
 ```
 
 ### 悬浮卡片动画
+
 使用位移淡入动画，模拟 Notion 的平滑弹出。
 
 ```css
@@ -128,12 +133,19 @@ const renderSuggestions = (extraClass) => {
 }
 
 @keyframes suggestionFadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 ```
 
 ### 列表项 (Notion 风格悬停)
+
 使用极浅的背景色变化。
 
 ```css
@@ -149,6 +161,7 @@ const renderSuggestions = (extraClass) => {
 ```
 
 ### 移动端适配
+
 在移动端，建议面板变为固定定位并撑满宽度。
 
 ```css

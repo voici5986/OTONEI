@@ -8,7 +8,7 @@ const DEFAULT_COVER = '/default_cover.svg';
 /**
  * 专辑封面图片获取 Hook
  * 封装封面加载、缓存查找和错误处理逻辑
- * 
+ *
  * @param {Object} track - 歌曲信息对象
  * @param {number} imgSize - 图片尺寸像素值
  * @param {boolean} lazy - 是否延迟加载
@@ -45,13 +45,13 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
       try {
         // 生成缓存键 - 使用下划线与PlayerContext保持一致
         const cacheKey = `${track.source}_${track.pic_id}_${imgSize}`;
-        
+
         // 检查缓存（除非强制获取）
         if (!forceFetch && coverCache[cacheKey]) {
           setImageUrl(coverCache[cacheKey]);
           return;
         }
-        
+
         // 尝试获取封面
         const coverUrl = await fetchCover(track.source, track.pic_id, imgSize);
         setImageUrl(coverUrl);
@@ -83,14 +83,14 @@ const useAlbumCoverImage = (track, imgSize = 500, lazy = false, forceFetch = fal
 
         // 生成缓存键
         const cacheKey = `${track.source}_${track.pic_id}_${imgSize}`;
-        
+
         // 检查缓存
         if (coverCache[cacheKey]) {
           setImageUrl(coverCache[cacheKey]);
           setIsLoaded(true);
           return;
         }
-        
+
         // 获取封面
         const coverUrl = await fetchCover(track.source, track.pic_id, imgSize);
         setImageUrl(coverUrl);

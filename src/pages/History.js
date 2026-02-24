@@ -35,28 +35,28 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       return;
     }
 
-    const filtered = currentHistory.filter(item => {
+    const filtered = currentHistory.filter((item) => {
       const song = item.song;
       const nameMatch = song.name && song.name.toLowerCase().includes(trimmedQuery);
       const albumMatch = song.album && song.album.toLowerCase().includes(trimmedQuery);
-      
+
       let artistMatch = false;
       if (typeof song.artist === 'string') {
         artistMatch = song.artist.toLowerCase().includes(trimmedQuery);
       } else if (Array.isArray(song.artists)) {
-        artistMatch = song.artists.some(a => 
+        artistMatch = song.artists.some((a) =>
           (typeof a === 'string' ? a : a.name).toLowerCase().includes(trimmedQuery)
         );
       }
-      
+
       return nameMatch || albumMatch || artistMatch;
     });
     setFilteredHistory(filtered);
   };
-  
+
   // 从PlayerContext获取状态和方法
   const { handlePlay, currentTrack } = usePlayer();
-  
+
   // 从AuthContext获取用户状态
   const { currentUser } = useAuth();
 
@@ -64,8 +64,8 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   const handleTrackPlay = (track) => {
     logger.log('从历史记录播放曲目:', track.id, track.name);
     // 创建纯歌曲列表作为播放列表
-    const songsList = filteredHistory.map(item => item.song);
-    const trackIndex = songsList.findIndex(item => item.id === track.id);
+    const songsList = filteredHistory.map((item) => item.song);
+    const trackIndex = songsList.findIndex((item) => item.id === track.id);
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, songsList);
   };
 
@@ -91,7 +91,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   // 监听收藏状态变化，同步更新历史记录中的心形图标
   useEffect(() => {
     const handleFavoritesChanged = () => {
-      setHistory(prev => [...prev]);
+      setHistory((prev) => [...prev]);
     };
 
     window.addEventListener('favorites_changed', handleFavoritesChanged);
@@ -109,9 +109,9 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       // 使用下载服务模块处理下载
       setDownloading(true);
       setCurrentDownloadingTrack(track);
-      
+
       await downloadTrack(
-        track, 
+        track,
         999, // 使用无损音质
         null, // 下载开始回调
         () => {
@@ -124,7 +124,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       logger.error('Download error:', error);
       toast.error('下载失败，请稍后重试', {
         icon: '❌',
-        autoClose: 3000
+        autoClose: 3000,
       });
       setDownloading(false);
       setCurrentDownloadingTrack(null);
@@ -135,10 +135,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   const renderLoginReminder = () => {
     if (!currentUser) {
       return (
-        <div 
-          className="login-prompt-container" 
-          onClick={() => onTabChange('user')}
-        >
+        <div className="login-prompt-container" onClick={() => onTabChange('user')}>
           <p className="login-prompt-desc">立即登录，在任何设备继续音乐旅程</p>
         </div>
       );
@@ -149,16 +146,22 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   return (
     <div className="history-page page-content-wrapper">
       {/* 移除标题栏，功能已迁移至账号页 */}
-      
+
       {/* 添加登录提醒 */}
       {renderLoginReminder()}
-      
+
       {loading ? (
         <div className="text-center my-5">
           <span className="spinner-custom"></span>
         </div>
       ) : history.length === 0 ? null : filteredHistory.length === 0 ? (
-        <div className="alert-light text-center py-4 rounded" style={{ backgroundColor: 'var(--color-background-alt)', border: '1px solid var(--color-border)' }}>
+        <div
+          className="alert-light text-center py-4 rounded"
+          style={{
+            backgroundColor: 'var(--color-background-alt)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
           没有匹配的历史记录
         </div>
       ) : (
@@ -167,7 +170,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
             const track = item.song;
             return (
               <div key={`${track.id}-${index}`} className="col-12 col-md-6">
-                <div 
+                <div
                   className={`music-card ${currentTrack?.id === track.id ? 'is-active' : ''}`}
                   onClick={() => handleTrackPlay(track)}
                 >
@@ -175,12 +178,14 @@ const History = ({ globalSearchQuery, onTabChange }) => {
                     <div className="music-card-info">
                       <div className="d-flex align-items-center">
                         <h6 className="mb-0 text-truncate">{track.name}</h6>
-                        <span className="ms-2 badge-time">{formatCompactTimestamp(item.timestamp)}</span>
+                        <span className="ms-2 badge-time">
+                          {formatCompactTimestamp(item.timestamp)}
+                        </span>
                       </div>
                       <small className="text-truncate">{getTrackArtist(track) || '未知歌手'}</small>
                     </div>
 
-                    <MusicCardActions 
+                    <MusicCardActions
                       track={track}
                       isDownloading={downloading && currentDownloadingTrack?.id === track.id}
                       onDownload={handleDownload}
@@ -196,4 +201,4 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   );
 };
 
-export default History; 
+export default History;

@@ -16,7 +16,7 @@ const COLORS = {
     card: '#1a1a1a',
     button: '#2a2a2a',
     accent: '#ffffff',
-  }
+  },
 };
 
 const PRESETS = {
@@ -36,31 +36,36 @@ const Logo = ({ params, color, size = 64 }) => {
   const lineX = center + lineOffset;
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       {/* 左侧半圆 */}
-      <path 
-        d={`M ${center} ${center - radius} A ${radius} ${radius} 0 0 0 ${center} ${center + radius}`} 
-        stroke={color} 
-        strokeWidth={strokeWidth} 
-        fill="none" 
+      <path
+        d={`M ${center} ${center - radius} A ${radius} ${radius} 0 0 0 ${center} ${center + radius}`}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill="none"
         strokeLinecap="round"
       />
       {/* 右侧半圆 */}
-      <path 
-        d={`M ${center} ${center - radius} A ${radius} ${radius} 0 0 1 ${center} ${center + radius}`} 
-        stroke={color} 
-        strokeWidth={strokeWidth} 
-        fill="none" 
+      <path
+        d={`M ${center} ${center - radius} A ${radius} ${radius} 0 0 1 ${center} ${center + radius}`}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill="none"
         strokeLinecap="round"
       />
       {/* 中间竖线 (I) */}
-      <line 
-        x1={lineX} 
-        y1={lineY1} 
-        x2={lineX} 
-        y2={lineY2} 
-        stroke={color} 
-        strokeWidth={strokeWidth} 
+      <line
+        x1={lineX}
+        y1={lineY1}
+        x2={lineX}
+        y2={lineY2}
+        stroke={color}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
       />
     </svg>
@@ -75,7 +80,7 @@ export default function OtoneiLogoGenerator() {
   const theme = darkMode ? COLORS.dark : COLORS.light;
 
   const updateParam = (key, value) => {
-    setParams(prev => ({ ...prev, [key]: value }));
+    setParams((prev) => ({ ...prev, [key]: value }));
     setActivePreset('custom');
   };
 
@@ -110,7 +115,10 @@ export default function OtoneiLogoGenerator() {
   };
 
   return (
-    <div className="min-h-screen p-8 transition-colors duration-300" style={{ backgroundColor: theme.bg }}>
+    <div
+      className="min-h-screen p-8 transition-colors duration-300"
+      style={{ backgroundColor: theme.bg }}
+    >
       <div className="max-w-6xl mx-auto">
         <header className="mb-12 flex justify-between items-start">
           <div>
@@ -134,19 +142,22 @@ export default function OtoneiLogoGenerator() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* 预览区域 */}
           <section className="space-y-6">
-            <div 
+            <div
               className="rounded-2xl p-12 flex flex-col items-center justify-center transition-colors duration-300"
-              style={{ 
+              style={{
                 backgroundColor: theme.card,
                 minHeight: '450px',
-                boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.05)'
+                boxShadow: darkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.05)',
               }}
             >
               <div className="text-center space-y-10">
                 <div className="transform scale-150">
                   <Logo params={params} color={theme.text} />
                 </div>
-                <div className="text-3xl font-light tracking-[0.2em] pt-4" style={{ color: theme.text }}>
+                <div
+                  className="text-3xl font-light tracking-[0.2em] pt-4"
+                  style={{ color: theme.text }}
+                >
                   OTONEI
                 </div>
               </div>
@@ -155,9 +166,9 @@ export default function OtoneiLogoGenerator() {
             <button
               onClick={downloadSVG}
               className="w-full px-6 py-4 rounded-xl flex items-center justify-center gap-3 transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ 
+              style={{
                 backgroundColor: theme.accent,
-                color: theme.bg
+                color: theme.bg,
               }}
             >
               <Download size={20} />
@@ -169,7 +180,10 @@ export default function OtoneiLogoGenerator() {
           <section className="space-y-8">
             {/* 预设方案 */}
             <div>
-              <label className="block text-sm font-medium mb-4 opacity-50 uppercase tracking-wider" style={{ color: theme.text }}>
+              <label
+                className="block text-sm font-medium mb-4 opacity-50 uppercase tracking-wider"
+                style={{ color: theme.text }}
+              >
                 预设方案
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -194,48 +208,59 @@ export default function OtoneiLogoGenerator() {
             </div>
 
             {/* 参数调整 */}
-            <div className="space-y-6 bg-opacity-50 rounded-2xl p-6" style={{ backgroundColor: theme.card }}>
-              <ControlSlider 
-                label="线条粗细" 
-                value={params.strokeWidth} 
-                min={1} max={8} step={0.1} 
+            <div
+              className="space-y-6 bg-opacity-50 rounded-2xl p-6"
+              style={{ backgroundColor: theme.card }}
+            >
+              <ControlSlider
+                label="线条粗细"
+                value={params.strokeWidth}
+                min={1}
+                max={8}
+                step={0.1}
                 unit="px"
                 theme={theme}
-                onChange={(v) => updateParam('strokeWidth', v)} 
+                onChange={(v) => updateParam('strokeWidth', v)}
               />
-              <ControlSlider 
-                label="竖线高度" 
-                value={params.lineHeight} 
-                min={20} max={60} step={1} 
+              <ControlSlider
+                label="竖线高度"
+                value={params.lineHeight}
+                min={20}
+                max={60}
+                step={1}
                 unit="px"
                 theme={theme}
-                onChange={(v) => updateParam('lineHeight', v)} 
+                onChange={(v) => updateParam('lineHeight', v)}
               />
-              <ControlSlider 
-                label="竖线偏移" 
-                value={params.lineOffset} 
-                min={-10} max={10} step={0.5} 
+              <ControlSlider
+                label="竖线偏移"
+                value={params.lineOffset}
+                min={-10}
+                max={10}
+                step={0.5}
                 unit="px"
                 theme={theme}
-                onChange={(v) => updateParam('lineOffset', v)} 
+                onChange={(v) => updateParam('lineOffset', v)}
               />
-              <ControlSlider 
-                label="圆圈大小" 
-                value={params.circleSize} 
-                min={20} max={60} step={1} 
+              <ControlSlider
+                label="圆圈大小"
+                value={params.circleSize}
+                min={20}
+                max={60}
+                step={1}
                 unit="px"
                 theme={theme}
-                onChange={(v) => updateParam('circleSize', v)} 
+                onChange={(v) => updateParam('circleSize', v)}
               />
             </div>
 
             {/* 设计建议 */}
-            <div 
+            <div
               className="p-6 rounded-2xl border border-opacity-10"
-              style={{ 
+              style={{
                 backgroundColor: theme.card,
                 borderColor: theme.text,
-                color: theme.text
+                color: theme.text,
               }}
             >
               <div className="flex items-center gap-2 mb-3 font-medium opacity-80">
@@ -243,9 +268,15 @@ export default function OtoneiLogoGenerator() {
                 <span>设计建议</span>
               </div>
               <ul className="space-y-2 opacity-60 text-xs leading-relaxed">
-                <li>• 极简风格推荐使用 <b>纤细</b> 预设，搭配较细的线条。</li>
-                <li>• <b>App Icon</b> 建议使用 <b>平衡</b> 或 <b>粗犷</b>，确保在小尺寸下清晰可见。</li>
-                <li>• <b>动感</b> 预设通过微调竖线位置，增加了视觉上的呼吸感。</li>
+                <li>
+                  • 极简风格推荐使用 <b>纤细</b> 预设，搭配较细的线条。
+                </li>
+                <li>
+                  • <b>App Icon</b> 建议使用 <b>平衡</b> 或 <b>粗犷</b>，确保在小尺寸下清晰可见。
+                </li>
+                <li>
+                  • <b>动感</b> 预设通过微调竖线位置，增加了视觉上的呼吸感。
+                </li>
                 <li>• 建议线条粗细保持在 2-3px 之间，以获得最佳的视觉平衡。</li>
               </ul>
             </div>
@@ -264,7 +295,8 @@ const ControlSlider = ({ label, value, min, max, step, unit, onChange, theme }) 
         {label}
       </label>
       <span className="text-xs font-mono opacity-50" style={{ color: theme.text }}>
-        {value}{unit}
+        {value}
+        {unit}
       </span>
     </div>
     <input

@@ -75,7 +75,12 @@ const User = ({ onTabChange }) => {
             {/* 本地统计 */}
             <div className="stats-card-notion p-4 h-100 d-flex flex-column">
               <div className="mb-4">
-                <h5 className="fw-bold mb-1" style={{ color: 'var(--color-text-primary)', fontSize: '1.1rem' }}>本地统计</h5>
+                <h5
+                  className="fw-bold mb-1"
+                  style={{ color: 'var(--color-text-primary)', fontSize: '1.1rem' }}
+                >
+                  本地统计
+                </h5>
                 <p className="text-muted small mb-0">数据仅存储在当前设备</p>
               </div>
 
@@ -111,9 +116,17 @@ const User = ({ onTabChange }) => {
               <div className="mt-auto pt-4 border-top">
                 <div className="d-flex flex-column gap-2">
                   <div className="d-flex align-items-center justify-content-between mb-1">
-                    <span className="fw-bold" style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>隐私与存储</span>
+                    <span
+                      className="fw-bold"
+                      style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}
+                    >
+                      隐私与存储
+                    </span>
                   </div>
-                  <p className="text-muted" style={{ fontSize: '0.75rem', lineHeight: '1.4', marginBottom: '12px' }}>
+                  <p
+                    className="text-muted"
+                    style={{ fontSize: '0.75rem', lineHeight: '1.4', marginBottom: '12px' }}
+                  >
                     清除所有本地缓存、收藏和历史记录。此操作不可撤销。
                   </p>
                   <ClearDataButton
@@ -123,7 +136,7 @@ const User = ({ onTabChange }) => {
                       backgroundColor: 'var(--color-background-alt)',
                       border: '1px solid var(--color-border)',
                       borderRadius: '8px',
-                      fontSize: '14px'
+                      fontSize: '14px',
                     }}
                   />
                 </div>
@@ -141,4 +154,4 @@ const User = ({ onTabChange }) => {
   );
 };
 
-export default User; 
+export default User;

@@ -4,27 +4,29 @@ import React from 'react';
  * 歌词切换按钮组件
  * 封装歌词展开/收起按钮的逻辑，减少代码重复
  */
-export const LyricToggleButton = ({ expanded, onToggle, className = '', iconOnly = true, customIcon = null }) => {
+export const LyricToggleButton = ({
+  expanded,
+  onToggle,
+  className = '',
+  iconOnly = true,
+  customIcon = null,
+}) => {
   return (
     <button
       onClick={onToggle}
       className={`${className} control-button`}
-      aria-label={expanded ? "收起歌词" : "展开歌词"}
-      title={expanded ? "收起歌词" : "展开歌词"}
+      aria-label={expanded ? '收起歌词' : '展开歌词'}
+      title={expanded ? '收起歌词' : '展开歌词'}
       style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
     >
       {customIcon ? (
         customIcon
       ) : iconOnly ? (
-        <img
-          src="/lyric.svg"
-          alt="歌词"
-          width="20"
-          height="20"
-          className="lyric-icon"
-        />
+        <img src="/lyric.svg" alt="歌词" width="20" height="20" className="lyric-icon" />
+      ) : expanded ? (
+        '收起歌词'
       ) : (
-        expanded ? "收起歌词" : "展开歌词"
+        '展开歌词'
       )}
     </button>
   );
@@ -59,28 +61,33 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
         borderRadius: 0,
         boxShadow: 'none',
         marginBottom: '12px',
-        position: 'relative'
+        position: 'relative',
       }}
     >
-      <div style={{
-        width: '100%',
-        maxWidth: '100%',
-        wordBreak: 'break-word',
-        letterSpacing: isActive ? '0.02em' : 'normal'
-      }}>
-        {line.text}
-      </div>
-      {line.translatedText && (
-        <div style={{
+      <div
+        style={{
           width: '100%',
           maxWidth: '100%',
           wordBreak: 'break-word',
-          paddingLeft: 0,
-          marginTop: '6px',
-          color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-muted)',
-          fontSize: isActive ? '1rem' : '0.9rem',
-          fontWeight: isActive ? '500' : 'normal'
-        }} className="translated-lyric">
+          letterSpacing: isActive ? '0.02em' : 'normal',
+        }}
+      >
+        {line.text}
+      </div>
+      {line.translatedText && (
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '100%',
+            wordBreak: 'break-word',
+            paddingLeft: 0,
+            marginTop: '6px',
+            color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-muted)',
+            fontSize: isActive ? '1rem' : '0.9rem',
+            fontWeight: isActive ? '500' : 'normal',
+          }}
+          className="translated-lyric"
+        >
           {line.translatedText}
         </div>
       )}
@@ -92,7 +99,12 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
  * 虚拟滚动歌词组件
  * 封装虚拟滚动歌词的渲染逻辑，减少代码重复
  */
-export const VirtualizedLyrics = ({ processedLyrics, visibleRange, lyricLineHeight, currentLyricIndex }) => {
+export const VirtualizedLyrics = ({
+  processedLyrics,
+  visibleRange,
+  lyricLineHeight,
+  currentLyricIndex,
+}) => {
   // 如果没有歌词，显示提示
   if (!processedLyrics || processedLyrics.length === 0) {
     return <div className="text-center text-muted py-5">暂无歌词</div>;
@@ -100,13 +112,14 @@ export const VirtualizedLyrics = ({ processedLyrics, visibleRange, lyricLineHeig
 
   // 计算占位元素高度
   const placeholderHeight = visibleRange.start * lyricLineHeight;
-  const bottomPlaceholderHeight = Math.max(0, (processedLyrics.length - visibleRange.end) * lyricLineHeight);
+  const bottomPlaceholderHeight = Math.max(
+    0,
+    (processedLyrics.length - visibleRange.end) * lyricLineHeight
+  );
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-      {placeholderHeight > 0 && (
-        <div style={{ height: `${placeholderHeight}px` }}></div>
-      )}
+      {placeholderHeight > 0 && <div style={{ height: `${placeholderHeight}px` }}></div>}
 
       {processedLyrics.slice(visibleRange.start, visibleRange.end).map((line, virtualIndex) => {
         const index = visibleRange.start + virtualIndex;
@@ -141,7 +154,7 @@ export const PlayerControlButton = ({
   className = '',
   ariaLabel = '',
   title = '',
-  children
+  children,
 }) => {
   return (
     <button

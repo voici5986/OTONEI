@@ -6,112 +6,122 @@ import logger from '../utils/logger.js';
  */
 
 class AudioEngine {
-    constructor() {
-        this.audio = new Audio();
-        this.audio.preload = 'auto';
-        this.audio.crossOrigin = 'anonymous';
-        this.eventListeners = new Map();
-        this.currentTrack = null;
+  constructor() {
+    this.audio = new Audio();
+    this.audio.preload = 'auto';
+    this.audio.crossOrigin = 'anonymous';
+    this.eventListeners = new Map();
+    this.currentTrack = null;
 
-        // 初始化默认事件转发
-        this._initEvents();
+    // 初始化默认事件转发
+    this._initEvents();
+  }
+
+  _initEvents() {
+    const events = [
+      'play',
+      'pause',
+      'ended',
+      'timeupdate',
+      'loadedmetadata',
+      'error',
+      'waiting',
+      'playing',
+      'canplay',
+    ];
+
+    events.forEach((eventName) => {
+      this.audio.addEventListener(eventName, (e) => {
+        this._dispatch(eventName, e);
+      });
+    });
+
+    // 自动重连逻辑或错误处理增强
+    this.audio.addEventListener('error', () => {
+      logger.error('[AudioEngine] 播放错误:', this.audio.error);
+    });
+  }
+
+  // 注册事件监听
+  on(event, callback) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    this.eventListeners.get(event).push(callback);
+    return () => this.off(event, callback);
+  }
+
+  off(event, callback) {
+    if (this.eventListeners.has(event)) {
+      const listeners = this.eventListeners.get(event);
+      this.eventListeners.set(
+        event,
+        listeners.filter((l) => l !== callback)
+      );
+    }
+  }
+
+  _dispatch(event, data) {
+    if (this.eventListeners.has(event)) {
+      this.eventListeners.get(event).forEach((callback) => callback(data));
+    }
+  }
+
+  // 播放控制
+  async setSource(url, track) {
+    logger.log('[AudioEngine] 设置音源:', url);
+    this.currentTrack = track;
+
+    // 停止当前播放
+    if (!this.audio.paused) {
+      this.audio.pause();
     }
 
-    _initEvents() {
-        const events = [
-            'play', 'pause', 'ended', 'timeupdate',
-            'loadedmetadata', 'error', 'waiting', 'playing', 'canplay'
-        ];
+    this.audio.src = url;
+    this.audio.load();
 
-        events.forEach(eventName => {
-            this.audio.addEventListener(eventName, (e) => {
-                this._dispatch(eventName, e);
-            });
-        });
-
-        // 自动重连逻辑或错误处理增强
-        this.audio.addEventListener('error', () => {
-            logger.error('[AudioEngine] 播放错误:', this.audio.error);
-        });
+    try {
+      await this.audio.play();
+      return true;
+    } catch (error) {
+      logger.warn('[AudioEngine] 自动播放尝试失败 (通常是浏览器限制):', error);
+      // 仍然标记为成功加载，等待用户交互触发 play()
+      return false;
     }
+  }
 
-    // 注册事件监听
-    on(event, callback) {
-        if (!this.eventListeners.has(event)) {
-            this.eventListeners.set(event, []);
-        }
-        this.eventListeners.get(event).push(callback);
-        return () => this.off(event, callback);
+  play() {
+    if (this.audio.src) {
+      return this.audio.play().catch((e) => logger.error('[AudioEngine] 播放失败:', e));
     }
+  }
 
-    off(event, callback) {
-        if (this.eventListeners.has(event)) {
-            const listeners = this.eventListeners.get(event);
-            this.eventListeners.set(event, listeners.filter(l => l !== callback));
-        }
+  pause() {
+    this.audio.pause();
+  }
+
+  seek(seconds) {
+    if (this.audio.duration) {
+      this.audio.currentTime = seconds;
     }
+  }
 
-    _dispatch(event, data) {
-        if (this.eventListeners.has(event)) {
-            this.eventListeners.get(event).forEach(callback => callback(data));
-        }
-    }
+  setVolume(val) {
+    this.audio.volume = Math.max(0, Math.min(1, val));
+  }
 
-    // 播放控制
-    async setSource(url, track) {
-        logger.log('[AudioEngine] 设置音源:', url);
-        this.currentTrack = track;
+  // 获取状态
+  get duration() {
+    return this.audio.duration || 0;
+  }
 
-        // 停止当前播放
-        if (!this.audio.paused) {
-            this.audio.pause();
-        }
+  get currentTime() {
+    return this.audio.currentTime || 0;
+  }
 
-        this.audio.src = url;
-        this.audio.load();
-
-        try {
-            await this.audio.play();
-            return true;
-        } catch (error) {
-            logger.warn('[AudioEngine] 自动播放尝试失败 (通常是浏览器限制):', error);
-            // 仍然标记为成功加载，等待用户交互触发 play()
-            return false;
-        }
-    }
-
-    play() {
-        if (this.audio.src) {
-            return this.audio.play().catch(e => logger.error('[AudioEngine] 播放失败:', e));
-        }
-    }
-
-    pause() {
-        this.audio.pause();
-    }
-
-    seek(seconds) {
-        if (this.audio.duration) {
-            this.audio.currentTime = seconds;
-        }
-    }
-
-    setVolume(val) {
-        this.audio.volume = Math.max(0, Math.min(1, val));
-    }
-
-    // 获取状态
-    get duration() {
-        return this.audio.duration || 0;
-    }
-
-    get currentTime() {
-        return this.audio.currentTime || 0;
-    }
-
-    get paused() {
-        return this.audio.paused;
-    }
+  get paused() {
+    return this.audio.paused;
+  }
 }
 
 // 单例模式

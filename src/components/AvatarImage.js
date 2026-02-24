@@ -1,14 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchAvatarDataUrl, getAvatarCache, setAvatarCache } from '../utils/avatarCache';
 
-const AvatarImage = ({
-  src,
-  cacheKey,
-  alt = 'Avatar',
-  className,
-  style,
-  fallback = null
-}) => {
+const AvatarImage = ({ src, cacheKey, alt = 'Avatar', className, style, fallback = null }) => {
   const [cachedSrc, setCachedSrc] = useState(null);
   const [currentSrc, setCurrentSrc] = useState(null);
   const [hasError, setHasError] = useState(false);

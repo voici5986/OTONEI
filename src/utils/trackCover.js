@@ -16,7 +16,7 @@ export const getTrackCoverUrl = (track) => {
     track.al?.picUrl,
     track.al?.pic_url,
     track.album?.picUrl,
-    track.album?.pic_url
+    track.album?.pic_url,
   ];
 
   for (const value of candidates) {
@@ -26,4 +26,3 @@ export const getTrackCoverUrl = (track) => {
   }
   return '';
 };
-

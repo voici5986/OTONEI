@@ -17,7 +17,7 @@ const SearchResultItem = ({ track, searchResults, quality }) => {
   const handleTrackPlay = (track) => {
     logger.log('从搜索结果播放曲目:', track.id, track.name, '音质:', activeQuality);
     // 使用当前搜索结果作为播放列表
-    const trackIndex = searchResults.findIndex(item => item.id === track.id);
+    const trackIndex = searchResults.findIndex((item) => item.id === track.id);
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, searchResults, activeQuality);
   };
 
@@ -27,7 +27,7 @@ const SearchResultItem = ({ track, searchResults, quality }) => {
   };
 
   return (
-    <div 
+    <div
       className={`music-card ${currentTrack?.id === track.id ? 'is-active' : ''}`}
       onClick={() => handleTrackPlay(track)}
     >
@@ -36,7 +36,7 @@ const SearchResultItem = ({ track, searchResults, quality }) => {
           <h6>{track.name}</h6>
           <small>{getTrackArtist(track) || '未知歌手'}</small>
         </div>
-        <MusicCardActions 
+        <MusicCardActions
           track={track}
           isDownloading={isTrackDownloading(track.id)}
           onDownload={onDownloadClick}

@@ -26,7 +26,7 @@ describe('getTrackArtist', () => {
     it('prioritizes "ar" array over "artists"', () => {
       const track = {
         ar: [{ name: 'Primary' }],
-        artists: [{ name: 'Secondary' }]
+        artists: [{ name: 'Secondary' }],
       };
       expect(getTrackArtist(track)).toBe('Primary');
     });
@@ -34,7 +34,7 @@ describe('getTrackArtist', () => {
     it('prioritizes "artists" array over "artist"', () => {
       const track = {
         artists: [{ name: 'Primary' }],
-        artist: 'Secondary'
+        artist: 'Secondary',
       };
       expect(getTrackArtist(track)).toBe('Primary');
     });
@@ -43,7 +43,7 @@ describe('getTrackArtist', () => {
       const track = {
         artist: 'Primary',
         artistsname: 'Secondary',
-        singer: 'Tertiary'
+        singer: 'Tertiary',
       };
       expect(getTrackArtist(track)).toBe('Primary');
     });
@@ -51,7 +51,7 @@ describe('getTrackArtist', () => {
     it('prioritizes "artist" over "al.artist"', () => {
       const track = {
         artist: 'Primary',
-        al: { artist: 'Secondary' }
+        al: { artist: 'Secondary' },
       };
       expect(getTrackArtist(track)).toBe('Primary');
     });
@@ -77,7 +77,9 @@ describe('getTrackArtist', () => {
 
     it('falls back to "al.artist" (nested object)', () => {
       expect(getTrackArtist({ al: { artist: 'Album Artist' } })).toBe('Album Artist');
-      expect(getTrackArtist({ al: { artist: { name: 'Album Artist Obj' } } })).toBe('Album Artist Obj');
+      expect(getTrackArtist({ al: { artist: { name: 'Album Artist Obj' } } })).toBe(
+        'Album Artist Obj'
+      );
     });
   });
 
@@ -94,27 +96,21 @@ describe('getTrackArtist', () => {
 
     it('filters out null/undefined/empty values in arrays', () => {
       const track = {
-        ar: [
-          { name: 'Valid' },
-          null,
-          undefined,
-          { name: '' },
-          { name: null }
-        ]
+        ar: [{ name: 'Valid' }, null, undefined, { name: '' }, { name: null }],
       };
       expect(getTrackArtist(track)).toBe('Valid');
     });
 
     it('handles mixed types in "artist" array', () => {
       const track = {
-        artist: ['String Artist', { name: 'Object Artist' }, null]
+        artist: ['String Artist', { name: 'Object Artist' }, null],
       };
       expect(getTrackArtist(track)).toBe('String Artist / Object Artist');
     });
 
     it('ignores artist array items without name', () => {
       const track = {
-        artist: [{ id: 1 }, { name: 'Valid' }, null]
+        artist: [{ id: 1 }, { name: 'Valid' }, null],
       };
       expect(getTrackArtist(track)).toBe('Valid');
     });

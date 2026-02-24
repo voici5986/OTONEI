@@ -18,7 +18,7 @@ const Header = ({
   onKeyDown,
   onSuggestionPick,
   onShowMore,
-  selectedIndex = -1
+  selectedIndex = -1,
 }) => {
   const { currentUser } = useAuth();
 
@@ -39,7 +39,7 @@ const Header = ({
     history: [],
     searchHistory: [],
     favoritesExtraCount: 0,
-    historyExtraCount: 0
+    historyExtraCount: 0,
   };
   const hasQuery = searchQuery && searchQuery.trim().length > 0;
 
@@ -81,10 +81,7 @@ const Header = ({
               <div className="suggestion-section-title d-flex justify-content-between align-items-center">
                 <span>最近搜索</span>
                 {historyTotal > 0 && (
-                  <span
-                    className="clear-history-link"
-                    onClick={handleClearHistory}
-                  >
+                  <span className="clear-history-link" onClick={handleClearHistory}>
                     清空
                   </span>
                 )}
@@ -153,18 +150,19 @@ const Header = ({
             ) : (
               <div className="suggestion-empty">暂无匹配</div>
             )}
-            {favExtraCount > 0 && (() => {
-              const isSelected = globalIdx === selectedIndex;
-              globalIdx++;
-              return (
-                <div
-                  className={`suggestion-more ${isSelected ? 'selected' : ''}`}
-                  onClick={() => onShowMore && onShowMore('favorites')}
-                >
-                  还有 {favExtraCount} 首收藏 →
-                </div>
-              );
-            })()}
+            {favExtraCount > 0 &&
+              (() => {
+                const isSelected = globalIdx === selectedIndex;
+                globalIdx++;
+                return (
+                  <div
+                    className={`suggestion-more ${isSelected ? 'selected' : ''}`}
+                    onClick={() => onShowMore && onShowMore('favorites')}
+                  >
+                    还有 {favExtraCount} 首收藏 →
+                  </div>
+                );
+              })()}
           </div>
 
           <div className="suggestion-divider"></div>
@@ -190,18 +188,19 @@ const Header = ({
             ) : (
               <div className="suggestion-empty">暂无匹配</div>
             )}
-            {histExtraCount > 0 && (() => {
-              const isSelected = globalIdx === selectedIndex;
-              globalIdx++;
-              return (
-                <div
-                  className={`suggestion-more ${isSelected ? 'selected' : ''}`}
-                  onClick={() => onShowMore && onShowMore('history')}
-                >
-                  还有 {histExtraCount} 首历史 →
-                </div>
-              );
-            })()}
+            {histExtraCount > 0 &&
+              (() => {
+                const isSelected = globalIdx === selectedIndex;
+                globalIdx++;
+                return (
+                  <div
+                    className={`suggestion-more ${isSelected ? 'selected' : ''}`}
+                    onClick={() => onShowMore && onShowMore('history')}
+                  >
+                    还有 {histExtraCount} 首历史 →
+                  </div>
+                );
+              })()}
           </div>
         </div>
 
@@ -257,7 +256,7 @@ const Header = ({
           >
             <div className="header-user-info text-end me-3 d-none d-xl-block">
               <div className="user-name small fw-bold text-truncate" style={{ maxWidth: '120px' }}>
-                {currentUser ? (currentUser.displayName || '已登录用户') : '未登录'}
+                {currentUser ? currentUser.displayName || '已登录用户' : '未登录'}
               </div>
               <div className="user-status text-muted" style={{ fontSize: '0.7rem' }}>
                 {currentUser ? '在线' : '点击登录'}
@@ -271,21 +270,34 @@ const Header = ({
                 alt="Profile"
                 className="rounded-circle shadow-sm"
                 style={{ width: '32px', height: '32px', objectFit: 'cover' }}
-                fallback={userInitial ? (
-                  <div
-                    className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
-                    style={{ width: '32px', height: '32px', fontSize: '0.9rem', backgroundColor: 'var(--color-text-primary)', color: 'var(--card-background)' }}
-                  >
-                    {userInitial}
-                  </div>
-                ) : (
-                  <div
-                    className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
-                    style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-background-alt)', color: 'var(--color-text-tertiary)' }}
-                  >
-                    <FaUser size={14} />
-                  </div>
-                )}
+                fallback={
+                  userInitial ? (
+                    <div
+                      className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        fontSize: '0.9rem',
+                        backgroundColor: 'var(--color-text-primary)',
+                        color: 'var(--card-background)',
+                      }}
+                    >
+                      {userInitial}
+                    </div>
+                  ) : (
+                    <div
+                      className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        backgroundColor: 'var(--color-background-alt)',
+                        color: 'var(--color-text-tertiary)',
+                      }}
+                    >
+                      <FaUser size={14} />
+                    </div>
+                  )
+                }
               />
             </div>
           </div>

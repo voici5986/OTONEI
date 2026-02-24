@@ -9,23 +9,24 @@ const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
 
   // 判断当前歌曲是否已收藏
-  const isFav = track && track.id && typeof isFavorite === 'function' ? isFavorite(track.id) : false;
+  const isFav =
+    track && track.id && typeof isFavorite === 'function' ? isFavorite(track.id) : false;
 
   // 处理收藏/取消收藏
   const handleToggleFavorite = async () => {
     if (!track || !track.id || isToggling) return;
-    
+
     setIsToggling(true);
     try {
       // 切换收藏状态
       const result = await toggleFavorite(track);
-      
+
       // 如果收藏列表已满，显示提示
       if (result.error === 'favorites_limit') {
         toast.warning('收藏列表已满，请删除一些收藏后再试');
         return;
       }
-      
+
       // 如果传入了回调函数，执行它
       if (onToggle) {
         onToggle(result.added);
@@ -54,16 +55,12 @@ const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
         alignItems: 'center',
         justifyContent: 'center',
         cursor: isToggling ? 'not-allowed' : 'pointer',
-        color: isFav ? 'var(--color-accent)' : 'var(--color-text-tertiary)'
+        color: isFav ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
       }}
     >
-      {isFav ? (
-        <FaHeart size={iconSize} />
-      ) : (
-        <FaRegHeart size={iconSize} />
-      )}
+      {isFav ? <FaHeart size={iconSize} /> : <FaRegHeart size={iconSize} />}
     </button>
   );
 };
 
-export default HeartButton; 
+export default HeartButton;

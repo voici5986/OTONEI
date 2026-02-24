@@ -37,9 +37,12 @@ const useNavigationState = ({ activeTab, onTabChange }) => {
     setExpanded(false); // 自动收起菜单
   };
 
-  const userInitial = currentUser && currentUser.displayName ?
-    currentUser.displayName[0].toUpperCase() :
-    (currentUser && currentUser.email ? currentUser.email[0].toUpperCase() : null);
+  const userInitial =
+    currentUser && currentUser.displayName
+      ? currentUser.displayName[0].toUpperCase()
+      : currentUser && currentUser.email
+        ? currentUser.email[0].toUpperCase()
+        : null;
 
   return {
     expanded,
@@ -48,7 +51,7 @@ const useNavigationState = ({ activeTab, onTabChange }) => {
     currentUser,
     handleNavItemClick,
     userInitial,
-    navItems: NAV_ITEMS
+    navItems: NAV_ITEMS,
   };
 };
 

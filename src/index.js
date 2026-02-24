@@ -52,7 +52,3 @@ root.render(
     </DeviceProvider>
   </AuthProvider>
 );
-
-
-
-

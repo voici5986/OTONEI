@@ -13,7 +13,7 @@ const Navigation = ({ activeTab, onTabChange }) => {
     currentUser,
     handleNavItemClick,
     userInitial,
-    navItems
+    navItems,
   } = useNavigationState({ activeTab, onTabChange });
 
   return (

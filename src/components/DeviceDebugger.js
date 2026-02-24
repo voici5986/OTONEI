@@ -7,11 +7,11 @@ import { useDevice } from '../contexts/DeviceContext';
  */
 const DeviceDebugger = ({ show = false }) => {
   const deviceInfo = useDevice();
-  
+
   if (!show) return null;
-  
+
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         bottom: '10px',
@@ -23,7 +23,7 @@ const DeviceDebugger = ({ show = false }) => {
         fontSize: '12px',
         zIndex: 'var(--z-index-overlay)',
         maxWidth: '300px',
-        overflowX: 'auto'
+        overflowX: 'auto',
       }}
     >
       <h5 style={{ fontSize: '14px', marginBottom: '5px' }}>设备信息</h5>
@@ -46,16 +46,15 @@ const DeviceDebugger = ({ show = false }) => {
         <strong>触摸屏:</strong> {deviceInfo.hasTouchScreen ? '是' : '否'}
       </div>
       <div>
-        <strong>屏幕:</strong> {deviceInfo.screenInfo.width}x{deviceInfo.screenInfo.height} 
-        (比例: {deviceInfo.screenInfo.ratio.toFixed(2)}, 
-        像素比: {deviceInfo.screenInfo.pixelRatio})
+        <strong>屏幕:</strong> {deviceInfo.screenInfo.width}x{deviceInfo.screenInfo.height}
+        (比例: {deviceInfo.screenInfo.ratio.toFixed(2)}, 像素比: {deviceInfo.screenInfo.pixelRatio})
       </div>
       <div>
-        <strong>视口:</strong> {deviceInfo.viewportInfo.width}x{deviceInfo.viewportInfo.height} 
+        <strong>视口:</strong> {deviceInfo.viewportInfo.width}x{deviceInfo.viewportInfo.height}
         (比例: {deviceInfo.viewportInfo.ratio.toFixed(2)})
       </div>
     </div>
   );
 };
 
-export default DeviceDebugger; 
+export default DeviceDebugger;

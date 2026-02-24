@@ -41,19 +41,21 @@ export const PlayerProvider = ({ children }) => {
     if (!text) return [];
     const lines = text.split('\n');
     const pattern = /\[(\d+):(\d+\.\d+)\]/;
-    return lines.map(line => {
-      const match = line.match(pattern);
-      if (match) {
-        const minutes = parseFloat(match[1]);
-        const seconds = parseFloat(match[2]);
-        return { time: minutes * 60 + seconds, text: line.replace(match[0], '').trim() };
-      }
-      return null;
-    }).filter(Boolean);
+    return lines
+      .map((line) => {
+        const match = line.match(pattern);
+        if (match) {
+          const minutes = parseFloat(match[1]);
+          const seconds = parseFloat(match[2]);
+          return { time: minutes * 60 + seconds, text: line.replace(match[0], '').trim() };
+        }
+        return null;
+      })
+      .filter(Boolean);
   }, []);
 
   const formatTime = useCallback((seconds) => {
-    if (isNaN(seconds)) return "0:00";
+    if (isNaN(seconds)) return '0:00';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
@@ -69,24 +71,27 @@ export const PlayerProvider = ({ children }) => {
   }, [isPlaying]);
 
   // 按需获取歌词的方法
-  const fetchLyrics = useCallback(async (track) => {
-    if (!track) return;
-    try {
-      const data = await getLyrics(track);
-      if (data && data.raw) {
-        setLyricData({
-          rawLyric: data.raw,
-          tLyric: data.translated || '',
-          parsedLyric: parseLyric(data.raw)
-        });
+  const fetchLyrics = useCallback(
+    async (track) => {
+      if (!track) return;
+      try {
+        const data = await getLyrics(track);
+        if (data && data.raw) {
+          setLyricData({
+            rawLyric: data.raw,
+            tLyric: data.translated || '',
+            parsedLyric: parseLyric(data.raw),
+          });
+        }
+      } catch (error) {
+        logger.error('[PlayerContext] 按需获取歌词失败:', error);
       }
-    } catch (error) {
-      logger.error('[PlayerContext] 按需获取歌词失败:', error);
-    }
-  }, [parseLyric]);
+    },
+    [parseLyric]
+  );
 
   const toggleLyric = useCallback(() => {
-    setLyricExpanded(prev => {
+    setLyricExpanded((prev) => {
       const nextState = !prev;
       // 如果即将展开且当前没有歌词，则触发加载
       if (nextState && currentTrack && !lyricData.rawLyric) {
@@ -106,7 +111,7 @@ export const PlayerProvider = ({ children }) => {
   // 获取封面的统一方法
   const fetchCover = useCallback(async (source, picId, size = 500) => {
     const cacheKey = `${source}_${picId}_${size}`;
-    
+
     // 1. 检查内存缓存（使用ref避免频繁重建）
     if (coverCacheRef.current[cacheKey]) return coverCacheRef.current[cacheKey];
 
@@ -115,7 +120,7 @@ export const PlayerProvider = ({ children }) => {
       const storedUrl = await getCoverFromStorage(cacheKey);
       if (storedUrl) {
         coverCacheRef.current[cacheKey] = storedUrl;
-        setCoverCache(prev => ({ ...prev, [cacheKey]: storedUrl }));
+        setCoverCache((prev) => ({ ...prev, [cacheKey]: storedUrl }));
         return storedUrl;
       }
     } catch (e) {
@@ -127,7 +132,7 @@ export const PlayerProvider = ({ children }) => {
       const url = await forceGetCoverImage(source, picId, size);
       if (url && !url.includes('default_cover')) {
         coverCacheRef.current[cacheKey] = url;
-        setCoverCache(prev => ({ ...prev, [cacheKey]: url }));
+        setCoverCache((prev) => ({ ...prev, [cacheKey]: url }));
         saveCoverToStorage(cacheKey, url).catch(() => {});
       }
       return url;
@@ -137,53 +142,56 @@ export const PlayerProvider = ({ children }) => {
     }
   }, []);
 
-  const handlePlay = useCallback(async (track, index = -1, playlist = null, quality = 999, forceRefresh = false) => {
-    try {
-      if (!isOnline) {
-        toast.warn('离线状态无法播放在线音乐'); // 假设全局有toast或通过其他方式提示
-        return;
-      }
-
-      // 如果不是重试，则重置重试计数
-      if (!forceRefresh) {
-        retryCountRef.current = 0;
-      }
-
-      // 更新列表逻辑
-      if (playlist) setCurrentPlaylist(playlist);
-      if (index >= 0) setCurrentIndex(index);
-
-      // 重置 UI 进度项（防止旧歌进度闪烁）
-      if (!forceRefresh) {
-        setPlayProgress(0);
-        setPlayedSeconds(0);
-        setTotalSeconds(0);
-        setLyricData({ rawLyric: '', tLyric: '', parsedLyric: [] });
-        setCurrentLyricIndex(-1);
-      }
-
-      // 加载并播放
+  const handlePlay = useCallback(
+    async (track, index = -1, playlist = null, quality = 999, forceRefresh = false) => {
       try {
-        await playMusic(track, quality, forceRefresh);
-      } catch (error) {
-        logger.warn(`[PlayerContext] 音质 ${quality} 请求失败，尝试降级到 320:`, error);
-        if (quality !== 320) {
-          await playMusic(track, 320, forceRefresh);
-        } else {
-          throw error; // 如果已经是 320 还失败，则抛出
+        if (!isOnline) {
+          toast.warn('离线状态无法播放在线音乐'); // 假设全局有toast或通过其他方式提示
+          return;
         }
-      }
 
-      if (!forceRefresh) {
-        addToHistory(track);
-      }
+        // 如果不是重试，则重置重试计数
+        if (!forceRefresh) {
+          retryCountRef.current = 0;
+        }
 
-      // 核心流程：仅请求并补全 500 尺寸的高清封面
-      fetchCover(track.source, track.pic_id, 500).catch(() => {});
-    } catch (error) {
-      logger.error('[PlayerContext] handlePlay error:', error);
-    }
-  }, [isOnline, fetchCover]);
+        // 更新列表逻辑
+        if (playlist) setCurrentPlaylist(playlist);
+        if (index >= 0) setCurrentIndex(index);
+
+        // 重置 UI 进度项（防止旧歌进度闪烁）
+        if (!forceRefresh) {
+          setPlayProgress(0);
+          setPlayedSeconds(0);
+          setTotalSeconds(0);
+          setLyricData({ rawLyric: '', tLyric: '', parsedLyric: [] });
+          setCurrentLyricIndex(-1);
+        }
+
+        // 加载并播放
+        try {
+          await playMusic(track, quality, forceRefresh);
+        } catch (error) {
+          logger.warn(`[PlayerContext] 音质 ${quality} 请求失败，尝试降级到 320:`, error);
+          if (quality !== 320) {
+            await playMusic(track, 320, forceRefresh);
+          } else {
+            throw error; // 如果已经是 320 还失败，则抛出
+          }
+        }
+
+        if (!forceRefresh) {
+          addToHistory(track);
+        }
+
+        // 核心流程：仅请求并补全 500 尺寸的高清封面
+        fetchCover(track.source, track.pic_id, 500).catch(() => {});
+      } catch (error) {
+        logger.error('[PlayerContext] handlePlay error:', error);
+      }
+    },
+    [isOnline, fetchCover]
+  );
 
   const handleNext = useCallback(() => {
     if (currentPlaylist.length <= 1) return;
@@ -244,7 +252,7 @@ export const PlayerProvider = ({ children }) => {
 
       // 更新歌词索引
       if (lyricData.parsedLyric.length > 0) {
-        let index = lyricData.parsedLyric.findIndex(line => line.time > current);
+        let index = lyricData.parsedLyric.findIndex((line) => line.time > current);
         index = index === -1 ? lyricData.parsedLyric.length - 1 : Math.max(0, index - 1);
         if (index !== lyricIndexRef.current) {
           setCurrentLyricIndex(index);
@@ -273,7 +281,9 @@ export const PlayerProvider = ({ children }) => {
       if (state.error) {
         // 如果发生播放错误，尝试自动刷新 URL 并重试一次
         if (retryCountRef.current < MAX_RETRIES && state.track) {
-          logger.warn(`[PlayerContext] 播放出错，尝试刷新 URL 并重试 (${retryCountRef.current + 1}/${MAX_RETRIES})`);
+          logger.warn(
+            `[PlayerContext] 播放出错，尝试刷新 URL 并重试 (${retryCountRef.current + 1}/${MAX_RETRIES})`
+          );
           retryCountRef.current += 1;
           handlePlay(state.track, currentIndex, currentPlaylist, 999, true); // 强制刷新重试
         } else {
@@ -285,13 +295,36 @@ export const PlayerProvider = ({ children }) => {
   }, [currentTrack, currentIndex, currentPlaylist, handlePlay]);
 
   const contextValue = {
-    currentTrack, playerUrl, isPlaying, playProgress, playedSeconds, totalSeconds,
-    currentPlaylist, currentIndex, playMode, lyricData, currentLyricIndex, lyricExpanded,
-    coverCache, lyricsContainerRef,
-    setIsPlaying, setTotalSeconds, setCurrentPlaylist, togglePlay, setLyricExpanded,
-    toggleLyric, handleProgress: () => { }, // 兼容性空函数，现在由监听器处理
-    handleEnded, handlePlay, handleNext, handlePrevious, handleTogglePlayMode,
-    formatTime, parseLyric, seekTo, fetchCover
+    currentTrack,
+    playerUrl,
+    isPlaying,
+    playProgress,
+    playedSeconds,
+    totalSeconds,
+    currentPlaylist,
+    currentIndex,
+    playMode,
+    lyricData,
+    currentLyricIndex,
+    lyricExpanded,
+    coverCache,
+    lyricsContainerRef,
+    setIsPlaying,
+    setTotalSeconds,
+    setCurrentPlaylist,
+    togglePlay,
+    setLyricExpanded,
+    toggleLyric,
+    handleProgress: () => {}, // 兼容性空函数，现在由监听器处理
+    handleEnded,
+    handlePlay,
+    handleNext,
+    handlePrevious,
+    handleTogglePlayMode,
+    formatTime,
+    parseLyric,
+    seekTo,
+    fetchCover,
   };
 
   return <PlayerContext.Provider value={contextValue}>{children}</PlayerContext.Provider>;

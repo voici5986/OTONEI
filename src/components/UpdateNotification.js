@@ -57,23 +57,29 @@ const UpdateNotification = () => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 'var(--z-index-notification)',
-          padding: '20px'
+          padding: '20px',
         }}
       >
-        <div 
+        <div
           className="toast-custom"
           style={{
             width: '100%',
             maxWidth: '320px',
             boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-            animation: 'zoomIn 0.3s ease-out'
+            animation: 'zoomIn 0.3s ease-out',
           }}
         >
           <div className="toast-header-custom" style={{ padding: '15px' }}>
             <span style={{ fontSize: '1.1rem' }}>发现新版本</span>
-            <button 
+            <button
               onClick={close}
-              style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '5px' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'inherit',
+                cursor: 'pointer',
+                padding: '5px',
+              }}
               aria-label="关闭"
             >
               <FaTimes />
@@ -84,14 +90,14 @@ const UpdateNotification = () => {
               OTONEI 有重要的更新可用。为了获得最佳体验，建议您立即更新。
             </p>
             <div className="d-grid">
-              <button 
+              <button
                 onClick={() => updateServiceWorker(true)}
                 className="d-flex align-items-center justify-content-center btn-primary-custom"
-                style={{ 
-                  padding: '12px', 
+                style={{
+                  padding: '12px',
                   fontSize: '1rem',
                   width: '100%',
-                  fontWeight: '600'
+                  fontWeight: '600',
                 }}
               >
                 <FaSync className="me-2" />
@@ -112,20 +118,26 @@ const UpdateNotification = () => {
 
   // 桌面端保持原有右下角 Toast 样式
   return (
-    <div 
-      style={{ 
-        position: 'fixed', 
-        bottom: '20px', 
-        right: '20px', 
-        zIndex: 'var(--z-index-notification)'
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 'var(--z-index-notification)',
       }}
     >
       <div className="toast-custom">
         <div className="toast-header-custom">
           <span>发现新版本</span>
-          <button 
+          <button
             onClick={close}
-            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '0' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              padding: '0',
+            }}
           >
             <FaTimes />
           </button>
@@ -133,7 +145,7 @@ const UpdateNotification = () => {
         <div className="toast-body-custom">
           <p className="mb-2">OTONEI 有新的更新可用。</p>
           <div className="d-flex justify-content-end">
-            <button 
+            <button
               onClick={() => updateServiceWorker(true)}
               className="d-flex align-items-center btn-primary-custom"
               style={{ padding: '6px 16px', fontSize: '0.85rem' }}

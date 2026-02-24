@@ -21,10 +21,7 @@ const AudioPlayer = () => {
   return isMobile ? (
     <MobilePlayerView {...viewState} />
   ) : (
-    <DesktopPlayerView 
-      {...viewState} 
-      playerUrl={playerContextProps.playerUrl} 
-    />
+    <DesktopPlayerView {...viewState} playerUrl={playerContextProps.playerUrl} />
   );
 };
 

@@ -25,7 +25,7 @@ const useAudioPlayerViewState = () => {
     handleTogglePlayMode,
     seekTo,
     lyricsContainerRef,
-    parseLyric
+    parseLyric,
   } = usePlayer();
 
   const [showMobileLyrics, setShowMobileLyrics] = useState(false);
@@ -53,14 +53,15 @@ const useAudioPlayerViewState = () => {
       album: currentTrack.album || '',
       artwork: [
         {
-          src: directCoverUrl ||
-               coverCache[`${currentTrack.source}_${currentTrack.pic_id}_500`] || 
-               coverCache[`${currentTrack.source}_${currentTrack.pic_id}_300`] || 
-               '/default_cover.svg',
+          src:
+            directCoverUrl ||
+            coverCache[`${currentTrack.source}_${currentTrack.pic_id}_500`] ||
+            coverCache[`${currentTrack.source}_${currentTrack.pic_id}_300`] ||
+            '/default_cover.svg',
           sizes: '500x500',
-          type: 'image/png'
-        }
-      ]
+          type: 'image/png',
+        },
+      ],
     });
 
     navigator.mediaSession.setActionHandler('play', togglePlay);
@@ -83,7 +84,7 @@ const useAudioPlayerViewState = () => {
         navigator.mediaSession.setPositionState({
           duration: totalSeconds,
           playbackRate: 1.0,
-          position: Math.min(playedSeconds, totalSeconds)
+          position: Math.min(playedSeconds, totalSeconds),
         });
       } catch (error) {
         logger.error('[MediaSession] setPositionState failed:', error);
@@ -102,7 +103,7 @@ const useAudioPlayerViewState = () => {
     const translatedLines = lyricData.tLyric ? parseLyric(lyricData.tLyric) : [];
     return lyricData.parsedLyric.map((line, index) => ({
       ...line,
-      translatedText: translatedLines[index]?.text || ''
+      translatedText: translatedLines[index]?.text || '',
     }));
   }, [lyricData, parseLyric]);
 
@@ -149,19 +150,27 @@ const useAudioPlayerViewState = () => {
 
   const getPlayModeTitle = () => {
     switch (playMode) {
-      case 'random': return '随机播放';
-      case 'repeat-one': return '单曲循环';
-      case 'sequence': return '列表循环';
-      default: return '列表循环';
+      case 'random':
+        return '随机播放';
+      case 'repeat-one':
+        return '单曲循环';
+      case 'sequence':
+        return '列表循环';
+      default:
+        return '列表循环';
     }
   };
 
   const renderPlayModeIcon = () => {
     switch (playMode) {
-      case 'random': return <FaRandom size={20} />;
-      case 'repeat-one': return <MdRepeatOne size={22} />;
-      case 'sequence': return <FaRedo size={18} />;
-      default: return <FaRedo size={18} />;
+      case 'random':
+        return <FaRandom size={20} />;
+      case 'repeat-one':
+        return <MdRepeatOne size={22} />;
+      case 'sequence':
+        return <FaRedo size={18} />;
+      default:
+        return <FaRedo size={18} />;
     }
   };
 
@@ -186,7 +195,7 @@ const useAudioPlayerViewState = () => {
     handleTouchMove,
     handleTouchEnd,
     getPlayModeTitle,
-    renderPlayModeIcon
+    renderPlayModeIcon,
   };
 };
 

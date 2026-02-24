@@ -4,43 +4,43 @@ import logger from '../utils/logger.js';
 // 配置并创建不同数据类型的存储实例
 const favoritesStore = localforage.createInstance({
   name: 'clMusicApp',
-  storeName: 'favorites'
+  storeName: 'favorites',
 });
 
 const historyStore = localforage.createInstance({
   name: 'clMusicApp',
-  storeName: 'history'
+  storeName: 'history',
 });
 
 // 添加搜索历史存储实例
 const searchHistoryStore = localforage.createInstance({
   name: 'clMusicApp',
-  storeName: 'searchHistory'
+  storeName: 'searchHistory',
 });
 
 // 添加同步状态存储实例
 const syncStore = localforage.createInstance({
   name: 'clMusicApp',
-  storeName: 'syncStatus'
+  storeName: 'syncStatus',
 });
 
 // 添加本地用户存储实例
 const userStore = localforage.createInstance({
   name: 'clMusicApp',
-  storeName: 'localUser'
+  storeName: 'localUser',
 });
 
 // 网络状态存储实例
 const networkStore = localforage.createInstance({
   name: 'clMusicApp',
-  storeName: 'networkStatus'
+  storeName: 'networkStatus',
 });
 
 // 添加封面图片缓存存储实例
 const coverStore = localforage.createInstance({
   name: 'clMusicApp',
   storeName: 'coverCache',
-  driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE]
+  driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
 });
 
 // 封面缓存过期时间：30天（毫秒）
@@ -62,9 +62,9 @@ export async function saveCoverToStorage(key, imageUrl) {
     // 存储图片URL和时间戳
     await coverStore.setItem(key, {
       url: imageUrl,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     logger.log(`[saveCoverToStorage] 封面已缓存至本地: ${key}`);
     return true;
   } catch (error) {
@@ -81,20 +81,18 @@ export async function saveCoverToStorage(key, imageUrl) {
 export async function getCoverFromStorage(key) {
   try {
     const data = await coverStore.getItem(key);
-    
+
     // 如果没有数据或数据已过期，返回null
-    if (!data || !data.url || !data.timestamp || 
-        (Date.now() - data.timestamp > COVER_CACHE_TTL)) {
-      
+    if (!data || !data.url || !data.timestamp || Date.now() - data.timestamp > COVER_CACHE_TTL) {
       // 如果数据已过期，删除它
       if (data) {
         await coverStore.removeItem(key);
         logger.log(`[getCoverFromStorage] 封面缓存已过期: ${key}`);
       }
-      
+
       return null;
     }
-    
+
     logger.log(`[getCoverFromStorage] 使用本地封面缓存: ${key}`);
     return data.url;
   } catch (error) {
@@ -113,11 +111,11 @@ export async function clearExpiredCovers(options = {}) {
     const now = Date.now();
     const expireThreshold = now - COVER_CACHE_TTL;
     let removedCount = 0;
-    
+
     // 获取所有键
     const keys = await coverStore.keys();
     const limitedKeys = keys.slice(0, Math.max(0, maxKeys));
-    
+
     // 检查每个缓存项
     for (let i = 0; i < limitedKeys.length; i++) {
       const key = limitedKeys[i];
@@ -129,11 +127,13 @@ export async function clearExpiredCovers(options = {}) {
 
       if (batchSize > 0 && (i + 1) % batchSize === 0) {
         // 分批让出主线程，避免启动时卡顿
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
-    
-    logger.log(`[clearExpiredCovers] 已清除 ${removedCount} 个过期的封面缓存 (扫描 ${limitedKeys.length}/${keys.length})`);
+
+    logger.log(
+      `[clearExpiredCovers] 已清除 ${removedCount} 个过期的封面缓存 (扫描 ${limitedKeys.length}/${keys.length})`
+    );
     return removedCount;
   } catch (error) {
     logger.error('[clearExpiredCovers] 清除过期封面缓存失败:', error);
@@ -152,7 +152,7 @@ export async function getFavorites() {
     const data = await favoritesStore.getItem('items');
     return data || []; // 如果没有数据，返回空数组
   } catch (error) {
-    logger.error("Error getting favorites:", error);
+    logger.error('Error getting favorites:', error);
     return [];
   }
 }
@@ -162,16 +162,15 @@ export async function saveFavorites(favoritesArray) {
     await favoritesStore.setItem('items', favoritesArray);
     return true;
   } catch (error) {
-    logger.error("保存收藏列表失败:", error);
+    logger.error('保存收藏列表失败:', error);
     return false;
   }
 }
 
-
 // 添加或移除收藏
 export async function toggleFavorite(track) {
   const favorites = await getFavorites();
-  const index = favorites.findIndex(item => item.id === track.id);
+  const index = favorites.findIndex((item) => item.id === track.id);
 
   if (index > -1) {
     // 已收藏，则移除
@@ -186,7 +185,7 @@ export async function toggleFavorite(track) {
     // 未收藏，则添加到列表开头，并添加修改时间戳
     const trackWithTimestamp = {
       ...track,
-      modifiedAt: Date.now() // 添加修改时间戳
+      modifiedAt: Date.now(), // 添加修改时间戳
     };
     favorites.unshift(trackWithTimestamp);
     await saveFavorites(favorites);
@@ -203,7 +202,7 @@ export async function saveLocalUser(user) {
     await userStore.setItem('localUser', user);
     return true;
   } catch (error) {
-    logger.error("保存本地用户信息失败:", error);
+    logger.error('保存本地用户信息失败:', error);
     return false;
   }
 }
@@ -213,7 +212,7 @@ export async function getLocalUser() {
   try {
     return await userStore.getItem('localUser');
   } catch (error) {
-    logger.error("获取本地用户信息失败:", error);
+    logger.error('获取本地用户信息失败:', error);
     return null;
   }
 }
@@ -228,13 +227,13 @@ export async function saveNetworkStatus(status) {
     const completeStatus = {
       online: status.online ?? navigator.onLine,
       lastChecked: status.lastChecked ?? Date.now(),
-      connectionType: status.connectionType ?? 'unknown'
+      connectionType: status.connectionType ?? 'unknown',
     };
-    
+
     await networkStore.setItem('status', completeStatus);
     return true;
   } catch (error) {
-    logger.error("保存网络状态失败:", error);
+    logger.error('保存网络状态失败:', error);
     return false;
   }
 }
@@ -245,25 +244,25 @@ export async function getNetworkStatus() {
     const status = await networkStore.getItem('status');
     if (!status) {
       // 默认状态
-      return { 
-        online: navigator.onLine, 
+      return {
+        online: navigator.onLine,
         lastChecked: Date.now(),
-        connectionType: navigator.onLine ? 'unknown' : 'offline'
+        connectionType: navigator.onLine ? 'unknown' : 'offline',
       };
     }
-    
+
     // 确保返回的对象包含connectionType字段
     if (!status.connectionType) {
       status.connectionType = status.online ? 'unknown' : 'offline';
     }
-    
+
     return status;
   } catch (error) {
-    logger.error("获取网络状态失败:", error);
-    return { 
-      online: navigator.onLine, 
+    logger.error('获取网络状态失败:', error);
+    return {
+      online: navigator.onLine,
       lastChecked: Date.now(),
-      connectionType: navigator.onLine ? 'unknown' : 'offline'
+      connectionType: navigator.onLine ? 'unknown' : 'offline',
     };
   }
 }
@@ -286,7 +285,7 @@ async function getHistoryGeneric(store) {
     const data = await store.getItem('items');
     return data || [];
   } catch (error) {
-    logger.error("Error getting history:", error);
+    logger.error('Error getting history:', error);
     return [];
   }
 }
@@ -305,7 +304,7 @@ async function saveHistoryGeneric(store, historyArray, maxItems) {
     await store.setItem('items', limitedHistory);
     return true;
   } catch (error) {
-    logger.error("Error saving history:", error);
+    logger.error('Error saving history:', error);
     return false;
   }
 }
@@ -322,26 +321,26 @@ async function saveHistoryGeneric(store, historyArray, maxItems) {
 async function addToHistoryGeneric(store, item, maxItems, findExistingFn, createItemFn) {
   try {
     const history = await getHistoryGeneric(store);
-    
+
     // 检查是否已经存在
     const existingIndex = history.findIndex(findExistingFn);
-    
+
     if (existingIndex !== -1) {
       // 如果存在，从原位置删除
       history.splice(existingIndex, 1);
     }
-    
+
     // 添加到历史记录的顶部
     history.unshift(createItemFn(item));
-    
+
     // 如果超过最大记录数，删除最旧的
     if (history.length > maxItems) {
       history.length = maxItems; // 直接截断数组
     }
-    
+
     return await saveHistoryGeneric(store, history, maxItems);
   } catch (error) {
-    logger.error("Error adding to history:", error);
+    logger.error('Error adding to history:', error);
     return false;
   }
 }
@@ -356,7 +355,7 @@ async function clearHistoryGeneric(store) {
     await store.setItem('items', []);
     return true;
   } catch (error) {
-    logger.error("Error clearing history:", error);
+    logger.error('Error clearing history:', error);
     return false;
   }
 }
@@ -380,10 +379,10 @@ export async function addToHistory(track) {
     historyStore,
     track,
     MAX_HISTORY_ITEMS,
-    item => item.song.id === track.id,
-    track => ({
+    (item) => item.song.id === track.id,
+    (track) => ({
       timestamp: Date.now(),
-      song: track
+      song: track,
     })
   );
 }
@@ -412,11 +411,11 @@ export async function addSearchHistory(query, source) {
     searchHistoryStore,
     { query, source },
     MAX_SEARCH_HISTORY_ITEMS,
-    item => item.query.toLowerCase() === query.toLowerCase() && item.source === source,
+    (item) => item.query.toLowerCase() === query.toLowerCase() && item.source === source,
     ({ query, source }) => ({
       timestamp: Date.now(),
       query: query,
-      source: source
+      source: source,
     })
   );
 }
@@ -436,7 +435,7 @@ export async function getSyncStatus(userId) {
     const data = await syncStore.getItem(key);
     return data || { loading: false, success: null, message: '', timestamp: null };
   } catch (error) {
-    logger.error("Error getting sync status:", error);
+    logger.error('Error getting sync status:', error);
     return { loading: false, success: null, message: '', timestamp: null };
   }
 }
@@ -448,10 +447,10 @@ export async function saveSyncStatus(status, userId) {
     await syncStore.setItem(key, status);
     return true;
   } catch (error) {
-    logger.error("Error saving sync status:", error);
+    logger.error('Error saving sync status:', error);
     return false;
   }
-} 
+}
 
 /**
  * 变更计数器操作 - 用于延迟同步
@@ -468,10 +467,10 @@ export async function getPendingSyncChanges() {
     return {
       favorites: counter?.favorites || 0,
       history: counter?.history || 0,
-      timestamp: timestamp || 0
+      timestamp: timestamp || 0,
     };
   } catch (error) {
-    logger.error("获取待同步变更计数失败:", error);
+    logger.error('获取待同步变更计数失败:', error);
     return { favorites: 0, history: 0, timestamp: 0 };
   }
 }
@@ -483,7 +482,7 @@ async function savePendingSyncChanges(counter) {
     await syncStore.setItem(CHANGES_TIMESTAMP_KEY, Date.now());
     return true;
   } catch (error) {
-    logger.error("保存待同步变更计数失败:", error);
+    logger.error('保存待同步变更计数失败:', error);
     return false;
   }
 }
@@ -494,13 +493,13 @@ export async function incrementPendingChanges(type) {
     const counter = await getPendingSyncChanges();
     const newCounter = {
       ...counter,
-      [type]: counter[type] + 1
+      [type]: counter[type] + 1,
     };
-    
+
     await savePendingSyncChanges(newCounter);
     return newCounter;
   } catch (error) {
-    logger.error("增加待同步变更计数失败:", error);
+    logger.error('增加待同步变更计数失败:', error);
     return null;
   }
 }
@@ -512,7 +511,7 @@ export async function resetPendingChanges() {
     await syncStore.setItem(CHANGES_TIMESTAMP_KEY, Date.now());
     return true;
   } catch (error) {
-    logger.error("重置待同步变更计数失败:", error);
+    logger.error('重置待同步变更计数失败:', error);
     return false;
   }
-} 
+}

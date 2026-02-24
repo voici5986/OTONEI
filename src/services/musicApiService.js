@@ -59,10 +59,10 @@ export const searchMusic = async (query, source, count = 20, page = 1) => {
         source: source,
         name: query,
         count: count,
-        pages: page
+        pages: page,
       },
       signal: controller.signal,
-      timeout: REQUEST_TIMEOUT
+      timeout: REQUEST_TIMEOUT,
     });
 
     // 清除超时
@@ -89,7 +89,12 @@ export const searchMusic = async (query, source, count = 20, page = 1) => {
     return validatedData;
   } catch (error) {
     // 处理取消请求的情况
-    if (axios.isCancel(error) || error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError') {
+    if (
+      axios.isCancel(error) ||
+      error?.code === 'ERR_CANCELED' ||
+      error?.name === 'CanceledError' ||
+      error?.name === 'AbortError'
+    ) {
       logger.warn('[searchMusic] 搜索请求超时或被取消');
       throw new Error('搜索请求超时，请稍后重试');
     }
@@ -124,7 +129,9 @@ export const getAudioUrl = async (track, quality = 999, forceRefresh = false) =>
       return pendingUrlRequests.get(pendingKey);
     }
 
-    logger.log(`[getAudioUrl] 开始请求: ${track.name} (${track.id}), 请求ID: ${requestId}, 强制刷新: ${forceRefresh}`);
+    logger.log(
+      `[getAudioUrl] 开始请求: ${track.name} (${track.id}), 请求ID: ${requestId}, 强制刷新: ${forceRefresh}`
+    );
 
     checkApiAccess();
 
@@ -141,16 +148,18 @@ export const getAudioUrl = async (track, quality = 999, forceRefresh = false) =>
           return cachedData;
         }
 
-        logger.log(`[getAudioUrl] ${forceRefresh ? '强制刷新' : '内存缓存未命中'}，调用API: ${requestId}`);
+        logger.log(
+          `[getAudioUrl] ${forceRefresh ? '强制刷新' : '内存缓存未命中'}，调用API: ${requestId}`
+        );
 
         const response = await axios.get(`${API_BASE}`, {
           params: {
             types: 'url',
             source: track.source,
             id: track.id,
-            br: quality
+            br: quality,
           },
-          timeout: REQUEST_TIMEOUT
+          timeout: REQUEST_TIMEOUT,
         });
 
         // 缓存结果到内存
@@ -229,7 +238,7 @@ export const getLyrics = async (track) => {
             // 兼容旧格式（直接存歌词对象）
             const payload = parsedLyrics?.data ? parsedLyrics.data : parsedLyrics;
             const timestamp = parsedLyrics?.timestamp || 0;
-            const isExpired = timestamp && (Date.now() - timestamp > LYRIC_CACHE_TTL);
+            const isExpired = timestamp && Date.now() - timestamp > LYRIC_CACHE_TTL;
             if (isExpired) {
               localStorage.removeItem(`${STORAGE_KEY_PREFIX}${cacheKey}`);
             } else if (payload) {
@@ -249,14 +258,14 @@ export const getLyrics = async (track) => {
           params: {
             types: 'lyric',
             source: track.source,
-            id: track.lyric_id
+            id: track.lyric_id,
           },
-          timeout: REQUEST_TIMEOUT
+          timeout: REQUEST_TIMEOUT,
         });
 
         const lyrics = {
           raw: response.data.lyric || '',
-          translated: response.data.tlyric || ''
+          translated: response.data.tlyric || '',
         };
 
         // 3. 缓存结果到内存
@@ -346,7 +355,7 @@ export const forceGetCoverImage = async (source, picId, size = 500) => {
     logger.log(`[forceGetCoverImage] 开始按需请求封面: ${source}/${picId}`);
     const response = await axios.get(`${API_BASE}`, {
       params: { types: 'pic', source, id: picId, size },
-      timeout: 5000
+      timeout: 5000,
     });
 
     if (response.data?.url) {
@@ -383,11 +392,11 @@ export const playMusic = async (track, quality = 999, forceRefresh = false) => {
     audioStateManager.loadTrack(track, url);
 
     // 后台异步补全 500 尺寸高清封面
-    forceGetCoverImage(track.source, track.pic_id, 500).catch(() => { });
+    forceGetCoverImage(track.source, track.pic_id, 500).catch(() => {});
 
     return {
       url,
-      fileSize: audioData.size
+      fileSize: audioData.size,
     };
   } catch (error) {
     logger.error('[playMusic] 播放音乐失败:', error);

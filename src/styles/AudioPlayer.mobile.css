@@ -12,7 +12,7 @@
     height: 100%; /* 占据父容器全部高度 */
     width: 100%;
     /* 增加底部 padding，--safe-area-bottom 适配全面屏手势区 */
-    padding: 0 0 calc(30px + var(--safe-area-bottom)) 0; 
+    padding: 0 0 calc(30px + var(--safe-area-bottom)) 0;
     background: transparent;
     display: flex;
     flex-direction: column;
@@ -38,9 +38,9 @@
   }
 
   .mobile-progress-container {
-     margin: 10px 0;
-     padding: 0px; /* 这里调整进度条的左右间距 */
-   }
+    margin: 10px 0;
+    padding: 0px; /* 这里调整进度条的左右间距 */
+  }
 
   .mobile-progress-container .progress-bar-container {
     height: 32px; /* 增大点击热区 */
@@ -130,9 +130,18 @@
 
 /* 呼吸动画：仅在移动端大图模式且播放时启用 */
 @keyframes breathe {
-  0% { transform: scale(1); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-  50% { transform: scale(1.02); box-shadow: 0 12px 28px rgba(0,0,0,0.25); }
-  100% { transform: scale(1); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+  0% {
+    transform: scale(1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .breathing-animation {

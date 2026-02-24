@@ -19,11 +19,11 @@
 
 2.  **配置 Vite 插件**：
     在 `vite.config.js` 中引入 UnoCSS 插件。
-    *注意：需将 `UnoCSS()` 插件放置在 `react()` 插件之后。*
+    _注意：需将 `UnoCSS()` 插件放置在 `react()` 插件之后。_
 
 3.  **入口文件调整**：
     在 `src/index.js` 中引入 `virtual:uno.css`。
-    *此时先不要移除旧的 bootstrap.min.css，确保样式不丢失。*
+    _此时先不要移除旧的 bootstrap.min.css，确保样式不丢失。_
 
 ### **阶段 2：配置 UnoCSS 预设**
 
@@ -60,17 +60,23 @@
 ## **三、 注意事项与风险防控**
 
 ### **1. Grid 系统补偿**
+
 Bootstrap 的 Grid 依赖特定的负 Margin 抵消。如果 `presetBootstrap` 的表现不符合预期，建议在 `uno.config.js` 的 `shortcuts` 中手动定义一套符合项目习惯的 `row` 样式。
 
 ### **2. 响应式断点对齐**
+
 确保 UnoCSS 的断点配置（sm, md, lg）与 Bootstrap 5 的标准完全一致：
+
 - `md`: 768px
 - `lg`: 992px
 - `xl`: 1200px
 
 ### **3. 动态类名识别**
+
 UnoCSS 采用静态扫描。如果代码中有 `className={`text-${color}`}` 这种动态拼接，UnoCSS 无法识别。
+
 - **解决方法**：使用 `safelist` 配置项或改用完整的类名三元表达式。
 
 ### **4. CSS 变量优先**
+
 项目中已存在大量 `--color-xxx` 变量。在编写原子类时，优先使用 `text-[var(--color-primary)]` 这种语法，保持 UI 的动态主题切换能力。

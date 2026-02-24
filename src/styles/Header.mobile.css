@@ -3,139 +3,139 @@
  */
 
 @media (max-width: 991.98px) {
-    .app-header-mobile {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 56px;
-        background-color: transparent;
-        /* 改为透明 */
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        padding: 0 16px;
-        border-bottom: none;
-        /* 移除底边框，追求极致极简 */
+  .app-header-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background-color: transparent;
+    /* 改为透明 */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: none;
+    /* 移除底边框，追求极致极简 */
+  }
+
+  .mobile-search-container {
+    width: 100%;
+    position: relative;
+  }
+
+  /* 圆角矩形搜索框容器 */
+  .mobile-search-field-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: #ffffff !important;
+    height: 36px;
+    /* 对齐桌面端高度 */
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(15, 15, 15, 0.1);
+    /* 对齐桌面端边框色 */
+  }
+
+  /* 合体逻辑：聚焦时抹平底部 */
+  .mobile-search-container:focus-within .mobile-search-field-wrapper {
+    background-color: #ffffff !important;
+    border-color: rgba(15, 15, 15, 0.15);
+    box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.08);
+    /* 恢复极其轻微的深灰阴影，不显脏 */
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+  }
+
+  .mobile-search-icon {
+    position: absolute;
+    left: 12px;
+    color: #91918e;
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .mobile-search-input {
+    width: 100%;
+    height: 100%;
+    padding: 0 36px;
+    border: none !important;
+    background: transparent !important;
+    -webkit-appearance: none;
+    appearance: none;
+    font-size: 14px;
+    font-weight: 400;
+    color: #37352f;
+    outline: none !important;
+  }
+
+  /* 彻底移除原生 X，避免视觉重叠 */
+  .mobile-search-input::-webkit-search-cancel-button,
+  .mobile-search-input::-webkit-search-decoration,
+  .mobile-search-input::-webkit-search-results-button,
+  .mobile-search-input::-webkit-search-results-decoration {
+    display: none;
+    -webkit-appearance: none;
+  }
+
+  /* 移动端悬浮卡片适配 */
+  .mobile-search-suggestions {
+    position: absolute;
+    top: 36px;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    z-index: 1100;
+    max-height: 70vh;
+    display: flex;
+    /* 改为 flex 布局 */
+    flex-direction: column;
+    border: 1px solid rgba(15, 15, 15, 0.15);
+    border-top: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
+    animation: slideDownMobile 0.2s ease-out;
+  }
+
+  .mobile-search-clear-btn {
+    position: absolute;
+    right: 8px;
+    color: #91918e;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+  }
+
+  @keyframes slideDownMobile {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
     }
 
-    .mobile-search-container {
-        width: 100%;
-        position: relative;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
 
-    /* 圆角矩形搜索框容器 */
-    .mobile-search-field-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-        background-color: #ffffff !important;
-        height: 36px;
-        /* 对齐桌面端高度 */
-        border-radius: 8px;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(15, 15, 15, 0.1);
-        /* 对齐桌面端边框色 */
-    }
-
-    /* 合体逻辑：聚焦时抹平底部 */
-    .mobile-search-container:focus-within .mobile-search-field-wrapper {
-        background-color: #ffffff !important;
-        border-color: rgba(15, 15, 15, 0.15);
-        box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.08);
-        /* 恢复极其轻微的深灰阴影，不显脏 */
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        border-bottom-color: transparent;
-    }
-
-    .mobile-search-icon {
-        position: absolute;
-        left: 12px;
-        color: #91918e;
-        font-size: 14px;
-        pointer-events: none;
-    }
-
-    .mobile-search-input {
-        width: 100%;
-        height: 100%;
-        padding: 0 36px;
-        border: none !important;
-        background: transparent !important;
-        -webkit-appearance: none;
-        appearance: none;
-        font-size: 14px;
-        font-weight: 400;
-        color: #37352f;
-        outline: none !important;
-    }
-
-    /* 彻底移除原生 X，避免视觉重叠 */
-    .mobile-search-input::-webkit-search-cancel-button,
-    .mobile-search-input::-webkit-search-decoration,
-    .mobile-search-input::-webkit-search-results-button,
-    .mobile-search-input::-webkit-search-results-decoration {
-        display: none;
-        -webkit-appearance: none;
-    }
-
-    /* 移动端悬浮卡片适配 */
-    .mobile-search-suggestions {
-        position: absolute;
-        top: 36px;
-        left: 0;
-        right: 0;
-        background-color: #ffffff;
-        z-index: 1100;
-        max-height: 70vh;
-        display: flex;
-        /* 改为 flex 布局 */
-        flex-direction: column;
-        border: 1px solid rgba(15, 15, 15, 0.15);
-        border-top: none;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-        box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
-        animation: slideDownMobile 0.2s ease-out;
-    }
-
-    .mobile-search-clear-btn {
-        position: absolute;
-        right: 8px;
-        color: #91918e;
-        background: transparent;
-        border: none;
-        padding: 8px;
-        display: flex;
-        align-items: center;
-    }
-
-    @keyframes slideDownMobile {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .app-container:not(.desktop-layout) .main-content {
-        padding-top: 54px;
-    }
+  .app-container:not(.desktop-layout) .main-content {
+    padding-top: 54px;
+  }
 }
 
 /* 4. 用户头像与主内容间距 (移动端通用) */
 .header-user-profile {
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.1s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s ease;
 }
 
 .header-user-profile:hover {
-    background-color: #f1f1ef;
+  background-color: #f1f1ef;
 }

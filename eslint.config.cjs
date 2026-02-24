@@ -2,15 +2,11 @@ const js = require('@eslint/js');
 const react = require('eslint-plugin-react');
 const reactHooks = require('eslint-plugin-react-hooks');
 const globals = require('globals');
+const prettier = require('eslint-config-prettier');
 
 module.exports = [
   {
-    ignores: [
-      'node_modules/**',
-      'build/**',
-      'dist/**',
-      'public/**'
-    ]
+    ignores: ['node_modules/**', 'build/**', 'dist/**', 'public/**'],
   },
   js.configs.recommended,
   {
@@ -20,22 +16,22 @@ module.exports = [
       sourceType: 'module',
       parserOptions: {
         ecmaFeatures: {
-          jsx: true
-        }
+          jsx: true,
+        },
       },
       globals: {
         ...globals.browser,
-        ...globals.node
-      }
+        ...globals.node,
+      },
     },
     plugins: {
       react,
-      'react-hooks': reactHooks
+      'react-hooks': reactHooks,
     },
     settings: {
       react: {
-        version: '19.0'
-      }
+        version: '19.0',
+      },
     },
     rules: {
       ...react.configs.recommended.rules,
@@ -44,7 +40,8 @@ module.exports = [
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/purity': 'off',
       'react-hooks/refs': 'off',
-      'preserve-caught-error': 'off'
-    }
-  }
+      'preserve-caught-error': 'off',
+    },
+  },
+  prettier,
 ];

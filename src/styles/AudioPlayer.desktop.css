@@ -54,7 +54,9 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      background-color 0.2s ease;
     box-shadow: 0 4px 12px rgba(209, 92, 92, 0.3);
   }
 
@@ -99,11 +101,11 @@
     z-index: var(--z-index-interaction);
     line-height: 1 !important;
   }
-  
+
   .progress-control-container .progress {
     height: 3px !important;
     min-height: 3px !important;
-    background-color: rgba(0,0,0,0.05) !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
   }
 
   .progress-control-container .progress:hover {
@@ -190,8 +192,20 @@
   .desktop-expanded-view .lyrics-scroll-container {
     flex: 1 !important;
     overflow-y: auto !important;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%) !important;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%) !important;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 15%,
+      black 85%,
+      transparent 100%
+    ) !important;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 15%,
+      black 85%,
+      transparent 100%
+    ) !important;
   }
 
   .desktop-expanded-view .lyric-line {

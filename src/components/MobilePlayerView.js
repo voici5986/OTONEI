@@ -28,13 +28,16 @@ const MobilePlayerView = ({
   handleTouchMove,
   handleTouchEnd,
   renderPlayModeIcon,
-  getPlayModeTitle
+  getPlayModeTitle,
 }) => {
   if (!currentTrack) return null;
 
   return (
     <>
-      <div className={`player-backdrop ${lyricExpanded ? 'visible' : ''}`} onClick={toggleLyric}></div>
+      <div
+        className={`player-backdrop ${lyricExpanded ? 'visible' : ''}`}
+        onClick={toggleLyric}
+      ></div>
       <div className={`audio-player ${lyricExpanded ? 'expanded' : 'collapsed'}`}>
         <div className="player-inner">
           <div className="progress-control-container">
@@ -42,7 +45,7 @@ const MobilePlayerView = ({
           </div>
 
           <div className="player-content">
-            <MobileMiniPlayer 
+            <MobileMiniPlayer
               currentTrack={currentTrack}
               isPlaying={isPlaying}
               togglePlay={togglePlay}
@@ -62,7 +65,7 @@ const MobilePlayerView = ({
       </div>
 
       {lyricExpanded && (
-        <MobileExpandedView 
+        <MobileExpandedView
           currentTrack={currentTrack}
           isPlaying={isPlaying}
           toggleLyric={toggleLyric}

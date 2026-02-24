@@ -1,22 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  getFavorites, 
-  getHistory, 
-  saveFavorites
-} from '../services/storage';
-import { 
-  FaHeart, 
-  FaHistory, 
-  FaSignOutAlt, 
-  FaCloud, 
-  FaChevronRight, 
-  FaDatabase, 
-  FaChevronDown, 
+import { getFavorites, getHistory, saveFavorites } from '../services/storage';
+import {
+  FaHeart,
+  FaHistory,
+  FaSignOutAlt,
+  FaCloud,
+  FaChevronRight,
+  FaDatabase,
+  FaChevronDown,
   FaChevronUp,
   FaFileExport,
   FaFileImport,
-  FaTimes
+  FaTimes,
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useSync } from '../contexts/SyncContext';
@@ -33,7 +29,7 @@ const UserProfile = ({ onTabChange }) => {
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [historyCount, setHistoryCount] = useState(0);
   const [syncCooldown, setSyncCooldown] = useState(false);
-  
+
   const [showDataMgmt, setShowDataMgmt] = useState(false);
 
   // 导入导出相关状态
@@ -43,15 +39,10 @@ const UserProfile = ({ onTabChange }) => {
   const [importProgress, setImportProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef(null);
-  
+
   // 使用同步上下文
-  const { 
-    syncStatus, 
-    startSync,
-    handleSyncComplete,
-    updatePendingChanges
-  } = useSync();
-  
+  const { syncStatus, startSync, handleSyncComplete, updatePendingChanges } = useSync();
+
   // 加载收藏和历史记录计数
   const loadCounts = useCallback(async () => {
     const favorites = await getFavorites();
@@ -68,7 +59,7 @@ const UserProfile = ({ onTabChange }) => {
     };
 
     refreshData();
-    
+
     // 监听同步刷新、收藏变化及本地数据清除事件
     const handleDataRefreshed = () => refreshData();
     const handleFavoritesChanged = () => refreshData();
@@ -76,56 +67,57 @@ const UserProfile = ({ onTabChange }) => {
       refreshData();
       toast.info('本地数据已更新');
     };
-    
+
     window.addEventListener('sync:data_refreshed', handleDataRefreshed);
     window.addEventListener('favorites_changed', handleFavoritesChanged);
     window.addEventListener('local:data_cleared', handleDataCleared);
-    
+
     return () => {
       window.removeEventListener('sync:data_refreshed', handleDataRefreshed);
       window.removeEventListener('favorites_changed', handleFavoritesChanged);
       window.removeEventListener('local:data_cleared', handleDataCleared);
     };
   }, [loadCounts, updatePendingChanges]);
-  
+
   // 处理手动同步
   const handleManualSync = async () => {
     if (!currentUser) return;
-    
+
     // 如果在冷却期，显示提示但不执行同步
     if (syncCooldown) {
       toast.info('请稍后再试，系统正在冷却中');
       return;
     }
-    
+
     // 检查是否在短时间内（1分钟）已经同步过
     if (syncStatus.timestamp) {
       const lastSyncTime = new Date(syncStatus.timestamp).getTime();
       const now = Date.now();
       const timeDiff = now - lastSyncTime;
-      
+
       // 如果在1分钟内已同步，提示并返回
-      if (timeDiff < 60000) { // 60000毫秒 = 1分钟
+      if (timeDiff < 60000) {
+        // 60000毫秒 = 1分钟
         toast.info('刚刚已同步，无需再次同步');
         return;
       }
     }
-    
+
     // 设置冷却状态
     setSyncCooldown(true);
-    
+
     // 使用setTimeout在8秒后解除冷却状态
     setTimeout(() => {
       setSyncCooldown(false);
     }, 8000); // 8秒冷却期
-    
+
     try {
       // 开始同步
       startSync();
-      
+
       // 执行同步
       const result = await initialSync(currentUser.uid);
-      
+
       // 处理同步结果（事件监听器将会自动更新UI）
       if (!result.success) {
         toast.error(`同步失败: ${result.error || '未知错误'}`);
@@ -136,7 +128,7 @@ const UserProfile = ({ onTabChange }) => {
       toast.error(`同步错误: ${error.message}`);
     }
   };
-  
+
   // 处理退出登录
   const handleLogout = async () => {
     try {
@@ -145,9 +137,9 @@ const UserProfile = ({ onTabChange }) => {
       logger.error('退出登录失败:', error);
     }
   };
-  
+
   // 处理收藏和历史记录点击
-// 处理统计卡片点击
+  // 处理统计卡片点击
   const handleStatsCardClick = (tabId) => {
     if (onTabChange) {
       onTabChange(tabId);
@@ -155,7 +147,7 @@ const UserProfile = ({ onTabChange }) => {
   };
 
   // --- 导入导出逻辑开始 ---
-  
+
   const searchTrack = async (trackInfo, source) => {
     try {
       const searchWithKeyword = async (keyword, source) => {
@@ -170,7 +162,10 @@ const UserProfile = ({ onTabChange }) => {
 
       let response = await searchWithKeyword(trackInfo.name, source);
       if (!response || !response.data || response.data.length === 0) {
-        const simplifiedName = trackInfo.name.replace(/[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, '');
+        const simplifiedName = trackInfo.name.replace(
+          /[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g,
+          ''
+        );
         if (simplifiedName !== trackInfo.name) {
           response = await searchWithKeyword(simplifiedName, source);
         }
@@ -189,28 +184,30 @@ const UserProfile = ({ onTabChange }) => {
       if (!response || !response.data || response.data.length === 0) return null;
 
       if (trackInfo.id) {
-        const idMatch = response.data.find(item => item.id === trackInfo.id);
+        const idMatch = response.data.find((item) => item.id === trackInfo.id);
         if (idMatch) return idMatch;
       }
       if (trackInfo.url) {
-        const urlMatch = response.data.find(item => item.url === trackInfo.url);
+        const urlMatch = response.data.find((item) => item.url === trackInfo.url);
         if (urlMatch) return urlMatch;
       }
       const targetArtist = (getTrackArtist(trackInfo) || '').toLowerCase();
-      const exactMatch = response.data.find(item =>
-        item.name.toLowerCase() === trackInfo.name.toLowerCase() &&
-        (getTrackArtist(item) || '').toLowerCase() === targetArtist
+      const exactMatch = response.data.find(
+        (item) =>
+          item.name.toLowerCase() === trackInfo.name.toLowerCase() &&
+          (getTrackArtist(item) || '').toLowerCase() === targetArtist
       );
       if (exactMatch) return exactMatch;
 
-      const nameMatches = response.data.filter(item =>
-        item.name.toLowerCase() === trackInfo.name.toLowerCase()
+      const nameMatches = response.data.filter(
+        (item) => item.name.toLowerCase() === trackInfo.name.toLowerCase()
       );
       if (nameMatches.length > 0) return nameMatches[0];
 
-      const partialMatch = response.data.find(item =>
-        item.name.toLowerCase().includes(trackInfo.name.toLowerCase()) ||
-        trackInfo.name.toLowerCase().includes(item.name.toLowerCase())
+      const partialMatch = response.data.find(
+        (item) =>
+          item.name.toLowerCase().includes(trackInfo.name.toLowerCase()) ||
+          trackInfo.name.toLowerCase().includes(item.name.toLowerCase())
       );
       if (partialMatch) return partialMatch;
 
@@ -232,7 +229,7 @@ const UserProfile = ({ onTabChange }) => {
       const exportData = {
         version: '1.1',
         timestamp: Date.now(),
-        favorites: favorites.map(item => ({
+        favorites: favorites.map((item) => ({
           name: item.name,
           artist: item.artist,
           album: item.album,
@@ -249,7 +246,7 @@ const UserProfile = ({ onTabChange }) => {
           tns: item.tns,
           ar: item.ar,
           al: item.al,
-        }))
+        })),
       };
 
       const jsonData = JSON.stringify(exportData, null, 2);
@@ -306,8 +303,8 @@ const UserProfile = ({ onTabChange }) => {
       setImportProgress(Math.floor((i / importData.favorites.length) * 100));
 
       try {
-        const existingByIdIndex = currentFavorites.findIndex(item =>
-          item.id === track.id && item.source === track.source
+        const existingByIdIndex = currentFavorites.findIndex(
+          (item) => item.id === track.id && item.source === track.source
         );
         if (existingByIdIndex >= 0) {
           newStatus[i] = { status: 'exists', message: '已存在' };
@@ -316,8 +313,8 @@ const UserProfile = ({ onTabChange }) => {
         }
 
         const trackArtist = getTrackArtist(track);
-        const existingByNameIndex = currentFavorites.findIndex(item =>
-          item.name === track.name && getTrackArtist(item) === trackArtist
+        const existingByNameIndex = currentFavorites.findIndex(
+          (item) => item.name === track.name && getTrackArtist(item) === trackArtist
         );
         if (existingByNameIndex >= 0) {
           newStatus[i] = { status: 'exists', message: '已存在' };
@@ -340,8 +337,8 @@ const UserProfile = ({ onTabChange }) => {
         }
 
         if (matchedTrack) {
-          const isDuplicate = newFavorites.some(item =>
-            item.id === matchedTrack.id && item.source === matchedTrack.source
+          const isDuplicate = newFavorites.some(
+            (item) => item.id === matchedTrack.id && item.source === matchedTrack.source
           );
           if (!isDuplicate) {
             newFavorites.unshift(matchedTrack);
@@ -386,10 +383,13 @@ const UserProfile = ({ onTabChange }) => {
   if (!currentUser) {
     return null;
   }
-  
-  const userInitial = currentUser.displayName ? currentUser.displayName[0].toUpperCase() : 
-                     (currentUser.email ? currentUser.email[0].toUpperCase() : '?');
-  
+
+  const userInitial = currentUser.displayName
+    ? currentUser.displayName[0].toUpperCase()
+    : currentUser.email
+      ? currentUser.email[0].toUpperCase()
+      : '?';
+
   // 格式化时间
   const formatTime = (date) => {
     if (!date) return '';
@@ -398,7 +398,7 @@ const UserProfile = ({ onTabChange }) => {
     }
     return date.toLocaleString('zh-CN', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -409,7 +409,7 @@ const UserProfile = ({ onTabChange }) => {
     if (syncStatus.success === false) return '同步失败';
     return '未同步';
   };
-  
+
   return (
     <div>
       {/* 1. 用户信息头部 */}
@@ -426,17 +426,14 @@ const UserProfile = ({ onTabChange }) => {
         <h3 className="user-name-large">{currentUser.displayName || '用户'}</h3>
         <p className="user-email-text">{currentUser.email}</p>
       </div>
-      
+
       {/* 2. 功能卡片列表 */}
       <div className="card-list">
         {/* 收藏卡片 */}
-        <div 
-          className="long-card" 
-          onClick={() => handleStatsCardClick('favorites')}
-        >
+        <div className="long-card" onClick={() => handleStatsCardClick('favorites')}>
           <div className="card-icon" style={{ color: '#EB5757' }}>
-              <FaHeart />
-            </div>
+            <FaHeart />
+          </div>
           <div className="card-label">收藏</div>
           <div className="card-number">{favoritesCount}</div>
           <div className="card-arrow">
@@ -445,10 +442,7 @@ const UserProfile = ({ onTabChange }) => {
         </div>
 
         {/* 历史卡片 */}
-        <div 
-          className="long-card" 
-          onClick={() => handleStatsCardClick('history')}
-        >
+        <div className="long-card" onClick={() => handleStatsCardClick('history')}>
           <div className="card-icon" style={{ color: '#787774' }}>
             <FaHistory />
           </div>
@@ -465,12 +459,15 @@ const UserProfile = ({ onTabChange }) => {
             <FaCloud />
           </div>
           <div className="card-label">多端数据同步</div>
-          <div className="card-number" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--color-text-muted)' }}>
-             {syncStatus.loading ? (
-                <span className="spinner-custom" style={{ width: '1rem', height: '1rem' }}></span>
-             ) : (
-                getSyncStatusText().replace('上次同步 ', '')
-             )}
+          <div
+            className="card-number"
+            style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--color-text-muted)' }}
+          >
+            {syncStatus.loading ? (
+              <span className="spinner-custom" style={{ width: '1rem', height: '1rem' }}></span>
+            ) : (
+              getSyncStatusText().replace('上次同步 ', '')
+            )}
           </div>
           <div className="card-arrow">
             <FaChevronRight />
@@ -479,19 +476,17 @@ const UserProfile = ({ onTabChange }) => {
 
         {/* 数据管理下拉 */}
         <div className="data-mgmt-container">
-          <div 
-            className={`long-card ${showDataMgmt ? 'active' : ''}`} 
+          <div
+            className={`long-card ${showDataMgmt ? 'active' : ''}`}
             onClick={() => setShowDataMgmt(!showDataMgmt)}
           >
             <div className="card-icon" style={{ color: 'var(--color-text-muted)' }}>
               <FaDatabase />
             </div>
             <div className="card-label">数据管理</div>
-            <div className="card-arrow">
-              {showDataMgmt ? <FaChevronUp /> : <FaChevronDown />}
-            </div>
+            <div className="card-arrow">{showDataMgmt ? <FaChevronUp /> : <FaChevronDown />}</div>
           </div>
-          
+
           {showDataMgmt && (
             <div className="data-mgmt-dropdown">
               <div className="dropdown-item" onClick={handleExport}>
@@ -510,7 +505,7 @@ const UserProfile = ({ onTabChange }) => {
           )}
         </div>
       </div>
-      
+
       {/* 导入功能所需组件 */}
       <input
         type="file"
@@ -522,7 +517,11 @@ const UserProfile = ({ onTabChange }) => {
 
       {showImportModal && (
         <div className="modal-overlay-custom" onClick={handleCloseImport} style={{ zIndex: 2000 }}>
-          <div className="modal-container-custom" style={{ maxWidth: '800px', width: '90%' }} onClick={e => e.stopPropagation()}>
+          <div
+            className="modal-container-custom"
+            style={{ maxWidth: '800px', width: '90%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header-custom">
               <h5 className="modal-title-custom">导入收藏</h5>
               <button className="modal-close-custom" onClick={handleCloseImport}>
@@ -532,32 +531,53 @@ const UserProfile = ({ onTabChange }) => {
             <div className="modal-body-custom">
               {importData && (
                 <>
-                  <div className="alert-custom alert-info-custom mb-3" style={{ 
-                    padding: '12px', 
-                    borderRadius: 'var(--border-radius-md)', 
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    border: '1px solid rgba(52, 152, 219, 0.2)',
-                    fontSize: '0.9rem'
-                  }}>
+                  <div
+                    className="alert-custom alert-info-custom mb-3"
+                    style={{
+                      padding: '12px',
+                      borderRadius: 'var(--border-radius-md)',
+                      backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                      border: '1px solid rgba(52, 152, 219, 0.2)',
+                      fontSize: '0.9rem',
+                    }}
+                  >
                     <div className="fw-bold mb-1">检测到 {importData.favorites.length} 首歌曲</div>
-                    <div className="text-muted small">导出时间: {new Date(importData.timestamp).toLocaleString()}</div>
+                    <div className="text-muted small">
+                      导出时间: {new Date(importData.timestamp).toLocaleString()}
+                    </div>
                   </div>
 
-                  <div className="progress-custom mb-3" style={{ height: '8px', backgroundColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div 
-                      className="progress-bar-custom" 
-                      style={{ 
+                  <div
+                    className="progress-custom mb-3"
+                    style={{
+                      height: '8px',
+                      backgroundColor: 'var(--color-border)',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      className="progress-bar-custom"
+                      style={{
                         width: `${importProgress}%`,
                         height: '100%',
                         backgroundColor: 'var(--color-primary)',
-                        transition: 'width 0.3s ease'
+                        transition: 'width 0.3s ease',
                       }}
-                    >
-                    </div>
+                    ></div>
                   </div>
                   <div className="text-end small text-muted mb-3">{importProgress}%</div>
 
-                  <div style={{ maxHeight: '250px', overflowY: 'auto', padding: '10px', backgroundColor: 'var(--color-background-alt)', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--color-border)' }}>
+                  <div
+                    style={{
+                      maxHeight: '250px',
+                      overflowY: 'auto',
+                      padding: '10px',
+                      backgroundColor: 'var(--color-background-alt)',
+                      borderRadius: 'var(--border-radius-md)',
+                      border: '1px solid var(--color-border)',
+                    }}
+                  >
                     {importData.favorites.slice(0, 100).map((track, index) => {
                       const status = importStatus[index] || { status: 'pending', message: '等待' };
                       let statusColor = 'text-muted';
@@ -566,21 +586,31 @@ const UserProfile = ({ onTabChange }) => {
                       else if (status.status === 'fail') statusColor = 'text-danger';
 
                       return (
-                        <div key={index} className={`d-flex align-items-center mb-1 small ${statusColor}`} style={{ fontSize: '0.8rem' }}>
-                          <span className="text-truncate" style={{ maxWidth: '70%' }}>{track.name} - {getTrackArtist(track) || '未知歌手'}</span>
+                        <div
+                          key={index}
+                          className={`d-flex align-items-center mb-1 small ${statusColor}`}
+                          style={{ fontSize: '0.8rem' }}
+                        >
+                          <span className="text-truncate" style={{ maxWidth: '70%' }}>
+                            {track.name} - {getTrackArtist(track) || '未知歌手'}
+                          </span>
                           <span className="ms-auto flex-shrink-0 opacity-75">{status.message}</span>
                         </div>
                       );
                     })}
-                    {importData.favorites.length > 100 && <div className="text-center text-muted small mt-2">... 以及更多 {importData.favorites.length - 100} 首歌曲</div>}
+                    {importData.favorites.length > 100 && (
+                      <div className="text-center text-muted small mt-2">
+                        ... 以及更多 {importData.favorites.length - 100} 首歌曲
+                      </div>
+                    )}
                   </div>
                 </>
               )}
             </div>
             <div className="modal-footer-custom">
-              <button 
-                className="minimal-action-btn" 
-                onClick={handleCloseImport} 
+              <button
+                className="minimal-action-btn"
+                onClick={handleCloseImport}
                 disabled={isImporting}
                 style={{ borderRadius: 'var(--border-radius)', padding: '6px 16px' }}
               >
@@ -604,4 +634,4 @@ const UserProfile = ({ onTabChange }) => {
   );
 };
 
-export default UserProfile; 
+export default UserProfile;

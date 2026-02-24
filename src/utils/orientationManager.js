@@ -11,7 +11,7 @@ import logger from './logger.js';
 const isOrientationApiSupported = () => {
   // 检查window对象是否存在（服务器端渲染兼容）
   if (typeof window === 'undefined') return false;
-  
+
   // 使用window.screen而不是直接使用screen全局变量
   return (
     window.screen &&
@@ -110,7 +110,7 @@ export const unlockOrientation = () => {
 export const getCurrentOrientation = () => {
   // 检查window对象是否存在（服务器端渲染兼容）
   if (typeof window === 'undefined') return 'unknown';
-  
+
   if (isOrientationApiSupported()) {
     // 使用Screen Orientation API获取屏幕方向
     const orientation = window.screen.orientation.type;
@@ -139,7 +139,7 @@ export const getCurrentOrientation = () => {
 export const addOrientationChangeListener = (callback) => {
   // 检查window对象是否存在（服务器端渲染兼容）
   if (typeof window === 'undefined') return () => {};
-  
+
   const handleOrientationChange = () => {
     const orientation = getCurrentOrientation();
     callback(orientation);
@@ -162,4 +162,3 @@ export const addOrientationChangeListener = (callback) => {
     }
   };
 };
-

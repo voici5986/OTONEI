@@ -86,7 +86,7 @@
   width: 100%;
   height: 40px;
   background: #ffffff;
-  border: 1px solid #E5E5E5;
+  border: 1px solid #e5e5e5;
   /* 1px 浅灰描边 */
   border-radius: 8px;
   /* 8px 圆角 */
@@ -99,9 +99,9 @@
 
 .input-field:focus {
   outline: none;
-  border-color: #2383E2;
+  border-color: #2383e2;
   /* 1px border + 1px box-shadow = 2px 实线感 */
-  box-shadow: 0 0 0 1px #2383E2 !important;
+  box-shadow: 0 0 0 1px #2383e2 !important;
 }
 
 .input-field::placeholder {
@@ -130,18 +130,18 @@
 
 /* 蓝色“继续/登录”按钮 */
 .btn-primary-auth {
-  background-color: #2383E2;
+  background-color: #2383e2;
   color: white;
   margin-top: 12px;
 }
 
 .btn-primary-auth:hover {
-  background-color: #1F71C2;
+  background-color: #1f71c2;
 }
 
 /* 第三方登录按钮 (Google) */
 .btn-google-auth {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border: 1px solid rgba(15, 15, 15, 0.1);
   color: var(--color-text-primary);
   margin-top: 16px;
@@ -164,7 +164,7 @@
 
 .divider-auth::before,
 .divider-auth::after {
-  content: "";
+  content: '';
   flex: 1;
   height: 1px;
   background: var(--color-border);
@@ -261,7 +261,7 @@
 }
 
 .dropdown-item.logout {
-  color: #EB5757;
+  color: #eb5757;
   border-top: 1px solid var(--color-border);
 }
 
@@ -304,7 +304,9 @@
   gap: 14px;
   /* 调整 gap */
   border: 1px solid var(--color-border);
-  transition: background 0.15s ease, transform 0.12s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
   box-shadow: none;
   /* 移除默认阴影，保持扁平 */
   position: relative;
@@ -395,7 +397,7 @@
 .logout-button {
   background: transparent;
   border: none;
-  color: #EB5757;
+  color: #eb5757;
   font-size: 14px;
   padding: 14px;
   cursor: pointer;
@@ -410,11 +412,11 @@
 }
 
 .logout-button:hover {
-  background: #FEF2F2;
+  background: #fef2f2;
 }
 
 .logout-button:active {
-  background: #FEE2E2;
+  background: #fee2e2;
 }
 
 .version {

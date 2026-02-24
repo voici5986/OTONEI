@@ -25,7 +25,7 @@ export const setAvatarCache = (key, dataUrl) => {
   try {
     const payload = JSON.stringify({
       dataUrl,
-      savedAt: Date.now()
+      savedAt: Date.now(),
     });
     localStorage.setItem(`${AVATAR_CACHE_PREFIX}${key}`, payload);
   } catch {

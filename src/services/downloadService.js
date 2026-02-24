@@ -17,15 +17,12 @@ const getFileExtension = (url, quality = 999) => {
   try {
     // 处理可能包含反斜杠的URL
     const cleanUrl = url.replace(/\\/g, '');
-    const fileName = new URL(cleanUrl).pathname
-      .split('/')
-      .pop()
-      .split(/[#?]/)[0]; // 移除可能的哈希和查询参数
-    
+    const fileName = new URL(cleanUrl).pathname.split('/').pop().split(/[#?]/)[0]; // 移除可能的哈希和查询参数
+
     // 使用正则表达式提取后缀
     const extensionMatch = fileName.match(/\.([a-z0-9]+)$/i);
     if (extensionMatch) return extensionMatch[1];
-    
+
     // 如果URL没有扩展名，根据音质决定
     return quality >= 999 ? 'flac' : 'mp3';
   } catch {
@@ -42,11 +39,11 @@ const getFileExtension = (url, quality = 999) => {
 const getQualityDescription = (quality) => {
   quality = Number(quality);
   if (quality >= 999) {
-    return "无损音质";
+    return '无损音质';
   } else if (quality >= 700) {
-    return "Hi-Res";
+    return 'Hi-Res';
   } else if (quality >= 320) {
-    return "高品质";
+    return '高品质';
   } else {
     return `${quality}kbps`;
   }
@@ -62,12 +59,12 @@ const MIN_DOWNLOAD_INTERVAL = 5000; // 5秒间隔
  */
 const processQueue = async () => {
   if (isProcessingQueue || downloadQueue.length === 0) return;
-  
+
   isProcessingQueue = true;
-  
+
   while (downloadQueue.length > 0) {
     const { track, quality, onStartDownload, onFinishDownload, resolve } = downloadQueue[0];
-    
+
     try {
       const result = await _processDownload(track, quality, onStartDownload, onFinishDownload);
       resolve(result);
@@ -75,16 +72,16 @@ const processQueue = async () => {
       logger.error('Queue processing error:', error);
       resolve(false);
     }
-    
+
     // 移除已处理的任务
     downloadQueue.shift();
-    
+
     // 如果队列中还有任务，等待间隔时间
     if (downloadQueue.length > 0) {
-      await new Promise(r => setTimeout(r, MIN_DOWNLOAD_INTERVAL));
+      await new Promise((r) => setTimeout(r, MIN_DOWNLOAD_INTERVAL));
     }
   }
-  
+
   isProcessingQueue = false;
 };
 
@@ -103,16 +100,16 @@ export const downloadTrack = (track, quality = 999, onStartDownload, onFinishDow
       quality,
       onStartDownload,
       onFinishDownload,
-      resolve
+      resolve,
     });
-    
+
     if (isProcessingQueue) {
       toast.info(`已加入下载队列，前方还有 ${downloadQueue.length - 1} 首任务`, {
         icon: '⏳',
-        autoClose: 2000
+        autoClose: 2000,
       });
     }
-    
+
     processQueue();
   });
 };
@@ -126,7 +123,7 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
     if (typeof onStartDownload === 'function') {
       onStartDownload(track);
     }
-    
+
     // 获取音频URL数据
     let audioData;
     try {
@@ -140,32 +137,32 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
         throw error;
       }
     }
-    
+
     // 获取下载链接
     const downloadUrl = audioData.url.replace(/\\/g, '');
     if (!downloadUrl) {
       throw new Error('无效的下载链接');
     }
-    
+
     // 设置下载文件名
     const extension = getFileExtension(downloadUrl, quality);
     const fileName = `${track.name} - ${getTrackArtist(track) || '未知歌手'}.${extension}`;
-    
+
     // 确定音质描述
     const qualityDesc = getQualityDescription(quality);
-    
+
     // 准备文件大小信息
     let fileSizeMsg = '';
     if (audioData.size) {
       const sizeMB = (parseInt(audioData.size) / 1024).toFixed(2);
       fileSizeMsg = ` (${sizeMB} MB)`;
     }
-    
+
     toast.info(`正在准备下载${qualityDesc}音频: ${fileName}${fileSizeMsg}`, {
       icon: '⏬',
-      autoClose: 2000
+      autoClose: 2000,
     });
-    
+
     // 直接下载
     try {
       // 使用fetch获取音频内容
@@ -178,30 +175,28 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
         throw new Error(`下载内容类型异常: ${contentType}`);
       }
       const blob = await audioResponse.blob();
-      
+
       // 创建blob URL
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       // 创建下载链接并点击
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = fileName; 
+      link.download = fileName;
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      
+
       // 清理
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(blobUrl);
       }, 100);
-      
 
-      
       return true;
     } catch (fetchError) {
       logger.error('Fetch error:', fetchError);
-      
+
       // 备用下载方法
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -211,14 +206,14 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       return true;
     }
   } catch (error) {
     logger.error('Download error:', error);
     toast.error('下载失败，请稍后重试', {
       icon: '❌',
-      autoClose: 3000
+      autoClose: 3000,
     });
     return false;
   } finally {
@@ -228,4 +223,3 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
     }
   }
 };
-

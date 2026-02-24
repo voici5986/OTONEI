@@ -1,71 +1,71 @@
 /* User.notion.css - 桌面端类 Notion 风格样式 */
 
 .stats-card-notion {
-    background-color: var(--color-background);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
 }
 
 .stats-item-notion {
-    display: flex;
-    align-items: center;
-    padding: 10px 12px;
-    border-radius: 8px;
-    transition: background 0.15s ease;
-    user-select: none;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  user-select: none;
 }
 
 .stats-item-notion.clickable {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .stats-item-notion:hover {
-    background-color: var(--color-background-alt);
+  background-color: var(--color-background-alt);
 }
 
 .stats-icon-wrapper {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--color-background-alt);
-    border-radius: 6px;
-    margin-right: 12px;
-    flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-background-alt);
+  border-radius: 6px;
+  margin-right: 12px;
+  flex-shrink: 0;
 }
 
 .stats-label-notion {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
 }
 
 .stats-value-notion {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    background-color: var(--color-background-alt);
-    padding: 2px 8px;
-    border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background-color: var(--color-background-alt);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 /* 装饰性边框 */
 .border-top {
-    border-top: 1px solid var(--color-border) !important;
+  border-top: 1px solid var(--color-border) !important;
 }
 
 /* 按钮微调 */
 .stats-card-notion .minimal-action-btn {
-    font-size: 14px;
-    height: 36px;
-    transition: all 0.2s ease;
+  font-size: 14px;
+  height: 36px;
+  transition: all 0.2s ease;
 }
 
 .stats-card-notion .minimal-action-btn:hover {
-    background-color: #FEF2F2 !important;
-    /* 针对清除按钮的浅红背景 */
-    color: #EB5757 !important;
+  background-color: #fef2f2 !important;
+  /* 针对清除按钮的浅红背景 */
+  color: #eb5757 !important;
 }

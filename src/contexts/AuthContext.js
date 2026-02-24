@@ -6,14 +6,9 @@ import {
   registerWithEmailAndPassword,
   logout,
   sendPasswordReset,
-  firebaseInitError
+  firebaseInitError,
 } from '../services/firebase';
-import {
-  SyncEvents,
-  triggerEvent,
-  shouldSyncOnLogin,
-  initialSync
-} from '../services/syncService';
+import { SyncEvents, triggerEvent, shouldSyncOnLogin, initialSync } from '../services/syncService';
 import { toast } from 'react-toastify';
 import { saveSyncStatus, getLocalUser, saveLocalUser, getNetworkStatus } from '../services/storage';
 import useFirebaseStatus from '../hooks/useFirebaseStatus';
@@ -34,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   // 使用Firebase状态Hook
   const { isAvailable: isFirebaseAvailable, checkAvailability } = useFirebaseStatus({
     showToasts: false, // 不显示提示，由AuthContext自己处理
-    manualCheck: true // 手动检查
+    manualCheck: true, // 手动检查
   });
 
   const [isOfflineMode, setIsOfflineMode] = useState(!isFirebaseAvailable);
@@ -55,7 +50,7 @@ export const AuthProvider = ({ children }) => {
           email,
           displayName: displayName || email,
           isAnonymous: false,
-          isLocal: true
+          isLocal: true,
         };
 
         // 保存本地用户
@@ -184,16 +179,19 @@ export const AuthProvider = ({ children }) => {
                 triggerEvent(SyncEvents.SYNC_STARTED, {
                   uid: currentUser.uid,
                   timestamp: Date.now(),
-                  syncType: 'logout'
+                  syncType: 'logout',
                 });
 
                 // 更新同步状态
-                await saveSyncStatus({
-                  loading: true,
-                  success: null,
-                  message: '退出前数据同步...',
-                  timestamp: null
-                }, currentUser.uid);
+                await saveSyncStatus(
+                  {
+                    loading: true,
+                    success: null,
+                    message: '退出前数据同步...',
+                    timestamp: null,
+                  },
+                  currentUser.uid
+                );
 
                 // 执行同步
                 const result = await initialSync(currentUser.uid);
@@ -204,24 +202,27 @@ export const AuthProvider = ({ children }) => {
                     uid: currentUser.uid,
                     timestamp: Date.now(),
                     syncType: 'logout',
-                    result: { success: true }
+                    result: { success: true },
                   });
                 } else {
                   triggerEvent(SyncEvents.SYNC_FAILED, {
                     uid: currentUser.uid,
                     error: result.error || '未知错误',
                     timestamp: Date.now(),
-                    syncType: 'logout'
+                    syncType: 'logout',
                   });
                 }
 
                 // 更新同步状态
-                await saveSyncStatus({
-                  loading: false,
-                  success: result.success,
-                  message: result.success ? '同步完成' : `同步失败: ${result.error}`,
-                  timestamp: new Date()
-                }, currentUser.uid);
+                await saveSyncStatus(
+                  {
+                    loading: false,
+                    success: result.success,
+                    message: result.success ? '同步完成' : `同步失败: ${result.error}`,
+                    timestamp: new Date(),
+                  },
+                  currentUser.uid
+                );
 
                 logger.log('退出前同步完成，状态:', result.success ? '成功' : '失败');
               } else {
@@ -237,7 +238,7 @@ export const AuthProvider = ({ children }) => {
             uid: currentUser.uid,
             error: syncError.message || '未知错误',
             timestamp: Date.now(),
-            syncType: 'logout'
+            syncType: 'logout',
           });
         }
       }
@@ -279,7 +280,7 @@ export const AuthProvider = ({ children }) => {
     // 离线模式下不需要监听Firebase身份验证状态
     if (isOfflineMode) {
       setLoading(false);
-      return () => { };
+      return () => {};
     }
 
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -298,27 +299,32 @@ export const AuthProvider = ({ children }) => {
           if (!networkStatus.online) {
             logger.warn('网络离线，跳过登录同步');
             setSyncComplete(true);
-            await saveSyncStatus({
-              loading: false,
-              success: false,
-              message: '网络离线，同步已跳过',
-              timestamp: new Date()
-            }, user.uid);
+            await saveSyncStatus(
+              {
+                loading: false,
+                success: false,
+                message: '网络离线，同步已跳过',
+                timestamp: new Date(),
+              },
+              user.uid
+            );
             return;
           }
-
 
           // 检查Firebase可用性，使用Hook提供的方法
           const firebaseAvailable = await checkAvailability();
           if (!firebaseAvailable) {
             logger.warn('Firebase不可用，跳过登录同步');
             setSyncComplete(true);
-            await saveSyncStatus({
-              loading: false,
-              success: false,
-              message: 'Firebase不可用，同步已跳过',
-              timestamp: new Date()
-            }, user.uid);
+            await saveSyncStatus(
+              {
+                loading: false,
+                success: false,
+                message: 'Firebase不可用，同步已跳过',
+                timestamp: new Date(),
+              },
+              user.uid
+            );
             return;
           }
 
@@ -327,22 +333,28 @@ export const AuthProvider = ({ children }) => {
           if (!syncCheck.shouldSync) {
             logger.log(`跳过登录同步: ${syncCheck.reason}`);
             setSyncComplete(true);
-            await saveSyncStatus({
-              loading: false,
-              success: true,
-              message: `同步已跳过: ${syncCheck.reason}`,
-              timestamp: new Date()
-            }, user.uid);
+            await saveSyncStatus(
+              {
+                loading: false,
+                success: true,
+                message: `同步已跳过: ${syncCheck.reason}`,
+                timestamp: new Date(),
+              },
+              user.uid
+            );
             return;
           }
 
           // 更新同步状态为"正在同步"
-          await saveSyncStatus({
-            loading: true,
-            success: null,
-            message: '登录后自动同步...',
-            timestamp: null
-          }, user.uid);
+          await saveSyncStatus(
+            {
+              loading: true,
+              success: null,
+              message: '登录后自动同步...',
+              timestamp: null,
+            },
+            user.uid
+          );
 
           // 添加超时处理
           const syncPromise = initialSync(user.uid);
@@ -351,21 +363,23 @@ export const AuthProvider = ({ children }) => {
           );
 
           // 使用Promise.race确保同步不会永久挂起
-          const result = await Promise.race([syncPromise, timeoutPromise])
-            .catch(error => {
-              logger.error('登录同步失败:', error);
-              return { success: false, error: error.message };
-            });
+          const result = await Promise.race([syncPromise, timeoutPromise]).catch((error) => {
+            logger.error('登录同步失败:', error);
+            return { success: false, error: error.message };
+          });
 
           setSyncComplete(true);
 
           // 更新同步状态
-          await saveSyncStatus({
-            loading: false,
-            success: result.success,
-            message: result.success ? '同步完成' : `同步失败: ${result.error}`,
-            timestamp: new Date()
-          }, user.uid);
+          await saveSyncStatus(
+            {
+              loading: false,
+              success: result.success,
+              message: result.success ? '同步完成' : `同步失败: ${result.error}`,
+              timestamp: new Date(),
+            },
+            user.uid
+          );
 
           if (result.success) {
             logger.log('登录同步成功');
@@ -377,12 +391,15 @@ export const AuthProvider = ({ children }) => {
           setSyncComplete(true);
 
           // 更新同步状态
-          await saveSyncStatus({
-            loading: false,
-            success: false,
-            message: `同步错误: ${error.message}`,
-            timestamp: new Date()
-          }, user.uid);
+          await saveSyncStatus(
+            {
+              loading: false,
+              success: false,
+              message: `同步错误: ${error.message}`,
+              timestamp: new Date(),
+            },
+            user.uid
+          );
         }
       }
     });
@@ -401,12 +418,8 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     signOut,
     resetPassword,
-    firebaseInitError
+    firebaseInitError,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-}; 
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

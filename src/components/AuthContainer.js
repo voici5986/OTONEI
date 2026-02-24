@@ -46,12 +46,13 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
       onAuthSuccess && onAuthSuccess();
     } catch (err) {
       logger.error('登录失败:', err);
-      const msg = {
-        'auth/user-not-found': '邮箱或密码错误',
-        'auth/wrong-password': '邮箱或密码错误',
-        'auth/invalid-email': '无效的邮箱格式',
-        'auth/too-many-requests': '登录尝试次数过多，请稍后再试'
-      }[err.code] || '登录失败，请稍后再试';
+      const msg =
+        {
+          'auth/user-not-found': '邮箱或密码错误',
+          'auth/wrong-password': '邮箱或密码错误',
+          'auth/invalid-email': '无效的邮箱格式',
+          'auth/too-many-requests': '登录尝试次数过多，请稍后再试',
+        }[err.code] || '登录失败，请稍后再试';
       setError(msg);
     } finally {
       setLoading(false);
@@ -62,7 +63,8 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    if (!displayName || !email || !password || !confirmPassword) return setError('请填写所有必填字段');
+    if (!displayName || !email || !password || !confirmPassword)
+      return setError('请填写所有必填字段');
     if (password !== confirmPassword) return setError('两次输入的密码不一致');
     if (password.length < 6) return setError('密码长度至少为6个字符');
 
@@ -72,11 +74,12 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
       onAuthSuccess && onAuthSuccess();
     } catch (err) {
       logger.error('注册失败:', err);
-      const msg = {
-        'auth/email-already-in-use': '该邮箱已被注册',
-        'auth/invalid-email': '无效的邮箱格式',
-        'auth/weak-password': '密码强度太弱'
-      }[err.code] || '注册失败，请稍后再试';
+      const msg =
+        {
+          'auth/email-already-in-use': '该邮箱已被注册',
+          'auth/invalid-email': '无效的邮箱格式',
+          'auth/weak-password': '密码强度太弱',
+        }[err.code] || '注册失败，请稍后再试';
       setError(msg);
     } finally {
       setLoading(false);
@@ -117,7 +120,9 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
     <div className="auth-form-container">
       {/* 品牌区域 (移动端显示) */}
       <div className="brand-section d-lg-none">
-        <div className="brand-logo"><img src="/logo.svg" alt="OTONEI" style={{ width: '48px', height: '48px' }} /></div>
+        <div className="brand-logo">
+          <img src="/logo.svg" alt="OTONEI" style={{ width: '48px', height: '48px' }} />
+        </div>
         <div className="brand-name">OTONEI</div>
         <div className="brand-tagline">让音乐随心而动</div>
       </div>
@@ -127,14 +132,26 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
       </h3>
 
       {error && <div className="alert-custom alert-danger-custom">{error}</div>}
-      {resetEmailSent && <div className="alert-custom alert-success-custom">重置邮件已发送，请查收</div>}
+      {resetEmailSent && (
+        <div className="alert-custom alert-success-custom">重置邮件已发送，请查收</div>
+      )}
 
-      <form onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleResetPassword}>
+      <form
+        onSubmit={
+          mode === 'login'
+            ? handleLogin
+            : mode === 'register'
+              ? handleRegister
+              : handleResetPassword
+        }
+      >
         {/* 昵称 (仅注册模式) */}
         {mode === 'register' && (
           <div className="form-group">
             <div className="input-wrapper">
-              <div className="input-icon"><FaUser /></div>
+              <div className="input-icon">
+                <FaUser />
+              </div>
               <input
                 type="text"
                 className="input-field"
@@ -151,7 +168,9 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
         {/* 邮箱 */}
         <div className="form-group">
           <div className="input-wrapper">
-            <div className="input-icon"><FaEnvelope /></div>
+            <div className="input-icon">
+              <FaEnvelope />
+            </div>
             <input
               type="email"
               className="input-field"
@@ -168,18 +187,24 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
         {mode !== 'forgot' && (
           <div className="form-group">
             <div className="input-wrapper">
-              <div className="input-icon"><FaLock /></div>
+              <div className="input-icon">
+                <FaLock />
+              </div>
               <input
                 type="password"
                 className="input-field"
-                placeholder={mode === 'register' ? "设置密码" : "密码"}
+                placeholder={mode === 'register' ? '设置密码' : '密码'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
               />
             </div>
-            {mode === 'register' && <div className="text-muted small mt-1 ps-1" style={{ fontSize: '12px' }}>密码长度至少为6个字符</div>}
+            {mode === 'register' && (
+              <div className="text-muted small mt-1 ps-1" style={{ fontSize: '12px' }}>
+                密码长度至少为6个字符
+              </div>
+            )}
           </div>
         )}
 
@@ -187,7 +212,9 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
         {mode === 'register' && (
           <div className="form-group">
             <div className="input-wrapper">
-              <div className="input-icon"><FaLock /></div>
+              <div className="input-icon">
+                <FaLock />
+              </div>
               <input
                 type="password"
                 className="input-field"
@@ -202,13 +229,25 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
         )}
 
         <button type="submit" disabled={loading} className="btn-auth btn-primary-auth">
-          {loading ? <span className="spinner-custom" style={{ width: '1.2rem', height: '1.2rem' }}></span> :
-            mode === 'login' ? "立即登录" : mode === 'register' ? "立即注册" : "发送重置邮件"}
+          {loading ? (
+            <span className="spinner-custom" style={{ width: '1.2rem', height: '1.2rem' }}></span>
+          ) : mode === 'login' ? (
+            '立即登录'
+          ) : mode === 'register' ? (
+            '立即注册'
+          ) : (
+            '发送重置邮件'
+          )}
         </button>
 
         {/* Google 登录 (非重置模式) */}
         {mode !== 'forgot' && (
-          <button type="button" onClick={handleGoogleLogin} disabled={loading} className="btn-auth btn-google-auth">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="btn-auth btn-google-auth"
+          >
             <FcGoogle /> 使用 Google 账号{mode === 'login' ? '登录' : '注册'}
           </button>
         )}
@@ -217,17 +256,29 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
         <div className="d-flex justify-content-between align-items-center mt-4">
           {mode === 'login' ? (
             <>
-              <button type="button" onClick={() => switchMode('forgot')} className="text-link">忘记密码？</button>
-              <button type="button" onClick={() => switchMode('register')} className="text-accent">免费注册</button>
+              <button type="button" onClick={() => switchMode('forgot')} className="text-link">
+                忘记密码？
+              </button>
+              <button type="button" onClick={() => switchMode('register')} className="text-accent">
+                免费注册
+              </button>
             </>
           ) : mode === 'register' ? (
             <div className="w-100 text-center">
               <span className="text-muted small">已有账号？</span>
-              <button type="button" onClick={() => switchMode('login')} className="text-accent ms-1">立即登录</button>
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className="text-accent ms-1"
+              >
+                立即登录
+              </button>
             </div>
           ) : (
             <div className="w-100 text-center">
-              <button type="button" onClick={() => switchMode('login')} className="text-accent">返回登录</button>
+              <button type="button" onClick={() => switchMode('login')} className="text-accent">
+                返回登录
+              </button>
             </div>
           )}
         </div>

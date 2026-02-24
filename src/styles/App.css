@@ -283,10 +283,11 @@
 
 /* 移动端全局布局调整 */
 @media (max-width: 768px) {
-
   /* 调整页面底部内边距：Tab栏(8vh) + 播放器收起高度(10vh) */
   body {
-    padding-bottom: calc(var(--mobile-tab-bar-height) + var(--player-height-collapsed) + var(--safe-area-bottom)) !important;
+    padding-bottom: calc(
+      var(--mobile-tab-bar-height) + var(--player-height-collapsed) + var(--safe-area-bottom)
+    ) !important;
     padding-top: 0 !important;
     /* 顶栏没了，不需要顶部内边距 */
   }
@@ -361,7 +362,9 @@
   background-color: var(--color-background) !important;
   border: 1px solid transparent !important;
   /* 默认无边框 */
-  transition: background 0.15s ease, transform 0.12s ease !important;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease !important;
   cursor: pointer;
 }
 

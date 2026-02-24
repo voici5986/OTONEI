@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { downloadTrack } from '../services/downloadService';
-import { 
-  handleError, 
-  ErrorTypes, 
-  ErrorSeverity, 
-  checkNetworkStatus, 
-  checkDownloadStatus 
+import {
+  handleError,
+  ErrorTypes,
+  ErrorSeverity,
+  checkNetworkStatus,
+  checkDownloadStatus,
 } from '../utils/errorHandler';
 import useNetworkStatus from '../hooks/useNetworkStatus';
 
@@ -22,56 +22,52 @@ export const useDownload = () => {
 export const DownloadProvider = ({ children }) => {
   const [downloading, setDownloading] = useState(false);
   const [currentDownloadingTrack, setCurrentDownloadingTrack] = useState(null);
-  
+
   const { isOnline } = useNetworkStatus({
     showToasts: false, // Don't show toast here as App might handle it
-    dispatchEvents: false
+    dispatchEvents: false,
   });
 
-  const handleDownload = useCallback(async (track, quality = 320) => {
-    // Check if already downloading
-    if (!checkDownloadStatus(downloading)) {
-      return;
-    }
+  const handleDownload = useCallback(
+    async (track, quality = 320) => {
+      // Check if already downloading
+      if (!checkDownloadStatus(downloading)) {
+        return;
+      }
 
-    // Check network
-    if (!checkNetworkStatus(isOnline, '下载音乐')) {
-      return;
-    }
+      // Check network
+      if (!checkNetworkStatus(isOnline, '下载音乐')) {
+        return;
+      }
 
-    try {
-      setDownloading(true);
-      setCurrentDownloadingTrack(track);
+      try {
+        setDownloading(true);
+        setCurrentDownloadingTrack(track);
 
-      await downloadTrack(track, quality);
+        await downloadTrack(track, quality);
+      } catch (error) {
+        handleError(error, ErrorTypes.DOWNLOAD, ErrorSeverity.ERROR, '下载失败，请重试');
+      } finally {
+        setDownloading(false);
+        setCurrentDownloadingTrack(null);
+      }
+    },
+    [downloading, isOnline]
+  );
 
-    } catch (error) {
-      handleError(
-        error,
-        ErrorTypes.DOWNLOAD,
-        ErrorSeverity.ERROR,
-        '下载失败，请重试'
-      );
-    } finally {
-      setDownloading(false);
-      setCurrentDownloadingTrack(null);
-    }
-  }, [downloading, isOnline]);
-
-  const isTrackDownloading = useCallback((trackId) => {
-    return downloading && currentDownloadingTrack?.id === trackId;
-  }, [downloading, currentDownloadingTrack]);
+  const isTrackDownloading = useCallback(
+    (trackId) => {
+      return downloading && currentDownloadingTrack?.id === trackId;
+    },
+    [downloading, currentDownloadingTrack]
+  );
 
   const value = {
     downloading,
     currentDownloadingTrack,
     handleDownload,
-    isTrackDownloading
+    isTrackDownloading,
   };
 
-  return (
-    <DownloadContext.Provider value={value}>
-      {children}
-    </DownloadContext.Provider>
-  );
+  return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;
 };

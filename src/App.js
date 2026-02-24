@@ -28,7 +28,6 @@ const Favorites = React.lazy(() => import('./pages/Favorites'));
 const History = React.lazy(() => import('./pages/History'));
 const User = React.lazy(() => import('./pages/User'));
 
-
 // 搜索结果项组件 - 已迁移至 components/SearchResultItem.js
 
 const AppContent = () => {
@@ -50,17 +49,15 @@ const AppContent = () => {
     }
   }, [activeTab]);
 
-
-
   const { isOnline } = useNetworkStatus({
     showToasts: true,
-    dispatchEvents: true
+    dispatchEvents: true,
   });
 
   // 使用自定义Hook管理Firebase状态
   useFirebaseStatus({
     showToasts: true,
-    manualCheck: false
+    manualCheck: false,
   });
 
   // 使用自定义Hook管理搜索逻辑
@@ -73,7 +70,7 @@ const AppContent = () => {
     handleSearch,
     setQuery,
     setSource,
-    setQuality
+    setQuality,
   } = useSearch(isOnline);
 
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
@@ -104,12 +101,10 @@ const AppContent = () => {
 
   // 下载相关状态 - 使用全局 Context
   // 可选音乐源
-  const sources = useMemo(() => ([
-    'netease', 'kuwo', 'joox', 'bilibili'
-  ]), []);
+  const sources = useMemo(() => ['netease', 'kuwo', 'joox', 'bilibili'], []);
 
   // 可选音质
-  const qualities = useMemo(() => ([128, 192, 320, 740, 999]), []);
+  const qualities = useMemo(() => [128, 192, 320, 740, 999], []);
 
   // 从PlayerContext获取封面相关方法
   const { setCurrentPlaylist, handlePlay: playTrack } = usePlayer();
@@ -137,7 +132,9 @@ const AppContent = () => {
       SearchService.searchLocal(trimmedQuery)
         .then((result) => {
           if (!active) return;
-          logger.log(`[Search Debug] SearchService 返回结果: 收藏=${result.favorites.length}, 历史=${result.history.length}`);
+          logger.log(
+            `[Search Debug] SearchService 返回结果: 收藏=${result.favorites.length}, 历史=${result.history.length}`
+          );
           setLocalSuggestions(result);
           setLocalSuggestionsLoading(false);
         })
@@ -167,12 +164,13 @@ const AppContent = () => {
 
   const buildSuggestionItems = useCallback((tracks) => {
     return tracks.map((track, index) => {
-      const stableId = track?.id || `${track?.name || 'idx'}-${track?.source || 'unknown'}-${index}`;
+      const stableId =
+        track?.id || `${track?.name || 'idx'}-${track?.source || 'unknown'}-${index}`;
       return {
         id: stableId,
         name: track?.name || '未命名',
         artist: getTrackArtist(track) || '未知歌手',
-        raw: track
+        raw: track,
       };
     });
   }, []);
@@ -228,16 +226,18 @@ const AppContent = () => {
   );
 
   // 格式化搜索历史建议
-  const historySuggestionItems = useMemo(() => (
-    searchHistory.slice(0, 5).map((item, index) => ({
-      id: `history-${index}-${item.timestamp}`,
-      name: item.query,
-      artist: `历史搜索 · ${item.source}`,
-      isSearchHistory: true,
-      rawQuery: item.query,
-      rawSource: item.source
-    }))
-  ), [searchHistory]);
+  const historySuggestionItems = useMemo(
+    () =>
+      searchHistory.slice(0, 5).map((item, index) => ({
+        id: `history-${index}-${item.timestamp}`,
+        name: item.query,
+        artist: `历史搜索 · ${item.source}`,
+        isSearchHistory: true,
+        rawQuery: item.query,
+        rawSource: item.source,
+      })),
+    [searchHistory]
+  );
 
   // 合并后的建议列表，用于键盘导航
   const allLimitedItems = useMemo(() => {
@@ -267,18 +267,21 @@ const AppContent = () => {
     return items;
   }, [query, historySuggestionItems, favoritesItems, historyItems]);
 
-  const handleSearchAction = useCallback((e) => {
-    handleSearch(e);
-    setSuggestionsOpen(false);
-    setSelectedIndex(-1);
-    // 关键修复：主动失去焦点，让 CSS :focus-within 状态消失，搜索框样式恢复
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    if (activeTab !== 'home') {
-      handleTabChange('home');
-    }
-  }, [handleSearch, activeTab, handleTabChange]);
+  const handleSearchAction = useCallback(
+    (e) => {
+      handleSearch(e);
+      setSuggestionsOpen(false);
+      setSelectedIndex(-1);
+      // 关键修复：主动失去焦点，让 CSS :focus-within 状态消失，搜索框样式恢复
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      if (activeTab !== 'home') {
+        handleTabChange('home');
+      }
+    },
+    [handleSearch, activeTab, handleTabChange]
+  );
 
   const handleKeyDown = (e) => {
     // 处理输入法组合输入，避免误触发搜索
@@ -296,10 +299,10 @@ const AppContent = () => {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % allLimitedItems.length);
+      setSelectedIndex((prev) => (prev + 1) % allLimitedItems.length);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + allLimitedItems.length) % allLimitedItems.length);
+      setSelectedIndex((prev) => (prev - 1 + allLimitedItems.length) % allLimitedItems.length);
     } else if (e.key === 'Enter') {
       if (selectedIndex >= 0 && selectedIndex < allLimitedItems.length) {
         e.preventDefault();
@@ -314,7 +317,6 @@ const AppContent = () => {
       setSelectedIndex(-1);
     }
   };
-
 
   const handleShowMore = (type) => {
     // 切换到对应的标签页
@@ -347,9 +349,18 @@ const AppContent = () => {
                   className="form-select-custom"
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  style={{ height: '38px', width: isDesktop ? '120px' : 'auto', fontSize: '0.85rem', flex: isDesktop ? 'none' : 1 }}
+                  style={{
+                    height: '38px',
+                    width: isDesktop ? '120px' : 'auto',
+                    fontSize: '0.85rem',
+                    flex: isDesktop ? 'none' : 1,
+                  }}
                 >
-                  {sources.map((src) => (<option key={src} value={src}>{src}</option>))}
+                  {sources.map((src) => (
+                    <option key={src} value={src}>
+                      {src}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="filter-group d-flex align-items-center">
@@ -358,9 +369,18 @@ const AppContent = () => {
                   className="form-select-custom"
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
-                  style={{ height: '38px', width: isDesktop ? '120px' : 'auto', fontSize: '0.85rem', flex: isDesktop ? 'none' : 1 }}
+                  style={{
+                    height: '38px',
+                    width: isDesktop ? '120px' : 'auto',
+                    fontSize: '0.85rem',
+                    flex: isDesktop ? 'none' : 1,
+                  }}
                 >
-                  {qualities.map((q) => (<option key={q} value={q}>{q === 999 ? '无损' : `${q}kbps`}</option>))}
+                  {qualities.map((q) => (
+                    <option key={q} value={q}>
+                      {q === 999 ? '无损' : `${q}kbps`}
+                    </option>
+                  ))}
                 </select>
               </div>
               {isDesktop && (
@@ -370,7 +390,14 @@ const AppContent = () => {
                   disabled={loading}
                   style={{ height: '38px', padding: '0 24px', fontSize: '0.85rem' }}
                 >
-                  {loading ? <span className="spinner-custom" style={{ width: '1rem', height: '1rem' }}></span> : '开始搜索'}
+                  {loading ? (
+                    <span
+                      className="spinner-custom"
+                      style={{ width: '1rem', height: '1rem' }}
+                    ></span>
+                  ) : (
+                    '开始搜索'
+                  )}
                 </button>
               )}
             </div>
@@ -430,12 +457,9 @@ const AppContent = () => {
   // 尝试锁定屏幕方向为竖屏（仅在移动设备和平板上）
   useEffect(() => {
     if (deviceInfo.isMobile || deviceInfo.isTablet) {
-      lockToPortrait().then(success => {
+      lockToPortrait().then((success) => {
         if (process.env.NODE_ENV === 'development') {
-          logger.log(success ?
-            '成功锁定屏幕方向为竖屏' :
-            '无法锁定屏幕方向，将使用备选方案'
-          );
+          logger.log(success ? '成功锁定屏幕方向为竖屏' : '无法锁定屏幕方向，将使用备选方案');
         }
       });
     }
@@ -446,11 +470,11 @@ const AppContent = () => {
     const initialize = async () => {
       try {
         if (process.env.NODE_ENV === 'development') {
-          logger.log("应用初始化中...");
+          logger.log('应用初始化中...');
         }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
-          logger.error("初始化失败:", error);
+          logger.error('初始化失败:', error);
         }
       }
     };
@@ -462,10 +486,10 @@ const AppContent = () => {
   useEffect(() => {
     // 异步清理过期封面缓存，不阻塞主流程
     clearExpiredCovers()
-      .then(count => {
+      .then((count) => {
         logger.log(`已清理 ${count} 个过期封面缓存`);
       })
-      .catch(error => {
+      .catch((error) => {
         logger.error('清理封面缓存失败:', error);
       });
   }, []);
@@ -484,7 +508,7 @@ const AppContent = () => {
         suggestions={{
           favorites: favoritesItems,
           history: historyItems,
-          searchHistory: historySuggestionItems
+          searchHistory: historySuggestionItems,
         }}
         onSearchFocus={handleSearchFocus}
         onSearchBlur={handleSearchBlur}
@@ -494,10 +518,7 @@ const AppContent = () => {
         onShowMore={handleShowMore}
         loading={loading}
       />
-      <Navigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       <div className={!deviceInfo.isMobile ? 'main-content' : 'main-content'}>
         <div className={!deviceInfo.isMobile ? 'content-area' : 'content-area'}>

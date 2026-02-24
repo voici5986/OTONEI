@@ -20,43 +20,42 @@ const CACHE_TTL = 1000;
  */
 export const detectDevice = () => {
   const now = Date.now();
-  
+
   // 如果有缓存且未过期，直接返回缓存结果
-  if (deviceInfoCache && (now - lastDetectionTime < CACHE_TTL)) {
+  if (deviceInfoCache && now - lastDetectionTime < CACHE_TTL) {
     return deviceInfoCache;
   }
-  
+
   // 获取用户代理字符串
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-  
+
   // 获取屏幕信息
   const screenWidth = window.screen.width;
   const screenHeight = window.screen.height;
   const screenRatio = screenWidth / screenHeight;
-  
+
   // 获取视口信息
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   const viewportRatio = viewportWidth / viewportHeight;
-  
+
   // 设备像素比
   const pixelRatio = window.devicePixelRatio || 1;
-  
+
   // 移动设备正则表达式
   const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-  
+
   // 平板设备正则表达式 (更精确的检测)
   const tabletRegex = /iPad|Android(?!.*Mobile)|Tablet|PlayBook/i;
-  
+
   // 基础检测
-  const hasTouchScreen = ('ontouchstart' in window) || 
-                         (navigator.maxTouchPoints > 0) || 
-                         (navigator.msMaxTouchPoints > 0);
-                         
+  const hasTouchScreen =
+    'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
   // 初步检测设备类型
   let isMobileDevice = mobileRegex.test(userAgent);
   let isTabletDevice = tabletRegex.test(userAgent);
-  
+
   // 更精确的平板检测
   // 如果设备报告为移动设备，但屏幕尺寸较大，可能是平板
   if (isMobileDevice && !isTabletDevice) {
@@ -64,17 +63,17 @@ export const detectDevice = () => {
     // iPad Pro 和一些大屏Android平板的特征
     if (
       (screenWidth >= 768 && screenHeight >= 768) || // 最小平板尺寸
-      (Math.max(screenWidth, screenHeight) >= 1024) || // 大屏幕设备
+      Math.max(screenWidth, screenHeight) >= 1024 || // 大屏幕设备
       (screenRatio > 0.6 && screenRatio < 1.7) // 平板通常有更接近正方形的屏幕比例
     ) {
       isTabletDevice = true;
       isMobileDevice = false;
     }
   }
-  
+
   // 检测是否为桌面设备
   const isDesktopDevice = !isMobileDevice && !isTabletDevice;
-  
+
   // 如果是桌面设备但有触摸屏，可能是触摸屏笔记本或平板模式的设备
   if (isDesktopDevice && hasTouchScreen) {
     // 检查是否可能是处于平板模式的笔记本
@@ -82,23 +81,23 @@ export const detectDevice = () => {
       isTabletDevice = true;
     }
   }
-  
+
   // 最终设备类型判断
   // 1. 小屏幕触摸设备 = 移动设备
   // 2. 中等屏幕触摸设备 = 平板
   // 3. 大屏幕或无触摸设备 = 桌面设备
-  
+
   let deviceType = 'desktop';
-  
+
   if (isMobileDevice) {
     deviceType = 'mobile';
   } else if (isTabletDevice) {
     deviceType = 'tablet';
   }
-  
+
   // 判断设备方向
   const orientation = viewportWidth > viewportHeight ? 'landscape' : 'portrait';
-  
+
   // 构造设备信息对象
   const deviceInfo = {
     isMobile: isMobileDevice,
@@ -110,20 +109,20 @@ export const detectDevice = () => {
       width: screenWidth,
       height: screenHeight,
       ratio: screenRatio,
-      pixelRatio
+      pixelRatio,
     },
     viewportInfo: {
       width: viewportWidth,
       height: viewportHeight,
-      ratio: viewportRatio
+      ratio: viewportRatio,
     },
-    hasTouchScreen
+    hasTouchScreen,
   };
-  
+
   // 更新缓存
   deviceInfoCache = deviceInfo;
   lastDetectionTime = now;
-  
+
   // 返回设备信息
   return deviceInfo;
 };
@@ -189,26 +188,25 @@ const refreshDeviceInfo = () => {
  */
 export const addDeviceChangeListener = (callback) => {
   let currentDevice = detectDevice();
-  
+
   const handleResize = () => {
     // 强制刷新设备信息
     const newDevice = refreshDeviceInfo();
-    
+
     // 检查设备类型或方向是否发生变化
     if (
-      currentDevice.deviceType !== newDevice.deviceType || 
+      currentDevice.deviceType !== newDevice.deviceType ||
       currentDevice.orientation !== newDevice.orientation
     ) {
       currentDevice = newDevice;
       callback(newDevice);
     }
   };
-  
+
   window.addEventListener('resize', handleResize);
-  
+
   // 返回移除监听器的函数
   return () => {
     window.removeEventListener('resize', handleResize);
   };
 };
-

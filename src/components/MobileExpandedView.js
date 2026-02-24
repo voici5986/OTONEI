@@ -20,29 +20,38 @@ const MobileExpandedView = ({
   handleTouchEnd,
   lyricsContainerRef,
   processedLyrics,
-  currentLyricIndex
+  currentLyricIndex,
 }) => {
   return (
-    <div 
+    <div
       className={`player-expanded-view ${showMobileLyrics ? 'mobile-lyrics-active' : ''} ${isDragging ? 'is-dragging' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ 
+      style={{
         transform: dragOffsetY > 0 ? `translateY(${dragOffsetY}px)` : '',
-        transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)'
+        transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
       }}
     >
-      <button onClick={toggleLyric} className="close-lyrics-btn" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}><FaTimes /></button>
-      
-      <div className="expanded-main-wrapper" onClick={() => {
-        if (window.innerWidth <= 768) setShowMobileLyrics(!showMobileLyrics);
-      }}>
+      <button
+        onClick={toggleLyric}
+        className="close-lyrics-btn"
+        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}
+      >
+        <FaTimes />
+      </button>
+
+      <div
+        className="expanded-main-wrapper"
+        onClick={() => {
+          if (window.innerWidth <= 768) setShowMobileLyrics(!showMobileLyrics);
+        }}
+      >
         <div className="album-info-section">
           <div className="album-cover-container">
-            <MobileAlbumCover 
-              track={currentTrack} 
-              size="large" 
+            <MobileAlbumCover
+              track={currentTrack}
+              size="large"
               isPlaying={isPlaying}
               imgSize={500}
             />

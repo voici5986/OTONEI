@@ -11,7 +11,7 @@ const DesktopNavbar = ({
   currentUser,
   handleNavItemClick,
   userInitial,
-  navItems
+  navItems,
 }) => {
   const deviceInfo = useDevice();
   const isSidebar = !deviceInfo.isMobile;
@@ -23,27 +23,31 @@ const DesktopNavbar = ({
     fontSize: isSidebar ? '1.4rem' : '1.6rem',
     color: 'var(--color-text-primary)',
     letterSpacing: '-0.5px', // 减小字间距，使文字更紧凑
-    marginLeft: '-2px' // 微调文字位置
+    marginLeft: '-2px', // 微调文字位置
   };
 
   return (
     <nav
       className={`navbar navbar-expand-lg nav-animated ${scrolled ? 'scrolled' : ''} ${isSidebar ? 'flex-column h-100 align-items-start border-0' : ''}`}
     >
-      <div className={`container-fluid ${isSidebar ? 'flex-column align-items-start px-0' : ''} h-100`}>
+      <div
+        className={`container-fluid ${isSidebar ? 'flex-column align-items-start px-0' : ''} h-100`}
+      >
         <div className={`navbar-brand d-flex align-items-center ${isSidebar ? 'mb-4 ps-3' : ''}`}>
           <img
             src="/logo.svg"
             alt="OTONEI Logo"
-            width={isSidebar ? "32" : "38"}
-            height={isSidebar ? "32" : "38"}
+            width={isSidebar ? '32' : '38'}
+            height={isSidebar ? '32' : '38'}
             className="logo-image logo-pulse me-1"
             style={{
               filter: 'drop-shadow(0 0 3px rgba(31, 31, 31, 0.25))',
-              marginBottom: '2px' // 微调垂直对齐
+              marginBottom: '2px', // 微调垂直对齐
             }}
           />
-          <span className="brand-text" style={logoStyle}>OTONEI</span>
+          <span className="brand-text" style={logoStyle}>
+            OTONEI
+          </span>
         </div>
 
         {/* 仅在移动端显示顶部的用户头像按钮 */}
@@ -61,16 +65,24 @@ const DesktopNavbar = ({
                   alt="Profile"
                   className="rounded-circle shadow-sm"
                   style={{ width: '32px', height: '32px', objectFit: 'cover' }}
-                  fallback={userInitial ? (
-                    <div
-                      className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
-                      style={{ width: '32px', height: '32px', fontSize: '1rem', backgroundColor: 'var(--color-text-primary)', color: 'var(--card-background)' }}
-                    >
-                      {userInitial}
-                    </div>
-                  ) : (
-                    <FaUser />
-                  )}
+                  fallback={
+                    userInitial ? (
+                      <div
+                        className="rounded-circle d-flex justify-content-center align-items-center shadow-sm"
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          fontSize: '1rem',
+                          backgroundColor: 'var(--color-text-primary)',
+                          color: 'var(--card-background)',
+                        }}
+                      >
+                        {userInitial}
+                      </div>
+                    ) : (
+                      <FaUser />
+                    )
+                  }
                 />
               </div>
             ) : (
@@ -98,9 +110,12 @@ const DesktopNavbar = ({
           </button>
         )}
 
-        <div className={`collapse navbar-collapse ${isSidebar ? "w-100 flex-column show" : (expanded ? "show" : "")}`} id="basic-navbar-nav">
-          <div className={`navbar-nav ${isSidebar ? "flex-column w-100" : "mx-auto"}`}>
-            {navItems.map(item => {
+        <div
+          className={`collapse navbar-collapse ${isSidebar ? 'w-100 flex-column show' : expanded ? 'show' : ''}`}
+          id="basic-navbar-nav"
+        >
+          <div className={`navbar-nav ${isSidebar ? 'flex-column w-100' : 'mx-auto'}`}>
+            {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <div
@@ -109,7 +124,10 @@ const DesktopNavbar = ({
                   className={`nav-link d-flex align-items-center ${isSidebar ? '' : 'mx-2 mx-md-4'} nav-item ${activeTab === item.id ? 'active' : ''}`}
                   style={{ cursor: 'pointer' }}
                 >
-                  <span className={`${isSidebar ? 'me-3' : 'me-1'} nav-icon`}><Icon /></span> {item.title}
+                  <span className={`${isSidebar ? 'me-3' : 'me-1'} nav-icon`}>
+                    <Icon />
+                  </span>{' '}
+                  {item.title}
                 </div>
               );
             })}

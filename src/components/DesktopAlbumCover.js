@@ -4,7 +4,7 @@ import useAlbumCoverImage from '../hooks/useAlbumCoverImage';
 /**
  * 桌面端专辑封面组件
  * 简单的缩略图显示，无复杂动画
- * 
+ *
  * @param {Object} props
  * @param {Object} props.track - 歌曲信息
  * @param {string|number} props.size - 尺寸 'small' | number
@@ -14,17 +14,20 @@ import useAlbumCoverImage from '../hooks/useAlbumCoverImage';
  * @param {boolean} props.lazy - 是否懒加载
  * @param {boolean} props.forceFetch - 是否强制加载
  */
-const DesktopAlbumCover = ({ 
-  track, 
-  size = 'small', 
-  onClick, 
+const DesktopAlbumCover = ({
+  track,
+  size = 'small',
+  onClick,
   className = '',
   imgSize = 300,
   lazy = false,
-  forceFetch = false
+  forceFetch = false,
 }) => {
   const { imageUrl, isLoaded, forceLoadCover, handleImageError } = useAlbumCoverImage(
-    track, imgSize, lazy, forceFetch
+    track,
+    imgSize,
+    lazy,
+    forceFetch
   );
 
   // 确定样式和尺寸
@@ -32,18 +35,18 @@ const DesktopAlbumCover = ({
     if (size === 'small') {
       return {};
     }
-    
+
     return {
       width: typeof size === 'number' ? `${size}px` : size,
       height: typeof size === 'number' ? `${size}px` : size,
       objectFit: 'cover',
-      backgroundColor: 'var(--card-hover-background)'
+      backgroundColor: 'var(--card-hover-background)',
     };
   };
-  
+
   // 样式类名
   const sizeClass = size === 'small' ? 'player-thumbnail rounded me-2' : 'rounded';
-  
+
   const handleClick = () => {
     if (lazy && !isLoaded) {
       forceLoadCover();
@@ -52,9 +55,9 @@ const DesktopAlbumCover = ({
       onClick();
     }
   };
-  
+
   return (
-    <div 
+    <div
       className={`${className} ${sizeClass} album-cover-wrapper`}
       onClick={handleClick}
       style={{
@@ -64,18 +67,18 @@ const DesktopAlbumCover = ({
         overflow: 'hidden',
         backgroundColor: 'var(--color-background-alt)',
         borderRadius: 'var(--border-radius-sm)',
-        ...getStyles()
+        ...getStyles(),
       }}
     >
-      <img 
+      <img
         src={imageUrl}
         alt="当前播放"
         className="album-cover-image"
-        style={{ 
+        style={{
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          borderRadius: 'inherit'
+          borderRadius: 'inherit',
         }}
         onError={handleImageError}
         loading="lazy"

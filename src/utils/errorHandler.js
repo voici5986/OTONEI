@@ -17,7 +17,7 @@ export const ErrorTypes = {
   AUTH: 'auth',
   STORAGE: 'storage',
   REGION: 'region',
-  UNKNOWN: 'unknown'
+  UNKNOWN: 'unknown',
 };
 
 /**
@@ -27,7 +27,7 @@ export const ErrorSeverity = {
   INFO: 'info',
   WARNING: 'warning',
   ERROR: 'error',
-  CRITICAL: 'critical'
+  CRITICAL: 'critical',
 };
 
 /**
@@ -38,44 +38,50 @@ export const ErrorSeverity = {
  * @param {string} customMessage - 自定义错误消息
  * @param {Function} callback - 错误处理后的回调函数
  */
-export const handleError = (error, type = ErrorTypes.UNKNOWN, severity = ErrorSeverity.ERROR, customMessage = null, callback = null) => {
+export const handleError = (
+  error,
+  type = ErrorTypes.UNKNOWN,
+  severity = ErrorSeverity.ERROR,
+  customMessage = null,
+  callback = null
+) => {
   // 记录错误到控制台
   if (process.env.NODE_ENV === 'development') {
     logger.error(`[${type.toUpperCase()}] Error:`, error);
   }
-  
+
   // 确定显示的错误消息
   let message = customMessage;
   if (!message) {
     message = getErrorMessage(error, type);
   }
-  
+
   // 检查是否是重复错误消息
   const errorKey = `${type}-${message}`;
   const now = Date.now();
   const lastShown = recentErrors.get(errorKey);
-  
-  if (lastShown && (now - lastShown) < ERROR_THROTTLE_TIME) {
+
+  if (lastShown && now - lastShown < ERROR_THROTTLE_TIME) {
     logger.log(`[ErrorHandler] 抑制重复错误通知: ${message} (${now - lastShown}ms内)`);
-    
+
     // 执行回调但不显示Toast
     if (callback && typeof callback === 'function') {
       callback(error, type, severity);
     }
-    
+
     return;
   }
-  
+
   // 更新最近显示的错误记录
   recentErrors.set(errorKey, now);
-  
+
   // 清理旧记录
   setTimeout(() => {
     if (recentErrors.get(errorKey) === now) {
       recentErrors.delete(errorKey);
     }
   }, ERROR_THROTTLE_TIME);
-  
+
   // 确定图标
   let icon = '❌';
   if (severity === ErrorSeverity.WARNING) {
@@ -83,7 +89,7 @@ export const handleError = (error, type = ErrorTypes.UNKNOWN, severity = ErrorSe
   } else if (severity === ErrorSeverity.INFO) {
     icon = 'ℹ️';
   }
-  
+
   // 确定持续时间
   let duration = 5000; // 默认5秒
   if (severity === ErrorSeverity.CRITICAL) {
@@ -91,10 +97,10 @@ export const handleError = (error, type = ErrorTypes.UNKNOWN, severity = ErrorSe
   } else if (severity === ErrorSeverity.INFO) {
     duration = 3000; // 信息提示显示更短时间
   }
-  
+
   // 显示错误提示
   showErrorToast(message, severity, icon, duration);
-  
+
   // 执行回调
   if (callback && typeof callback === 'function') {
     callback(error, type, severity);
@@ -112,13 +118,12 @@ const getErrorMessage = (error, type) => {
   if ((error.message && error.message.includes('Network Error')) || error.code === 'ERR_NETWORK') {
     return '网络连接错误，请检查您的网络连接';
   }
-  
+
   // 检查是否是超时错误
   if (error.message && error.message.includes('timeout')) {
     return '请求超时，请稍后重试';
   }
-  
-  
+
   // 根据错误类型返回适当的消息
   switch (type) {
     case ErrorTypes.NETWORK:
@@ -159,7 +164,7 @@ const showErrorToast = (message, severity, icon, duration) => {
     draggable: true,
     progress: undefined,
   };
-  
+
   switch (severity) {
     case ErrorSeverity.INFO:
       toast.info(message, toastOptions);
@@ -167,14 +172,14 @@ const showErrorToast = (message, severity, icon, duration) => {
     case ErrorSeverity.WARNING:
       toast.warning(message, {
         ...toastOptions,
-        className: 'custom-toast warning-toast'
+        className: 'custom-toast warning-toast',
       });
       break;
     case ErrorSeverity.ERROR:
     case ErrorSeverity.CRITICAL:
       toast.error(message, {
         ...toastOptions,
-        className: 'custom-toast error-toast'
+        className: 'custom-toast error-toast',
       });
       break;
     default:
@@ -268,17 +273,19 @@ export const getRecoverySuggestion = (type) => {
  */
 export const canAutoRecover = (error, type) => {
   // 网络错误通常可以通过重试来恢复
-  if (type === ErrorTypes.NETWORK || 
-      ((error.message && error.message.includes('Network Error')) || 
-      error.code === 'ERR_NETWORK')) {
+  if (
+    type === ErrorTypes.NETWORK ||
+    (error.message && error.message.includes('Network Error')) ||
+    error.code === 'ERR_NETWORK'
+  ) {
     return true;
   }
-  
+
   // API错误可能可以通过重试来恢复
   if (type === ErrorTypes.API && error.response && error.response.status >= 500) {
     return true;
   }
-  
+
   // 其他类型的错误通常需要用户干预
   return false;
 };
@@ -293,26 +300,26 @@ export const canAutoRecover = (error, type) => {
 export const autoRecover = async (recoveryFn, maxRetries = 3, delay = 1000) => {
   let retries = 0;
   let lastError = null;
-  
+
   while (retries < maxRetries) {
     try {
       // 捕获当前delay值
       const currentDelay = delay;
       // 等待指定延迟
-      await new Promise(resolve => setTimeout(resolve, currentDelay));
-      
+      await new Promise((resolve) => setTimeout(resolve, currentDelay));
+
       // 尝试恢复
       const result = await recoveryFn();
       return result;
     } catch (error) {
       lastError = error;
       retries++;
-      
+
       // 增加重试延迟（指数退避）
       delay *= 2;
     }
   }
-  
+
   // 所有重试都失败了
   throw lastError;
-}; 
+};

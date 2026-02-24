@@ -11,8 +11,6 @@
 - 📱 **PWA 支持** - 可作为本地应用安装，支持离线访问核心功能，具备自动更新检查与通知机制
 - 🎨 **现代化 UI** - 沉浸式播放器、双语歌词（支持滚动与预览）、响应式设计
 
-
-
 ## 🏗️ 技术架构
 
 OTONEI 采用现代化的前端技术栈构建：
@@ -69,17 +67,20 @@ docker run -d -p 80:80 --name sonicflow --restart always sonicflow
 ### 开发步骤
 
 1. **克隆项目**
+
    ```bash
    git clone https://github.com/voici5986/SonicFlow.git
    cd SonicFlow
    ```
 
 2. **安装依赖**
+
    ```bash
    npm install
    ```
 
 3. **配置环境变量**
+
    ```bash
    cp .env.example .env.local
    # 编辑 .env.local 文件，根据需要配置 API 和 Firebase
@@ -106,9 +107,9 @@ npm run serve
 
 无论是本地开发还是生产环境部署，你都可以通过环境变量配置 API。请参考 [.env.example](.env.example) 进行配置：
 
-| 变量名 | 描述 | 默认值/示例 | 是否必需 |
-| :--- | :--- | :--- | :--- |
-| `REACT_APP_API_BASE` | 后端 API 地址 | `/api-v1` (开发环境代理至生产 API) | ✅ 必需 |
+| 变量名               | 描述          | 默认值/示例                        | 是否必需 |
+| :------------------- | :------------ | :--------------------------------- | :------- |
+| `REACT_APP_API_BASE` | 后端 API 地址 | `/api-v1` (开发环境代理至生产 API) | ✅ 必需  |
 
 | `FIREBASE_API_KEY` | Firebase API Key | 参见 [FIREBASE_SETUP.md](FIREBASE_SETUP.md) | ❌ 可选 |
 | `FIREBASE_AUTH_DOMAIN` | Firebase 认证域名 | your-project.firebaseapp.com | ❌ 可选 |
@@ -117,23 +118,23 @@ npm run serve
 | `FIREBASE_MESSAGING_SENDER_ID` | Firebase 消息发送者 ID | 123456789 | ❌ 可选 |
 | `FIREBASE_APP_ID` | Firebase 应用 ID | 1:123456789:web:abcdef | ❌ 可选 |
 
-> 🔧 **配置说明**: 
+> 🔧 **配置说明**:
+>
 > - 必需配置 `REACT_APP_API_BASE` 以确保应用正常运行
 > - 如需使用云端同步功能，请配置所有 Firebase 相关变量
-> 
 
 ## 📦 技术栈
 
-| 类别 | 技术选型 |
-| :--- | :--- |
-| **前端框架** | React 19, Vite 7, React Router |
-| **UI 组件库** | React Bootstrap, React Icons, React Toastify |
-| **状态管理** | React Context API, 自定义 Hooks |
-| **数据存储** | Localforage (IndexedDB), Firebase Realtime Database |
-| **音频处理** | Native HTML5 Audio API, React Player |
-| **构建工具** | Vite, Cloudflare Pages Functions |
-| **部署平台** | Cloudflare Pages, Docker, Nginx |
-| **开发工具** | ESLint, Prettier, GitHub Actions |
+| 类别          | 技术选型                                            |
+| :------------ | :-------------------------------------------------- |
+| **前端框架**  | React 19, Vite 7, React Router                      |
+| **UI 组件库** | React Bootstrap, React Icons, React Toastify        |
+| **状态管理**  | React Context API, 自定义 Hooks                     |
+| **数据存储**  | Localforage (IndexedDB), Firebase Realtime Database |
+| **音频处理**  | Native HTML5 Audio API, React Player                |
+| **构建工具**  | Vite, Cloudflare Pages Functions                    |
+| **部署平台**  | Cloudflare Pages, Docker, Nginx                     |
+| **开发工具**  | ESLint, Prettier, GitHub Actions                    |
 
 ## 📁 项目结构
 

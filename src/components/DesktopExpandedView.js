@@ -14,29 +14,25 @@ const DesktopExpandedView = ({
   toggleLyric,
   lyricsContainerRef,
   processedLyrics,
-  currentLyricIndex
+  currentLyricIndex,
 }) => {
   return (
     <div className="player-expanded-view desktop-expanded-view">
       {/* 关闭按钮 */}
-      <button 
-        onClick={toggleLyric} 
+      <button
+        onClick={toggleLyric}
         className="close-lyrics-btn"
         title="收起播放器"
         style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}
       >
         <FaTimes />
       </button>
-      
+
       <div className="expanded-main-wrapper">
         {/* 左侧：封面信息区 */}
         <div className="album-info-section">
           <div className="album-cover-container">
-            <DesktopAlbumCover 
-              track={currentTrack} 
-              size={450} 
-              imgSize={500}
-            />
+            <DesktopAlbumCover track={currentTrack} size={450} imgSize={500} />
           </div>
           <div className="track-details mt-4">
             <h2 className="track-title">{currentTrack.name}</h2>
@@ -49,11 +45,7 @@ const DesktopExpandedView = ({
           <div className="lyrics-scroll-container" ref={lyricsContainerRef}>
             {processedLyrics.length > 0 ? (
               processedLyrics.map((line, idx) => (
-                <LyricLine 
-                  key={idx} 
-                  line={line} 
-                  isActive={idx === currentLyricIndex} 
-                />
+                <LyricLine key={idx} line={line} isActive={idx === currentLyricIndex} />
               ))
             ) : (
               <div className="lyric-line no-lyrics">暂无歌词</div>

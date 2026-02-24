@@ -8,7 +8,7 @@ const AUDIO_STATES = {
   PLAYING: 'playing',
   PAUSED: 'paused',
   STOPPED: 'stopped',
-  ERROR: 'error'
+  ERROR: 'error',
 };
 
 class AudioStateManager {
@@ -64,7 +64,7 @@ class AudioStateManager {
   addListener(listener) {
     this.listeners.push(listener);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+      this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 
@@ -74,9 +74,9 @@ class AudioStateManager {
       track: this.currentTrack,
       url: audioEngine.audio.src,
       isLoading: this.isLoading,
-      error: this.error
+      error: this.error,
     };
-    this.listeners.forEach(l => l(stateSnapshot));
+    this.listeners.forEach((l) => l(stateSnapshot));
   }
 
   // 核心控制代理到引擎

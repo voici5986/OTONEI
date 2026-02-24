@@ -54,16 +54,16 @@ const OrientationPrompt = () => {
         zIndex: 'var(--z-index-overlay)',
         color: 'white',
         padding: '20px',
-        textAlign: 'center'
+        textAlign: 'center',
       }}
     >
-      <FaMobileAlt 
-        size={60} 
-        style={{ 
+      <FaMobileAlt
+        size={60}
+        style={{
           transform: 'rotate(90deg)',
           marginBottom: '20px',
           animation: 'rotate-phone 1.5s infinite ease-in-out',
-        }} 
+        }}
       />
       <h3 style={{ marginBottom: '15px' }}>请旋转设备</h3>
       <p style={{ fontSize: '16px', maxWidth: '300px' }}>
@@ -85,4 +85,4 @@ const OrientationPrompt = () => {
   );
 };
 
-export default OrientationPrompt; 
+export default OrientationPrompt;

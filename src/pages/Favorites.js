@@ -64,134 +64,141 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
     if (lowerStr.includes(lowerQuery)) return true;
 
     // 4. 分词检查 - 适用于由空格分隔的多个单词
-    const words = query.split(/\s+/).filter(word => word.length > 0);
+    const words = query.split(/\s+/).filter((word) => word.length > 0);
     if (words.length > 1) {
-      return words.every(word => isMatch(str, word));
+      return words.every((word) => isMatch(str, word));
     }
 
     return false;
   }, []);
 
   // 递归搜索任何值是否匹配查询词
-  const searchInValue = useCallback((value, query) => {
-    // 处理字符串直接比较
-    if (typeof value === 'string') {
-      return isMatch(value, query);
-    }
+  const searchInValue = useCallback(
+    (value, query) => {
+      // 处理字符串直接比较
+      if (typeof value === 'string') {
+        return isMatch(value, query);
+      }
 
-    // 处理数组 - 检查数组中的每个元素
-    if (Array.isArray(value)) {
-      return value.some(item => searchInValue(item, query));
-    }
+      // 处理数组 - 检查数组中的每个元素
+      if (Array.isArray(value)) {
+        return value.some((item) => searchInValue(item, query));
+      }
 
-    // 处理对象 - 检查所有属性值
-    if (value !== null && typeof value === 'object') {
-      return Object.values(value).some(propValue =>
-        searchInValue(propValue, query)
-      );
-    }
+      // 处理对象 - 检查所有属性值
+      if (value !== null && typeof value === 'object') {
+        return Object.values(value).some((propValue) => searchInValue(propValue, query));
+      }
 
-    // 其他类型无法搜索
-    return false;
-  }, [isMatch]);
+      // 其他类型无法搜索
+      return false;
+    },
+    [isMatch]
+  );
 
   // 专门检查艺术家字段的匹配
-  const isArtistMatch = useCallback((track, query) => {
-    // 1. 检查artist字段（字符串形式）
-    if (typeof track.artist === 'string' && isMatch(track.artist, query)) {
-      return true;
-    }
-
-    // 2. 检查artist字段（对象形式）
-    if (track.artist !== null && typeof track.artist === 'object') {
-      // 检查name属性
-      if (track.artist.name && isMatch(track.artist.name, query)) {
+  const isArtistMatch = useCallback(
+    (track, query) => {
+      // 1. 检查artist字段（字符串形式）
+      if (typeof track.artist === 'string' && isMatch(track.artist, query)) {
         return true;
       }
 
-      // 递归搜索整个对象
-      if (searchInValue(track.artist, query)) {
-        return true;
-      }
-    }
-
-    // 3. 检查artists数组（某些API返回数组）
-    if (Array.isArray(track.artists)) {
-      // 检查数组中的每个艺术家
-      return track.artists.some(artist => {
-        if (typeof artist === 'string') {
-          return isMatch(artist, query);
+      // 2. 检查artist字段（对象形式）
+      if (track.artist !== null && typeof track.artist === 'object') {
+        // 检查name属性
+        if (track.artist.name && isMatch(track.artist.name, query)) {
+          return true;
         }
 
-        if (artist && typeof artist === 'object') {
-          // 检查name属性
-          if (artist.name && isMatch(artist.name, query)) {
-            return true;
+        // 递归搜索整个对象
+        if (searchInValue(track.artist, query)) {
+          return true;
+        }
+      }
+
+      // 3. 检查artists数组（某些API返回数组）
+      if (Array.isArray(track.artists)) {
+        // 检查数组中的每个艺术家
+        return track.artists.some((artist) => {
+          if (typeof artist === 'string') {
+            return isMatch(artist, query);
           }
 
-          // 递归搜索整个对象
-          return searchInValue(artist, query);
-        }
+          if (artist && typeof artist === 'object') {
+            // 检查name属性
+            if (artist.name && isMatch(artist.name, query)) {
+              return true;
+            }
 
-        return false;
-      });
-    }
-
-    // 4. 检查ar字段（网易云音乐常用）
-    if (Array.isArray(track.ar)) {
-      return track.ar.some(artist => {
-        if (typeof artist === 'string') {
-          return isMatch(artist, query);
-        }
-
-        if (artist && typeof artist === 'object') {
-          // 检查name属性
-          if (artist.name && isMatch(artist.name, query)) {
-            return true;
+            // 递归搜索整个对象
+            return searchInValue(artist, query);
           }
 
-          // 递归搜索整个对象
-          return searchInValue(artist, query);
+          return false;
+        });
+      }
+
+      // 4. 检查ar字段（网易云音乐常用）
+      if (Array.isArray(track.ar)) {
+        return track.ar.some((artist) => {
+          if (typeof artist === 'string') {
+            return isMatch(artist, query);
+          }
+
+          if (artist && typeof artist === 'object') {
+            // 检查name属性
+            if (artist.name && isMatch(artist.name, query)) {
+              return true;
+            }
+
+            // 递归搜索整个对象
+            return searchInValue(artist, query);
+          }
+
+          return false;
+        });
+      }
+
+      // 5. 检查album对象中的artist信息
+      if (track.al && typeof track.al === 'object') {
+        if (searchInValue(track.al, query)) {
+          return true;
         }
-
-        return false;
-      });
-    }
-
-    // 5. 检查album对象中的artist信息
-    if (track.al && typeof track.al === 'object') {
-      if (searchInValue(track.al, query)) {
-        return true;
       }
-    }
 
-    // 6. 尝试在整个track对象中搜索（仅限特定字段）
-    const fieldsToSearch = ['artistsname', 'singer', 'author', 'composer'];
-    for (const field of fieldsToSearch) {
-      if (track[field] && isMatch(track[field], query)) {
-        return true;
+      // 6. 尝试在整个track对象中搜索（仅限特定字段）
+      const fieldsToSearch = ['artistsname', 'singer', 'author', 'composer'];
+      for (const field of fieldsToSearch) {
+        if (track[field] && isMatch(track[field], query)) {
+          return true;
+        }
       }
-    }
 
-    return false;
-  }, [isMatch, searchInValue]);
+      return false;
+    },
+    [isMatch, searchInValue]
+  );
 
   // 将搜索逻辑提取出来
-  const performSearch = useCallback((query, currentFavorites) => {
-    const trimmedQuery = query.trim();
-    if (!trimmedQuery) {
-      setFilteredFavorites(currentFavorites);
-      return;
-    }
-
-    const filtered = currentFavorites.filter(track => {
-      if (isMatch(track.name, trimmedQuery) || isMatch(track.album, trimmedQuery)) {
-        return true;
+  const performSearch = useCallback(
+    (query, currentFavorites) => {
+      const trimmedQuery = query.trim();
+      if (!trimmedQuery) {
+        setFilteredFavorites(currentFavorites);
+        return;
       }
-      return isArtistMatch(track, trimmedQuery);
-    });
-    setFilteredFavorites(filtered);
-  }, [isMatch, isArtistMatch]);
+
+      const filtered = currentFavorites.filter((track) => {
+        if (isMatch(track.name, trimmedQuery) || isMatch(track.album, trimmedQuery)) {
+          return true;
+        }
+        return isArtistMatch(track, trimmedQuery);
+      });
+      setFilteredFavorites(filtered);
+    },
+    [isMatch, isArtistMatch]
+  );
 
   // 监听全局搜索
   useEffect(() => {
@@ -204,10 +211,7 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   const renderLoginReminder = () => {
     if (!currentUser) {
       return (
-        <div 
-          className="login-prompt-container" 
-          onClick={() => onTabChange('user')}
-        >
+        <div className="login-prompt-container" onClick={() => onTabChange('user')}>
           <p className="login-prompt-desc">立即登录，在任何设备继续音乐旅程</p>
         </div>
       );
@@ -219,14 +223,14 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   const handleTrackPlay = (track) => {
     logger.log('从收藏播放曲目:', track.id, track.name);
     // 使用当前收藏列表作为播放列表，并找到当前曲目的索引
-    const trackIndex = filteredFavorites.findIndex(item => item.id === track.id);
+    const trackIndex = filteredFavorites.findIndex((item) => item.id === track.id);
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, filteredFavorites);
   };
 
   return (
     <div className="favorites-page page-content-wrapper">
       {/* 移除标题栏，功能已迁移至账号页 */}
-      
+
       {/* 添加登录提醒 */}
       {renderLoginReminder()}
 
@@ -235,27 +239,31 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
           <span className="spinner-custom"></span>
         </div>
       ) : favorites.length === 0 ? null : filteredFavorites.length === 0 ? (
-        <div className="alert-light text-center py-4 rounded" style={{ backgroundColor: 'var(--color-background-alt)', border: '1px solid var(--color-border)' }}>
+        <div
+          className="alert-light text-center py-4 rounded"
+          style={{
+            backgroundColor: 'var(--color-background-alt)',
+            border: '1px solid var(--color-border)',
+          }}
+        >
           <p className="mb-0">没有匹配的收藏歌曲</p>
-          <small className="text-muted">
-            尝试使用不同的关键词搜索
-          </small>
+          <small className="text-muted">尝试使用不同的关键词搜索</small>
         </div>
       ) : (
         <div className="favorites-grid row g-3">
           {filteredFavorites.map((track, index) => (
             <div key={`${track.id}-${track.source}-${index}`} className="col-12 col-md-6">
-              <div 
+              <div
                 className={`music-card ${currentTrack?.id === track.id ? 'is-active' : ''}`}
                 onClick={() => handleTrackPlay(track)}
               >
                 <div className="music-card-row">
-                <div className="music-card-info">
-                  <h6>{track.name}</h6>
-                  <small>{getTrackArtist(track) || '未知歌手'}</small>
-                </div>
+                  <div className="music-card-info">
+                    <h6>{track.name}</h6>
+                    <small>{getTrackArtist(track) || '未知歌手'}</small>
+                  </div>
 
-                  <MusicCardActions 
+                  <MusicCardActions
                     track={track}
                     isDownloading={isTrackDownloading(track.id)}
                     onDownload={handleDownload}
@@ -270,4 +278,4 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   );
 };
 
-export default Favorites; 
+export default Favorites;

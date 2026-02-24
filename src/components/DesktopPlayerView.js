@@ -22,13 +22,16 @@ const DesktopPlayerView = ({
   processedLyrics,
   renderPlayModeIcon,
   getPlayModeTitle,
-  playerUrl
+  playerUrl,
 }) => {
   if (!currentTrack) return null;
 
   return (
     <>
-      <div className={`player-backdrop ${lyricExpanded ? 'visible' : ''}`} onClick={toggleLyric}></div>
+      <div
+        className={`player-backdrop ${lyricExpanded ? 'visible' : ''}`}
+        onClick={toggleLyric}
+      ></div>
       <div className={`audio-player ${lyricExpanded ? 'expanded' : 'collapsed'}`}>
         <div className="player-inner">
           <div className="progress-control-container">
@@ -36,7 +39,7 @@ const DesktopPlayerView = ({
           </div>
 
           <div className="player-content">
-            <DesktopPlayerControl 
+            <DesktopPlayerControl
               currentTrack={currentTrack}
               isPlaying={isPlaying}
               togglePlay={togglePlay}
@@ -55,7 +58,7 @@ const DesktopPlayerView = ({
       </div>
 
       {lyricExpanded && (
-        <DesktopExpandedView 
+        <DesktopExpandedView
           currentTrack={currentTrack}
           isPlaying={isPlaying}
           toggleLyric={toggleLyric}

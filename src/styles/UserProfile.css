@@ -147,7 +147,7 @@
   font-size: 1.8rem;
   font-weight: 600;
   background: var(--color-text-primary);
-  color: #FFFFFF;
+  color: #ffffff;
   border: none;
 }
 
@@ -440,7 +440,7 @@
   flex-wrap: wrap;
 }
 
-.equal-height-row>[class*='col-'] {
+.equal-height-row > [class*='col-'] {
   display: flex;
   flex-direction: column;
 }

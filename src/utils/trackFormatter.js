@@ -6,19 +6,25 @@
 export const getTrackArtist = (track) => {
   if (!track) return '';
   if (Array.isArray(track.ar)) {
-    return track.ar.map(a => a?.name || '').filter(Boolean).join(' / ');
+    return track.ar
+      .map((a) => a?.name || '')
+      .filter(Boolean)
+      .join(' / ');
   }
   if (Array.isArray(track.artists)) {
-    return track.artists.map(a => a?.name || '').filter(Boolean).join(' / ');
+    return track.artists
+      .map((a) => a?.name || '')
+      .filter(Boolean)
+      .join(' / ');
   }
   if (Array.isArray(track.artist)) {
     return track.artist
-      .map(a => (typeof a === 'string' ? a : (a?.name || '')))
+      .map((a) => (typeof a === 'string' ? a : a?.name || ''))
       .filter(Boolean)
       .join(' / ');
   }
   if (track.artist) {
-    return typeof track.artist === 'string' ? track.artist : (track.artist.name || '');
+    return typeof track.artist === 'string' ? track.artist : track.artist.name || '';
   }
   if (track.artistsname) return String(track.artistsname);
   if (track.singer) return String(track.singer);
@@ -26,7 +32,7 @@ export const getTrackArtist = (track) => {
   if (track.composer) return String(track.composer);
   if (track.al?.artist) {
     const alArtist = track.al.artist;
-    return typeof alArtist === 'string' ? alArtist : (alArtist?.name || '');
+    return typeof alArtist === 'string' ? alArtist : alArtist?.name || '';
   }
   return '';
 };

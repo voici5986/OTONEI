@@ -3,42 +3,43 @@
 :root {
   /* ===== 颜色系统 ===== */
   /* 基础颜色 */
-  --color-primary: #2383E2;
+  --color-primary: #2383e2;
   /* 更改为主色为 Notion 蓝 */
-  --color-primary-light: #3391EE;
-  --color-primary-dark: #1F71C2;
-  --color-secondary: #2F3437;
-  --color-secondary-light: #6B6F76;
-  --color-secondary-dark: #1F1F1F;
+  --color-primary-light: #3391ee;
+  --color-primary-dark: #1f71c2;
+  --color-secondary: #2f3437;
+  --color-secondary-light: #6b6f76;
+  --color-secondary-dark: #1f1f1f;
 
   /* 功能性颜色 */
   --color-success: #28a745;
   --color-danger: #e74c3c;
   --color-warning: #ffc107;
   --color-info: #17a2b8;
-  --color-accent: #D15C5C;
-  --color-notion-focus: #2383E2;
+  --color-accent: #d15c5c;
+  --color-notion-focus: #2383e2;
   /* Notion 经典的聚焦蓝色 */
 
   /* 中性颜色 (Notion 风格) */
-  --color-text-primary: #2F3437;
-  --color-text-secondary: #6B6F76;
+  --color-text-primary: #2f3437;
+  --color-text-secondary: #6b6f76;
   --color-text-tertiary: #91918e;
-  --color-text-muted: #9B9A97;
-  --color-background: #FFFFFF;
-  --color-background-alt: #F7F7F5;
-  --color-hover-notion: #EFEFEE;
-  --color-border: #E5E5E5;
+  --color-text-muted: #9b9a97;
+  --color-background: #ffffff;
+  --color-background-alt: #f7f7f5;
+  --color-hover-notion: #efefee;
+  --color-border: #e5e5e5;
   /* 归一化为浅灰描边 */
-  --color-border-active: #2383E2;
+  --color-border-active: #2383e2;
 
   /* 渐变色 (已弃用，建议改为单色) */
-  --gradient-primary: #2F3437;
-  --gradient-dark: #1F1F1F;
+  --gradient-primary: #2f3437;
+  --gradient-dark: #1f1f1f;
 
   /* ===== 排版 ===== */
-  --font-family-base: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-base:
+    'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   --font-size-base: 1rem;
   --font-size-sm: 0.875rem;
   --font-size-lg: 1.25rem;
@@ -108,8 +109,8 @@
   --music-card-hover-transform: var(--card-hover-transform);
 
   /* 卡片 */
-  --card-background: #FFFFFF;
-  --card-hover-background: #F7F6F4;
+  --card-background: #ffffff;
+  --card-hover-background: #f7f6f4;
   --card-hover-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   --card-hover-transform: translateY(-5px);
   --card-border-radius: 12px;
@@ -127,7 +128,7 @@
   --progress-height: 6px;
   --progress-height-hover: 8px;
   --progress-border-radius: 10px;
-  --progress-background: #D3D1CB;
+  --progress-background: #d3d1cb;
   --progress-fill: var(--color-text-primary);
 
   /* 按钮 (移除动效与强投影) */
@@ -178,8 +179,8 @@
     font-size: 14px;
     line-height: normal;
     color: var(--color-text-primary);
-    background-color: #FFFFFF;
-    border: 1px solid #E5E5E5;
+    background-color: #ffffff;
+    border: 1px solid #e5e5e5;
     /* 1px 浅灰描边 */
     border-radius: 8px;
     /* 8px 圆角 */
@@ -192,9 +193,9 @@
 
   .form-control-custom:focus,
   .form-select-custom:focus {
-    border-color: #2383E2;
+    border-color: #2383e2;
     /* 1px border + 1px box-shadow = 2px 实线感 */
-    box-shadow: 0 0 0 1px #2383E2 !important;
+    box-shadow: 0 0 0 1px #2383e2 !important;
   }
 
   .form-control-custom::placeholder {

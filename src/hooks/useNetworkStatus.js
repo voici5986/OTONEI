@@ -4,35 +4,36 @@ import logger from '../utils/logger.js';
 
 /**
  * 网络状态管理Hook
- * 
+ *
  * @param {Object} options 配置选项
  * @param {boolean} options.showToasts 是否显示网络状态变化的提示
  * @param {boolean} options.dispatchEvents 是否分发自定义事件
  * @returns {Object} 网络状态相关数据和方法
  */
 const useNetworkStatus = (options = {}) => {
-  const {
-    dispatchEvents = true
-  } = options;
+  const { dispatchEvents = true } = options;
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastChecked, setLastChecked] = useState(Date.now());
   const [connectionType, setConnectionType] = useState('unknown');
 
   // 发送网络状态变化的自定义事件
-  const dispatchNetworkStatusChange = useCallback((online, typeOverride = null) => {
-    if (!dispatchEvents) return;
+  const dispatchNetworkStatusChange = useCallback(
+    (online, typeOverride = null) => {
+      if (!dispatchEvents) return;
 
-    // 创建并分发自定义事件，带有网络状态信息
-    const timestamp = Date.now();
-    const type = typeOverride ?? connectionType;
-    const event = new CustomEvent('networkStatusChange', {
-      detail: { online, lastChecked: timestamp, connectionType: type }
-    });
-    window.dispatchEvent(event);
-    setLastChecked(timestamp);
-    logger.log(`[useNetworkStatus] 已分发网络状态变化事件: ${online ? '在线' : '离线'}`);
-  }, [dispatchEvents, connectionType]);
+      // 创建并分发自定义事件，带有网络状态信息
+      const timestamp = Date.now();
+      const type = typeOverride ?? connectionType;
+      const event = new CustomEvent('networkStatusChange', {
+        detail: { online, lastChecked: timestamp, connectionType: type },
+      });
+      window.dispatchEvent(event);
+      setLastChecked(timestamp);
+      logger.log(`[useNetworkStatus] 已分发网络状态变化事件: ${online ? '在线' : '离线'}`);
+    },
+    [dispatchEvents, connectionType]
+  );
 
   // 检测网络连接类型
   const detectConnectionType = useCallback(() => {
@@ -173,8 +174,8 @@ const useNetworkStatus = (options = {}) => {
     lastChecked,
     connectionType,
     checkNetworkStatus,
-    dispatchNetworkStatusChange
+    dispatchNetworkStatusChange,
   };
 };
 
-export default useNetworkStatus; 
+export default useNetworkStatus;

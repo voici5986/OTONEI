@@ -36,9 +36,9 @@
 
 ```css
 :root {
-  --neutral-0:   #ffffff; /* 页面 / 卡片主背景 */
-  --neutral-25:  #fafaf9; /* 次级背景 */
-  --neutral-50:  #f5f5f4; /* 弱背景 */
+  --neutral-0: #ffffff; /* 页面 / 卡片主背景 */
+  --neutral-25: #fafaf9; /* 次级背景 */
+  --neutral-50: #f5f5f4; /* 弱背景 */
   --neutral-100: #efefee; /* Hover / Selected */
   --neutral-200: #e4e4e2; /* 分割线 */
   --neutral-300: #d4d4d2; /* 强边界 */
@@ -53,17 +53,17 @@
 
 ### 1.3 中性色使用矩阵（强制）
 
-| 场景 | 使用 Token |
-|----|----|
-| 页面背景 | neutral-0 / neutral-25 |
-| Card 背景 | neutral-0 |
-| Hover / Selected | neutral-100 |
-| 分割线 | neutral-200 |
-| 表格边框 | neutral-300 |
-| 正文文字 | neutral-700 |
-| 次级文字 | neutral-500 |
-| 禁用 / 占位 | neutral-400 |
-| 标题文字 | neutral-900 |
+| 场景             | 使用 Token             |
+| ---------------- | ---------------------- |
+| 页面背景         | neutral-0 / neutral-25 |
+| Card 背景        | neutral-0              |
+| Hover / Selected | neutral-100            |
+| 分割线           | neutral-200            |
+| 表格边框         | neutral-300            |
+| 正文文字         | neutral-700            |
+| 次级文字         | neutral-500            |
+| 禁用 / 占位      | neutral-400            |
+| 标题文字         | neutral-900            |
 
 > **组件只能引用 Token，不允许直接使用 Hex。**
 
@@ -91,13 +91,13 @@
 
 #### 使用矩阵
 
-| 场景 | 使用方式 | 禁止项 |
-|----|----|----|
-| 主操作 / 链接 | blue text / icon | 大面积背景 |
-| 危险操作 | red text / thin bg | 强对比 |
-| 错误提示 | red icon + text | 改变布局 |
-| 成功状态 | green icon / text | 动画强调 |
-| 警告提示 | yellow icon | 高频出现 |
+| 场景          | 使用方式           | 禁止项     |
+| ------------- | ------------------ | ---------- |
+| 主操作 / 链接 | blue text / icon   | 大面积背景 |
+| 危险操作      | red text / thin bg | 强对比     |
+| 错误提示      | red icon + text    | 改变布局   |
+| 成功状态      | green icon / text  | 动画强调   |
+| 警告提示      | yellow icon        | 高频出现   |
 
 ---
 
@@ -111,12 +111,12 @@
 border: 1px solid var(--neutral-200);
 ```
 
-| 场景 | 规则 |
-|----|----|
-| Card / Panel | 必须有 border |
-| 页面分区 | border-t / border-b |
-| 列表 | divide-y |
-| Sticky 区域 | border + 可选 shadow |
+| 场景         | 规则                 |
+| ------------ | -------------------- |
+| Card / Panel | 必须有 border        |
+| 页面分区     | border-t / border-b  |
+| 列表         | divide-y             |
+| Sticky 区域  | border + 可选 shadow |
 
 ---
 
@@ -130,13 +130,13 @@ border: 1px solid var(--neutral-200);
 }
 ```
 
-| 组件 | 是否允许 |
-|----|----|
-| Card | ❌ |
-| Button | ❌ |
-| Menu / Popover | ✅ |
-| Dialog | ✅ |
-| Sticky | ⚠️ 极弱 |
+| 组件           | 是否允许 |
+| -------------- | -------- |
+| Card           | ❌       |
+| Button         | ❌       |
+| Menu / Popover | ✅       |
+| Dialog         | ✅       |
+| Sticky         | ⚠️ 极弱  |
 
 ---
 
@@ -150,11 +150,11 @@ border: 1px solid var(--neutral-200);
 }
 ```
 
-| 元素 | 圆角 |
-|----|----|
-| Button / Input | 6px |
-| Card / Panel | 8px |
-| Menu / Dialog | 8px |
+| 元素           | 圆角 |
+| -------------- | ---- |
+| Button / Input | 6px  |
+| Card / Panel   | 8px  |
+| Menu / Dialog  | 8px  |
 
 禁止在同一组件中混用圆角级别。
 
@@ -195,7 +195,7 @@ border: 1px solid var(--neutral-200);
 ## 7. 列表与导航（Notion 核心）
 
 ```css
-.nav-item[data-active="true"] {
+.nav-item[data-active='true'] {
   background: var(--neutral-100);
   border-radius: var(--radius);
 }
@@ -221,12 +221,12 @@ transition:
 
 ## 9. UI 使用矩阵（最终裁决）
 
-| 组件 | 设计态度 |
-|----|----|
-| Button | 系统控件，而非 CTA |
-| Card | 信息分组 |
-| Dialog | 短暂存在 |
-| Sidebar | 纸张感 |
+| 组件    | 设计态度           |
+| ------- | ------------------ |
+| Button  | 系统控件，而非 CTA |
+| Card    | 信息分组           |
+| Dialog  | 短暂存在           |
+| Sidebar | 纸张感             |
 
 ---
 
@@ -235,4 +235,3 @@ transition:
 > **如果三年后由另一个工程师维护，它会不会越改越丑？**
 
 如果答案是“不会”，那这套 UI 是合格的。
-

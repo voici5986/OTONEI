@@ -4,279 +4,279 @@
 
 /* 1. 桌面端顶部导航基础容器 */
 .app-header-desktop {
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: 240px;
-    height: 64px;
-    background-color: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    z-index: 1000;
-    padding: 0 40px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid rgba(15, 15, 15, 0.05);
-    transition: left var(--transition-normal);
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 240px;
+  height: 64px;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 1000;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(15, 15, 15, 0.05);
+  transition: left var(--transition-normal);
 }
 
 /* 桌面端搜索框外层容器 */
 .header-search-container {
-    flex: 0 1 755px;
-    position: relative;
+  flex: 0 1 755px;
+  position: relative;
 }
 
 /* 核心输入框组：极致一体化设计 */
 .header-search-field-wrapper {
-    display: flex !important;
-    align-items: center;
-    background-color: #ffffff;
-    border: 1px solid rgba(15, 15, 15, 0.1);
-    border-radius: 12px;
-    height: 40px;
-    padding: 0 10px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: visible;
+  display: flex !important;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid rgba(15, 15, 15, 0.1);
+  border-radius: 12px;
+  height: 40px;
+  padding: 0 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
 }
 
 /* 聚焦状态：无缝转换 */
 .header-search-container:focus-within .header-search-field-wrapper {
-    background-color: #ffffff;
-    border-color: rgba(15, 15, 15, 0.15);
-    border-bottom-color: transparent !important;
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.1);
+  background-color: #ffffff;
+  border-color: rgba(15, 15, 15, 0.15);
+  border-bottom-color: transparent !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.1);
 }
 
 /* 搜索图标：零背景完全融合 */
 .header-search-icon {
-    color: #91918e;
-    font-size: 14px;
-    margin-right: 8px;
-    flex-shrink: 0;
-    background: transparent !important;
-    border: none !important;
+  color: #91918e;
+  font-size: 14px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  background: transparent !important;
+  border: none !important;
 }
 
 /* 输入框：彻底融入背景 */
 .header-search-input {
-    flex: 1;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    color: #37352f !important;
-    padding: 0 !important;
-    height: 100% !important;
-    outline: none !important;
-    margin: 0 !important;
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: #37352f !important;
+  padding: 0 !important;
+  height: 100% !important;
+  outline: none !important;
+  margin: 0 !important;
 }
 
 .header-search-input::-webkit-search-cancel-button,
 .header-search-input::-webkit-search-decoration,
 .header-search-input::-webkit-search-results-button,
 .header-search-input::-webkit-search-results-decoration {
-    display: none;
-    -webkit-appearance: none;
+  display: none;
+  -webkit-appearance: none;
 }
 
 .header-search-input::placeholder {
-    color: #91918e;
+  color: #91918e;
 }
 
 /* 桌面端建议面板：紧密耦合 */
 .desktop-search-suggestions {
-    position: absolute;
-    top: 36px;
-    left: 0;
-    right: 0;
-    background-color: #ffffff;
-    border: 1px solid rgba(15, 15, 15, 0.1);
-    border-top: none;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
-    z-index: 1100;
-    animation: suggestionFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    max-height: 600px;
-    display: flex;
-    /* 改为 flex 布局 */
-    flex-direction: column;
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid rgba(15, 15, 15, 0.1);
+  border-top: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
+  z-index: 1100;
+  animation: suggestionFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 600px;
+  display: flex;
+  /* 改为 flex 布局 */
+  flex-direction: column;
 }
 
 /* 新增：独立的内部滚动区域 */
 .suggestion-scroll-area {
-    flex: 1;
-    /* 占据剩余空间 */
-    overflow-y: auto;
-    /* 在这里开启滚动 */
-    padding: 6px 0 10px 0;
+  flex: 1;
+  /* 占据剩余空间 */
+  overflow-y: auto;
+  /* 在这里开启滚动 */
+  padding: 6px 0 10px 0;
 }
 
 @keyframes suggestionFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 2. 建议项通用样式 (桌面与移动共用) */
 .suggestion-section-title {
-    font-size: 12px;
-    color: #91918e;
-    margin: 6px 6px 6px 6px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  font-size: 12px;
+  color: #91918e;
+  margin: 6px 6px 6px 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .clear-history-link {
-    font-weight: normal;
-    cursor: pointer;
-    text-transform: none;
-    letter-spacing: 0;
+  font-weight: normal;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .clear-history-link:hover {
-    color: #37352f;
+  color: #37352f;
 }
 
 .suggestion-item {
-    width: calc(100% - 16px);
-    margin: 0 8px;
-    text-align: left;
-    border: none !important;
-    background: transparent !important;
-    padding: 6px 12px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    cursor: pointer;
-    transition: background 0.1s ease;
+  width: calc(100% - 16px);
+  margin: 0 8px;
+  text-align: left;
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  cursor: pointer;
+  transition: background 0.1s ease;
 }
 
 /* 桌面端特有：单行左右布局 */
 .desktop-search-suggestions .suggestion-item {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    padding: 10px 12px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 12px;
 }
 
 .desktop-search-suggestions .suggestion-title {
-    flex: 1;
+  flex: 1;
 }
 
 .desktop-search-suggestions .suggestion-subtitle {
-    flex-shrink: 0;
-    text-align: right;
-    max-width: 240px;
+  flex-shrink: 0;
+  text-align: right;
+  max-width: 240px;
 }
 
 .suggestion-item:hover,
 .suggestion-item.selected {
-    background-color: #f1f1ef !important;
+  background-color: #f1f1ef !important;
 }
 
 .suggestion-title {
-    font-size: 14px;
-    color: #37352f;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 14px;
+  color: #37352f;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .suggestion-subtitle {
-    font-size: 12px;
-    font-weight: 400;
-    color: #787774;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 400;
+  color: #787774;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .suggestion-empty {
-    font-size: 13px;
-    color: #91918e;
-    padding: 30px 12px;
-    text-align: center;
+  font-size: 13px;
+  color: #91918e;
+  padding: 30px 12px;
+  text-align: center;
 }
 
 .suggestion-more {
-    font-size: 14px;
-    color: #91918e;
-    padding: 8px 12px;
-    cursor: pointer;
-    border-radius: 8px;
-    margin: 4px 6px 0 8px;
-    transition: background 0.1s ease;
+  font-size: 14px;
+  color: #91918e;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 4px 6px 0 8px;
+  transition: background 0.1s ease;
 }
 
 .suggestion-more:hover,
 .suggestion-more.selected {
-    background-color: #f1f1ef !important;
-    color: #37352f !important;
+  background-color: #f1f1ef !important;
+  color: #37352f !important;
 }
 
 .suggestion-divider {
-    height: 1px;
-    background-color: rgba(15, 15, 15, 0.05);
-    margin: 6px 12px;
+  height: 1px;
+  background-color: rgba(15, 15, 15, 0.05);
+  margin: 6px 12px;
 }
 
 .suggestion-footer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 400;
-    color: #91918e;
-    border-top: 1px solid rgba(15, 15, 15, 0.05);
-    flex-shrink: 0;
-    /* 拒绝被滚动条挤压 */
-    background-color: #ffffff;
-    /* 确保背景不透明 */
-    border-bottom-left-radius: 12px;
-    /* 保持跟容器底部一致 */
-    border-bottom-right-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #91918e;
+  border-top: 1px solid rgba(15, 15, 15, 0.05);
+  flex-shrink: 0;
+  /* 拒绝被滚动条挤压 */
+  background-color: #ffffff;
+  /* 确保背景不透明 */
+  border-bottom-left-radius: 12px;
+  /* 保持跟容器底部一致 */
+  border-bottom-right-radius: 12px;
 }
 
 .search-clear-btn {
-    background: transparent;
-    border: none;
-    color: #91918e;
-    padding: 4px;
-    border-radius: 50%;
-    display: flex;
-    cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #91918e;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  cursor: pointer;
 }
 
 .search-clear-btn:hover {
-    background-color: #f1f1ef;
-    color: #37352f;
+  background-color: #f1f1ef;
+  color: #37352f;
 }
 
 /* 桌面端特有覆盖：桌面布局主内容间距 */
 .desktop-layout .main-content {
-    padding-top: 64px;
+  padding-top: 64px;
 }
 
 @media (max-width: 991.98px) {
-    .app-header-desktop {
-        display: none !important;
-    }
+  .app-header-desktop {
+    display: none !important;
+  }
 }
