@@ -25,7 +25,7 @@
     "test": "vitest run",
     "prepare": "husky",
     "changeset": "changeset",
-    "release": "pnpm changeset version && node scripts/release-commit.js"
+    "release": "pnpm changeset version"
   },
   "browserslist": {
     "production": [
