@@ -34,11 +34,11 @@
   },
   "lint-staged": {
     "*.{js,jsx}": [
-      "prettier --write",
-      "eslint --fix"
+      "npx --no-install eslint --fix",
+      "npx --no-install prettier --write"
     ],
     "*.{css,json,md}": [
-      "prettier --write"
+      "npx --no-install prettier --write"
     ]
   },
   "browserslist": {
