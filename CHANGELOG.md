@@ -1,5 +1,11 @@
 # 更新日志 (CHANGELOG)
 
+### [1.6.1](https://github.com/voici5986/OTONEI/compare/v1.6.0...v1.6.1) (2026-02-24)
+
+### 🔨 辅助任务
+
+- fix husky and lint-staged path for windows ([e674912](https://github.com/voici5986/OTONEI/commit/e6749126f640017d5e198b7dcf2fb3aa0852381b))
+
 ## 1.6.0 (2026-02-24)
 
 ### 💄 代码格式
