@@ -1,8 +1,29 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+staged_files=$(git diff --cached --name-only)
+
+is_release_commit=1
+for file in $staged_files; do
+  case "$file" in
+    CHANGELOG.md|package.json|pnpm-lock.yaml) ;;
+    *) is_release_commit=0 ;;
+  esac
+done
+
+if [ "$is_release_commit" -eq 1 ] && [ -n "$staged_files" ]; then
+  exit 0
+fi
+
 pnpm format
 pnpm lint
 pnpm test
 pnpm changeset
 git add -A
+
+staged_files=$(git diff --cached --name-only)
+echo "$staged_files" | grep -E "^\.changeset/.*\.md$" >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "ERROR: No .changeset/*.md found. Please create a changeset."
+  exit 1
+fi
