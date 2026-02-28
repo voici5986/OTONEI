@@ -21,8 +21,7 @@ const SearchResultItem = ({ track, searchResults, quality }) => {
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, searchResults, activeQuality);
   };
 
-  const onDownloadClick = (e) => {
-    e.stopPropagation();
+  const onDownloadClick = (track) => {
     handleDownload(track, activeQuality);
   };
 

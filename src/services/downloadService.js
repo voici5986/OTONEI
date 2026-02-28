@@ -49,6 +49,43 @@ const getQualityDescription = (quality) => {
   }
 };
 
+/**
+ * 解析并格式化文件大小（兼容带单位/无单位）
+ * 支持单位：B、KB、MB、GB（大小写均可）
+ * 无单位时：> 1,048,576 视为字节，否则视为 KB
+ */
+const formatFileSizeMessage = (rawSize) => {
+  if (rawSize === null || rawSize === undefined) return '';
+
+  const text = String(rawSize).trim().toLowerCase();
+  if (!text) return '';
+
+  const numberMatch = text.match(/-?\d+(?:\.\d+)?/);
+  if (!numberMatch) return '';
+
+  const value = Number(numberMatch[0]);
+  if (!Number.isFinite(value) || value <= 0) return '';
+
+  let bytes;
+  if (/\bgb\b/.test(text)) {
+    bytes = value * 1024 * 1024 * 1024;
+  } else if (/\bmb\b/.test(text)) {
+    bytes = value * 1024 * 1024;
+  } else if (/\bkb\b/.test(text) || /\bk\b/.test(text)) {
+    bytes = value * 1024;
+  } else if (/\bb\b/.test(text)) {
+    bytes = value;
+  } else {
+    // 无单位时按量级推断
+    bytes = value > 1024 * 1024 ? value : value * 1024;
+  }
+
+  if (!Number.isFinite(bytes) || bytes <= 0) return '';
+
+  const sizeMB = bytes / (1024 * 1024);
+  return ` (${sizeMB.toFixed(2)} MB)`;
+};
+
 // 下载队列管理
 const downloadQueue = [];
 let isProcessingQueue = false;
@@ -152,11 +189,7 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
     const qualityDesc = getQualityDescription(quality);
 
     // 准备文件大小信息
-    let fileSizeMsg = '';
-    if (audioData.size) {
-      const sizeMB = (parseInt(audioData.size) / 1024).toFixed(2);
-      fileSizeMsg = ` (${sizeMB} MB)`;
-    }
+    const fileSizeMsg = formatFileSizeMessage(audioData?.size);
 
     toast.info(`正在准备下载${qualityDesc}音频: ${fileName}${fileSizeMsg}`, {
       icon: '⏬',

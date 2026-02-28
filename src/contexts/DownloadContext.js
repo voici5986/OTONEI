@@ -29,7 +29,7 @@ export const DownloadProvider = ({ children }) => {
   });
 
   const handleDownload = useCallback(
-    async (track, quality = 320) => {
+    async (track, quality = 999) => {
       // Check if already downloading
       if (!checkDownloadStatus(downloading)) {
         return;
