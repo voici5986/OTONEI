@@ -89,7 +89,7 @@ const formatFileSizeMessage = (rawSize) => {
 // 下载队列管理
 const downloadQueue = [];
 let isProcessingQueue = false;
-const MIN_DOWNLOAD_INTERVAL = 5000; // 5秒间隔
+const MIN_DOWNLOAD_INTERVAL = 2000; // 2秒间隔
 
 /**
  * 处理下载队列

@@ -1,9 +1,8 @@
 ## [1.6.5](https://github.com/voici5986/OTONEI/compare/v1.6.4...v1.6.5) (2026-02-28)
 
-
 ### Bug Fixes
 
-* 修正下载组件事件处理和默认音质参数 ([acac949](https://github.com/voici5986/OTONEI/commit/acac949aac1bf5cb6afc69ea6e36adde9b34a347))
+- 修正下载组件事件处理和默认音质参数 ([acac949](https://github.com/voici5986/OTONEI/commit/acac949aac1bf5cb6afc69ea6e36adde9b34a347))
 
 # 更新日志 (CHANGELOG)
 
