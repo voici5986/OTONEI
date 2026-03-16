@@ -112,21 +112,34 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     'process.env.VITE_APP_VERSION': JSON.stringify(process.env.npm_package_version),
   },
-  esbuild: {
-    // 强制对 src 下的所有 .js 文件使用 jsx 加载器
-    loader: 'jsx',
-    include: /src\/.*\.js$/,
-    exclude: [],
+  oxc: {
+    // 让 .js/.jsx/.ts/.tsx 都走 JSX 解析（兼容 Windows 路径）
+    include: /[\\/]src[\\/].*\.[jt]sx?$/,
+    exclude: /node_modules/,
+    // 强制把 .js 当作 JSX 解析
+    lang: 'jsx',
+    jsx: {
+      runtime: 'automatic',
+    },
   },
   optimizeDeps: {
-    esbuildOptions: {
-      loader: {
+    // Rolldown 预构建时把 .js 当作 JSX 处理
+    rolldownOptions: {
+      moduleTypes: {
         '.js': 'jsx',
       },
     },
   },
   build: {
     outDir: 'build',
+    rolldownOptions: {
+      transform: {
+        jsx: 'react-jsx',
+      },
+      moduleTypes: {
+        '.js': 'jsx',
+      },
+    },
   },
   test: {
     environment: 'jsdom',
