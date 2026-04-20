@@ -9,6 +9,58 @@ import logger from '../utils/logger.js';
 import { getTrackArtist } from '../utils/trackFormatter';
 
 const Favorites = ({ globalSearchQuery, onTabChange }) => {
+  // 检查字符串是否匹配查询词
+  const isMatch = useCallback(function match(text, query) {
+    // 处理null/undefined
+    if (!text) return false;
+
+    // 确保为字符串
+    const str = typeof text === 'string' ? text : String(text);
+
+    // 1. 精确匹配检查
+    if (str === query) return true;
+
+    // 2. 包含检查 - 保持原始大小写
+    if (str.includes(query)) return true;
+
+    // 3. 不区分大小写检查
+    const lowerStr = str.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    if (lowerStr.includes(lowerQuery)) return true;
+
+    // 4. 分词检查 - 适用于由空格分隔的多个单词
+    const words = query.split(/\s+/).filter((word) => word.length > 0);
+    if (words.length > 1) {
+      return words.every((word) => match(str, word));
+    }
+
+    return false;
+  }, []);
+
+  // 递归搜索任何值是否匹配查询词
+  const searchInValue = useCallback(
+    function search(value, query) {
+      // 处理字符串直接比较
+      if (typeof value === 'string') {
+        return isMatch(value, query);
+      }
+
+      // 处理数组 - 检查数组中的每个元素
+      if (Array.isArray(value)) {
+        return value.some((item) => search(item, query));
+      }
+
+      // 处理对象 - 检查所有属性值
+      if (value !== null && typeof value === 'object') {
+        return Object.values(value).some((propValue) => search(propValue, query));
+      }
+
+      // 其他类型无法搜索
+      return false;
+    },
+    [isMatch]
+  );
+
   // 从PlayerContext获取状态和方法（防御性处理，避免上下文缺失导致崩溃）
   const player = usePlayer();
   const handlePlay = player?.handlePlay || (() => {});
@@ -43,58 +95,6 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   useEffect(() => {
     loadFavorites();
   }, []);
-
-  // 检查字符串是否匹配查询词
-  const isMatch = useCallback((text, query) => {
-    // 处理null/undefined
-    if (!text) return false;
-
-    // 确保为字符串
-    const str = typeof text === 'string' ? text : String(text);
-
-    // 1. 精确匹配检查
-    if (str === query) return true;
-
-    // 2. 包含检查 - 保持原始大小写
-    if (str.includes(query)) return true;
-
-    // 3. 不区分大小写检查
-    const lowerStr = str.toLowerCase();
-    const lowerQuery = query.toLowerCase();
-    if (lowerStr.includes(lowerQuery)) return true;
-
-    // 4. 分词检查 - 适用于由空格分隔的多个单词
-    const words = query.split(/\s+/).filter((word) => word.length > 0);
-    if (words.length > 1) {
-      return words.every((word) => isMatch(str, word));
-    }
-
-    return false;
-  }, []);
-
-  // 递归搜索任何值是否匹配查询词
-  const searchInValue = useCallback(
-    (value, query) => {
-      // 处理字符串直接比较
-      if (typeof value === 'string') {
-        return isMatch(value, query);
-      }
-
-      // 处理数组 - 检查数组中的每个元素
-      if (Array.isArray(value)) {
-        return value.some((item) => searchInValue(item, query));
-      }
-
-      // 处理对象 - 检查所有属性值
-      if (value !== null && typeof value === 'object') {
-        return Object.values(value).some((propValue) => searchInValue(propValue, query));
-      }
-
-      // 其他类型无法搜索
-      return false;
-    },
-    [isMatch]
-  );
 
   // 专门检查艺术家字段的匹配
   const isArtistMatch = useCallback(

@@ -21,13 +21,6 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   const [downloading, setDownloading] = useState(false);
   const [currentDownloadingTrack, setCurrentDownloadingTrack] = useState(null);
 
-  // 监听全局搜索
-  useEffect(() => {
-    if (globalSearchQuery !== undefined) {
-      performSearch(globalSearchQuery, history);
-    }
-  }, [globalSearchQuery, history]);
-
   const performSearch = (query, currentHistory) => {
     const trimmedQuery = query.trim().toLowerCase();
     if (!trimmedQuery) {
@@ -53,6 +46,13 @@ const History = ({ globalSearchQuery, onTabChange }) => {
     });
     setFilteredHistory(filtered);
   };
+
+  // 监听全局搜索
+  useEffect(() => {
+    if (globalSearchQuery !== undefined) {
+      performSearch(globalSearchQuery, history);
+    }
+  }, [globalSearchQuery, history]);
 
   // 从PlayerContext获取状态和方法
   const { handlePlay, currentTrack } = usePlayer();
