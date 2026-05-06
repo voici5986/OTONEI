@@ -67,7 +67,10 @@ const AppContent = () => {
     source,
     quality,
     loading,
+    loadingMore,
+    hasMore,
     handleSearch,
+    handleLoadMore,
     setQuery,
     setSource,
     setQuality,
@@ -422,6 +425,31 @@ const AppContent = () => {
                 </div>
               ))}
             </div>
+            {hasMore ? (
+              <div className="d-flex justify-content-center mt-4 mb-2">
+                <button
+                  type="button"
+                  className="search-submit-btn"
+                  onClick={handleLoadMore}
+                  disabled={loading || loadingMore}
+                  style={{
+                    height: '38px',
+                    minWidth: '128px',
+                    padding: '0 24px',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  {loadingMore ? (
+                    <span
+                      className="spinner-custom"
+                      style={{ width: '1rem', height: '1rem' }}
+                    ></span>
+                  ) : (
+                    '加载更多'
+                  )}
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
