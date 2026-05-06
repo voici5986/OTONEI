@@ -73,7 +73,7 @@ service cloud.firestore {
 
 ```
 # API配置
-REACT_APP_API_BASE=/api
+REACT_APP_API_BASE=/api-v1/api.php
 
 # Firebase配置
 REACT_APP_FIREBASE_API_KEY=your-api-key

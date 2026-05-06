@@ -62,9 +62,10 @@ export default defineConfig({
       workbox: {
         // 运行时缓存策略
         runtimeCaching: [
-          // API 请求：网络优先，确保数据实时性
+          // API 请求：Cloudflare Pages 上走同源 /api-v1，始终直连网络
           {
-            urlPattern: /^https:\/\/music-api\.gdstudio\.xyz\/.*$/,
+            urlPattern: ({ url }) =>
+              url.origin === self.location.origin && url.pathname.startsWith('/api-v1'),
             handler: 'NetworkOnly',
           },
           // 封面图片：缓存优先，设置过期时间
@@ -94,6 +95,7 @@ export default defineConfig({
         ],
         // 确保 index.html 始终被缓存
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api-v1(?:\/|$)/],
       },
       // 开发环境下也生成 Service Worker，方便调试
       devOptions: {

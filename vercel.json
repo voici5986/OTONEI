@@ -4,7 +4,7 @@
   "outputDirectory": "build",
   "rewrites": [
     { "source": "/api-v1", "destination": "https://music-api.gdstudio.xyz/api.php" },
-    { "source": "/api-v1/(.*)", "destination": "https://music-api.gdstudio.xyz/$1" },
+    { "source": "/api-v1/api.php", "destination": "https://music-api.gdstudio.xyz/api.php" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

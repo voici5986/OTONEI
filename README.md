@@ -67,6 +67,14 @@ pnpm run serve
 
 ### Cloudflare Pages
 
+推荐部署到 Cloudflare Pages。项目已包含：
+
+- `functions/api-v1/[[path]].js`：只代理 `/api-v1` 和 `/api-v1/api.php` 到上游 `api.php`
+- `public/_routes.json`：只让 `/api-v1` 命中 Pages Functions，静态资源不消耗 Functions 调用
+- `public/_redirects`：SPA 路由回退到 `index.html`
+- `public/_headers`：静态资源安全头和基础缓存策略
+- `wrangler.toml`：声明 Pages 输出目录和 Functions 兼容日期
+
 构建命令：
 
 ```bash
@@ -79,14 +87,20 @@ pnpm run build
 build
 ```
 
-Cloudflare Pages Functions 会处理 `/api-v1/*` 代理。
+建议环境变量：
+
+```text
+NODE_VERSION=22.16.0
+PNPM_VERSION=10.33.0
+REACT_APP_API_BASE=/api-v1/api.php
+```
 
 ### Vercel
 
 `vercel.json` 已配置：
 
 - `/api-v1` -> `https://music-api.gdstudio.xyz/api.php`
-- `/api-v1/*` -> `https://music-api.gdstudio.xyz/*`
+- `/api-v1/api.php` -> `https://music-api.gdstudio.xyz/api.php`
 - 其他路径回退到 SPA 入口
 
 ### Docker
