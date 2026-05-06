@@ -78,7 +78,7 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   const [filteredFavorites, setFilteredFavorites] = useState([]);
 
   // 定义loadFavorites函数在useEffect之前
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     setLoading(true);
     try {
       const favItems = await getFavorites();
@@ -90,11 +90,32 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadFavorites();
-  }, []);
+  }, [loadFavorites]);
+
+  useEffect(() => {
+    const handleDataChanged = () => {
+      loadFavorites();
+    };
+    const handleLocalDataCleared = (event) => {
+      if (event.detail?.favorites) {
+        loadFavorites();
+      }
+    };
+
+    window.addEventListener('favorites_changed', handleDataChanged);
+    window.addEventListener('local:data_cleared', handleLocalDataCleared);
+    window.addEventListener('sync:data_refreshed', handleDataChanged);
+
+    return () => {
+      window.removeEventListener('favorites_changed', handleDataChanged);
+      window.removeEventListener('local:data_cleared', handleLocalDataCleared);
+      window.removeEventListener('sync:data_refreshed', handleDataChanged);
+    };
+  }, [loadFavorites]);
 
   // 专门检查艺术家字段的匹配
   const isArtistMatch = useCallback(

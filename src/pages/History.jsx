@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getHistory } from '../services/storage';
 import { toast } from 'react-toastify';
-import moment from 'moment';
-import 'moment/locale/zh-cn';
 import MusicCardActions from '../components/MusicCardActions';
 import './History.css';
 import { downloadTrack } from '../services/downloadService';
@@ -11,8 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 import logger from '../utils/logger.js';
 import { getTrackArtist } from '../utils/trackFormatter';
 
-// 设置moment为中文
-moment.locale('zh-cn');
+const getHistoryTrack = (item) => item?.song || item;
+const getHistoryTimestamp = (item) => item?.timestamp || Date.now();
 
 const History = ({ globalSearchQuery, onTabChange }) => {
   const [history, setHistory] = useState([]);
@@ -29,7 +27,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
     }
 
     const filtered = currentHistory.filter((item) => {
-      const song = item.song;
+      const song = getHistoryTrack(item);
       const nameMatch = song.name && song.name.toLowerCase().includes(trimmedQuery);
       const albumMatch = song.album && song.album.toLowerCase().includes(trimmedQuery);
 
@@ -64,13 +62,13 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   const handleTrackPlay = (track) => {
     logger.log('从历史记录播放曲目:', track.id, track.name);
     // 创建纯歌曲列表作为播放列表
-    const songsList = filteredHistory.map((item) => item.song);
+    const songsList = filteredHistory.map(getHistoryTrack);
     const trackIndex = songsList.findIndex((item) => item.id === track.id);
     handlePlay(track, trackIndex >= 0 ? trackIndex : -1, songsList);
   };
 
   // 定义loadHistory函数在useEffect之前
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
       const historyItems = await getHistory();
@@ -82,11 +80,30 @@ const History = ({ globalSearchQuery, onTabChange }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [loadHistory]);
+
+  useEffect(() => {
+    const handleHistoryChanged = () => {
+      loadHistory();
+    };
+    const handleLocalDataCleared = (event) => {
+      if (event.detail?.history) {
+        loadHistory();
+      }
+    };
+
+    window.addEventListener('local:data_cleared', handleLocalDataCleared);
+    window.addEventListener('sync:data_refreshed', handleHistoryChanged);
+
+    return () => {
+      window.removeEventListener('local:data_cleared', handleLocalDataCleared);
+      window.removeEventListener('sync:data_refreshed', handleHistoryChanged);
+    };
+  }, [loadHistory]);
 
   // 监听收藏状态变化，同步更新历史记录中的心形图标
   useEffect(() => {
@@ -100,7 +117,11 @@ const History = ({ globalSearchQuery, onTabChange }) => {
 
   const formatCompactTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    return moment(date).format('MM-DD  HH:mm');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${month}-${day}  ${hours}:${minutes}`;
   };
 
   // 处理下载功能
@@ -167,7 +188,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       ) : (
         <div className="history-grid row g-3">
           {filteredHistory.map((item, index) => {
-            const track = item.song;
+            const track = getHistoryTrack(item);
             return (
               <div key={`${track.id}-${index}`} className="col-12 col-md-6">
                 <div
@@ -179,7 +200,7 @@ const History = ({ globalSearchQuery, onTabChange }) => {
                       <div className="d-flex align-items-center">
                         <h6 className="mb-0 text-truncate">{track.name}</h6>
                         <span className="ms-2 badge-time">
-                          {formatCompactTimestamp(item.timestamp)}
+                          {formatCompactTimestamp(getHistoryTimestamp(item))}
                         </span>
                       </div>
                       <small className="text-truncate">{getTrackArtist(track) || '未知歌手'}</small>

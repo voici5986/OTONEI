@@ -1,0 +1,13 @@
+node_modules
+build
+dist
+dev-dist
+.pnpm-store
+.git
+.github
+coverage
+.env
+.env.local
+*.log
+API.txt
+temp_icons

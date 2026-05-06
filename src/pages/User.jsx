@@ -25,8 +25,10 @@ const User = ({ onTabChange }) => {
     loadCounts();
 
     // 监听数据清除事件
-    const handleDataCleared = () => {
-      loadCounts();
+    const handleDataCleared = (event) => {
+      if (event.detail?.favorites || event.detail?.history) {
+        loadCounts();
+      }
     };
 
     window.addEventListener('local:data_cleared', handleDataCleared);

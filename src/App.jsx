@@ -95,8 +95,17 @@ const AppContent = () => {
     }
 
     const handleCleared = () => setSearchHistory([]);
+    const handleLocalDataCleared = (event) => {
+      if (event.detail?.searchHistory) {
+        setSearchHistory([]);
+      }
+    };
     window.addEventListener('search_history_cleared', handleCleared);
-    return () => window.removeEventListener('search_history_cleared', handleCleared);
+    window.addEventListener('local:data_cleared', handleLocalDataCleared);
+    return () => {
+      window.removeEventListener('search_history_cleared', handleCleared);
+      window.removeEventListener('local:data_cleared', handleLocalDataCleared);
+    };
   }, [suggestionsOpen, query]);
 
   // 下载相关状态 - 使用全局 Context

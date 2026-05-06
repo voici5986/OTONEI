@@ -99,7 +99,7 @@ REACT_APP_FIREBASE_APP_ID=your-app-id
 
 ### 增量同步机制
 
-SonicFlow现在使用增量同步机制，这种方式可以显著减少数据传输量和Firebase操作次数：
+OTONEI 现在使用增量同步机制，这种方式可以显著减少数据传输量和 Firebase 操作次数：
 
 1. **工作原理**：
    - 系统记录上次同步的时间戳

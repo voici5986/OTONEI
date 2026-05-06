@@ -14,6 +14,22 @@ import { saveSyncStatus, getLocalUser, saveLocalUser, getNetworkStatus } from '.
 import useFirebaseStatus from '../hooks/useFirebaseStatus';
 import logger from '../utils/logger.js';
 
+const createLocalPasswordSalt = () => {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+};
+
+const hashLocalPassword = async (password, salt) => {
+  if (!crypto?.subtle) {
+    throw new Error('当前浏览器不支持本地密码校验');
+  }
+
+  const data = new TextEncoder().encode(`${salt}:${password}`);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+};
+
 // 创建认证上下文
 export const AuthContext = createContext();
 
@@ -44,6 +60,9 @@ export const AuthProvider = ({ children }) => {
     // 如果处于离线模式，创建本地用户
     if (isOfflineMode) {
       try {
+        const passwordSalt = createLocalPasswordSalt();
+        const passwordHash = await hashLocalPassword(password, passwordSalt);
+
         // 创建简单的本地用户对象
         const localUser = {
           uid: `local_${Date.now()}`,
@@ -51,6 +70,8 @@ export const AuthProvider = ({ children }) => {
           displayName: displayName || email,
           isAnonymous: false,
           isLocal: true,
+          passwordSalt,
+          passwordHash,
         };
 
         // 保存本地用户
@@ -92,15 +113,18 @@ export const AuthProvider = ({ children }) => {
       try {
         const localUser = await getLocalUser();
 
-        // 检查本地用户是否存在且邮箱匹配
-        if (localUser && localUser.email === email) {
-          // 简单模拟密码检查，实际生产中应使用更安全的方式
+        const canVerifyPassword = localUser?.passwordSalt && localUser?.passwordHash;
+        const passwordMatches =
+          canVerifyPassword &&
+          (await hashLocalPassword(password, localUser.passwordSalt)) === localUser.passwordHash;
+
+        if (localUser && localUser.email === email && passwordMatches) {
           setCurrentUser(localUser);
           return { success: true, user: localUser };
-        } else {
-          toast.error('邮箱或密码错误');
-          return { success: false, error: new Error('邮箱或密码错误') };
         }
+
+        toast.error(canVerifyPassword ? '邮箱或密码错误' : '本地账户缺少密码凭据，请重新注册');
+        return { success: false, error: new Error('邮箱或密码错误') };
       } catch (err) {
         toast.error('登录失败');
         return { success: false, error: err };

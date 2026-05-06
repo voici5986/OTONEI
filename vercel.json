@@ -2,5 +2,9 @@
   "framework": "vite",
   "buildCommand": "pnpm run build",
   "outputDirectory": "build",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api-v1", "destination": "https://music-api.gdstudio.xyz/api.php" },
+    { "source": "/api-v1/(.*)", "destination": "https://music-api.gdstudio.xyz/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

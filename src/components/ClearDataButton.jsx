@@ -97,7 +97,11 @@ const ClearDataButton = ({
       toast.success('本地数据已清除');
 
       // 触发自定义事件以通知其他组件刷新
-      window.dispatchEvent(new CustomEvent('local:data_cleared'));
+      window.dispatchEvent(
+        new CustomEvent('local:data_cleared', {
+          detail: selectedOptions,
+        })
+      );
 
       // 关闭模态框
       handleClose();

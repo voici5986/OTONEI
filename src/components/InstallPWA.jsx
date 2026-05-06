@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaDownload, FaTimes } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import { useDevice } from '../contexts/DeviceContext';
 import logger from '../utils/logger.js';
 
@@ -57,8 +58,7 @@ const InstallPWA = () => {
       setDeferredPrompt(null);
       setIsInstalled(true);
 
-      // 显示安装成功消息
-      alert('OTONEI已成功安装！您可以从主屏幕启动应用。');
+      toast.success('OTONEI 已成功安装');
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);

@@ -3,7 +3,7 @@ on:
     tags:
       - 'v*'
 env:
-  IMAGE_NAME: sonicflow
+  IMAGE_NAME: otonei
 
 jobs:
   build:

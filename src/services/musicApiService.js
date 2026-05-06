@@ -10,20 +10,12 @@ import '../types';
 import logger from '../utils/logger';
 
 // Constants
-// 直接从浏览器请求 API,每个用户使用自己的 IP,避免共享限制
-const API_BASE = '/api-v1/api.php';
+const API_BASE = process.env.REACT_APP_API_BASE || '/api-v1/api.php';
 const REQUEST_TIMEOUT = 12000; // 12秒请求超时
 
 // 添加防重复请求映射
 const pendingUrlRequests = new Map();
 const pendingLyricRequests = new Map();
-
-/**
- * 检查是否允许API请求
- */
-const checkApiAccess = () => {
-  return true;
-};
 
 /**
  * 搜索音乐
@@ -35,8 +27,6 @@ const checkApiAccess = () => {
  */
 export const searchMusic = async (query, source, count = 20, page = 1) => {
   try {
-    checkApiAccess();
-
     // 生成缓存键
     const cacheKey = `${query}_${source}_${count}_${page}`;
 
@@ -133,8 +123,6 @@ export const getAudioUrl = async (track, quality = 999, forceRefresh = false) =>
       `[getAudioUrl] 开始请求: ${track.name} (${track.id}), 请求ID: ${requestId}, 强制刷新: ${forceRefresh}`
     );
 
-    checkApiAccess();
-
     // 生成缓存键
     const cacheKey = `${track.source}_${track.id}_${quality}`;
 
@@ -212,8 +200,6 @@ export const getLyrics = async (track) => {
     }
 
     logger.log(`[getLyrics] 开始请求: ${track.name} (${track.lyric_id}), 请求ID: ${requestId}`);
-
-    checkApiAccess();
 
     // 生成缓存键
     const cacheKey = `${track.source}_${track.lyric_id}`;
@@ -379,8 +365,6 @@ export const forceGetCoverImage = async (source, picId, size = 500) => {
 export const playMusic = async (track, quality = 999, forceRefresh = false) => {
   try {
     logger.log(`[playMusic] 开始请求: ${track.name} (${track.id}), 强制刷新: ${forceRefresh}`);
-
-    checkApiAccess();
 
     // 先获取音频数据
     const audioData = await getAudioUrl(track, quality, forceRefresh);

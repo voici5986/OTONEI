@@ -17,22 +17,41 @@ export const FavoritesProvider = ({ children }) => {
   const { currentUser } = useAuth();
   const { updatePendingChanges } = useSync();
 
+  const loadFavorites = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const favList = await getFavorites();
+      setFavorites(favList);
+    } catch (error) {
+      logger.error('加载收藏列表失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // 初始化时加载收藏列表
   useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        setIsLoading(true);
-        const favList = await getFavorites();
-        setFavorites(favList);
-      } catch (error) {
-        logger.error('加载收藏列表失败:', error);
-      } finally {
-        setIsLoading(false);
+    loadFavorites();
+  }, [loadFavorites]);
+
+  useEffect(() => {
+    const handleExternalDataChange = () => {
+      loadFavorites();
+    };
+    const handleLocalDataCleared = (event) => {
+      if (event.detail?.favorites) {
+        loadFavorites();
       }
     };
 
-    loadFavorites();
-  }, []);
+    window.addEventListener('local:data_cleared', handleLocalDataCleared);
+    window.addEventListener('sync:data_refreshed', handleExternalDataChange);
+
+    return () => {
+      window.removeEventListener('local:data_cleared', handleLocalDataCleared);
+      window.removeEventListener('sync:data_refreshed', handleExternalDataChange);
+    };
+  }, [loadFavorites]);
 
   // 检查歌曲是否已收藏
   const isFavorite = useCallback(

@@ -2,14 +2,14 @@ FROM node:24.13.0-slim AS base
 
 ENV NPM_HOME="/npm"
 ENV PATH="$NPM_HOME:$PATH"
-ENV REACT_APP_API_BASE="https://music-api.ucds.me/api"
+ENV REACT_APP_API_BASE="/api-v1/api.php"
 RUN corepack enable
 COPY . /app
 WORKDIR /app
 
 FROM base AS build
-RUN --mount=type=cache,id=npm,target=/npm/store  npm i --frozen-lockfile
-RUN npm run build
+RUN --mount=type=cache,id=pnpm,target=/npm/store pnpm install --frozen-lockfile
+RUN pnpm run build
 
 # Production stage
 FROM nginx:alpine-slim AS production-stage

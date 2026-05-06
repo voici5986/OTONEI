@@ -109,15 +109,6 @@ class AudioStateManager {
     this.error = error;
     this._updateState(AUDIO_STATES.ERROR);
   }
-
-  isValidRequest() {
-    // 简化逻辑，由 AudioEngine 保证唯一性
-    return true;
-  }
-
-  cancelCurrentRequest() {
-    // 抽象层不再需要复杂的取消逻辑，引擎重设 src 即可
-  }
 }
 
 const audioStateManager = new AudioStateManager();

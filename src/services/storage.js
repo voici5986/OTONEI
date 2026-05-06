@@ -180,7 +180,7 @@ export async function toggleFavorite(track) {
   } else {
     // 检查是否已达到上限
     if (favorites.length >= MAX_FAVORITES_ITEMS) {
-      return { added: false, full: true };
+      return { added: false, full: true, error: 'favorites_limit' };
     }
     // 未收藏，则添加到列表开头，并添加修改时间戳
     const trackWithTimestamp = {
@@ -379,7 +379,12 @@ export async function addToHistory(track) {
     historyStore,
     track,
     MAX_HISTORY_ITEMS,
-    (item) => item.song.id === track.id,
+    (item) => {
+      const song = item.song || item;
+      return (
+        String(song?.id) === String(track.id) && (song?.source || track.source) === track.source
+      );
+    },
     (track) => ({
       timestamp: Date.now(),
       song: track,

@@ -16,11 +16,12 @@ export default defineConfig({
     VitePWA({
       injectRegister: false,
       registerType: 'prompt', // 使用提示更新策略，避免自动刷新打断用户
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['maskable-logo.svg'],
       manifest: {
         name: 'OTONEI',
         short_name: 'OTONEI',
         description: '在线音乐搜索、播放和下载，支持多平台音乐资源',
+        lang: 'zh-CN',
         theme_color: '#f5f5f7',
         background_color: '#f5f5f7',
         display: 'standalone',
@@ -114,6 +115,34 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react-vendor',
+              test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+              priority: 30,
+            },
+            {
+              name: 'firebase-vendor',
+              test: /node_modules[\\/](@firebase|firebase)[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'ui-vendor',
+              test: /node_modules[\\/](bootstrap|react-icons|react-toastify|@popperjs)[\\/]/,
+              priority: 10,
+            },
+            {
+              name: 'vendor',
+              test: /node_modules[\\/]/,
+              minSize: 20000,
+            },
+          ],
+        },
+      },
+    },
   },
   test: {
     environment: 'jsdom',

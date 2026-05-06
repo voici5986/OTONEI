@@ -28,7 +28,7 @@ const SearchService = {
       );
 
       // 2. 匹配历史
-      const historyTracks = (historyData || []).map((item) => item.song).filter(Boolean);
+      const historyTracks = (historyData || []).map((item) => item.song || item).filter(Boolean);
 
       const uniqueHistoryMap = new Map();
       historyTracks.forEach((track) => {

@@ -315,7 +315,6 @@ export const PlayerProvider = ({ children }) => {
     togglePlay,
     setLyricExpanded,
     toggleLyric,
-    handleProgress: () => {}, // 兼容性空函数，现在由监听器处理
     handleEnded,
     handlePlay,
     handleNext,

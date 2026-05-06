@@ -7,9 +7,22 @@ const TARGET_API_BASE = 'https://music-api.gdstudio.xyz';
 const SOURCE_PATH_PREFIX = '/api-v1';
 const TARGET_PATH_ACTUAL = '/api.php';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
 
   // 1. 提取子路径和查询参数
   // 如果请求是 /api-v1/something?query=1，逻辑保持一致
@@ -48,9 +61,7 @@ export async function onRequest(context) {
 
     // 4. 构建并返回响应（注入 CORS 和安全头）
     const responseHeaders = new Headers(response.headers);
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    Object.entries(corsHeaders).forEach(([key, value]) => responseHeaders.set(key, value));
     responseHeaders.delete('X-Powered-By');
     responseHeaders.delete('Server');
 
@@ -62,7 +73,7 @@ export async function onRequest(context) {
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Proxy Fetch Failed', message: error.message }), {
       status: 502,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
 }
