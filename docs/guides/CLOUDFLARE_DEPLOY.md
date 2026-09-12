@@ -28,7 +28,7 @@ VITE_API_BASE=/api-v1/api.php
 REACT_APP_API_BASE=/api-v1/api.php
 ```
 
-仓库中的 `.node-version`、`engines.node`、`engines.pnpm` 和 `devEngines.packageManager` 是版本策略来源；Dashboard 中的变量是部署环境的镜像配置，修改后应与这些策略保持一致。当前未在本地验证 Cloudflare 控制台是否自动读取 `.node-version`，请在项目设置中显式确认 Node 26.x 与 pnpm 12.x。
+仓库中的 `.node-version`、`engines.node` 和 `engines.pnpm` 是版本策略来源；Dashboard 中的变量是部署环境的镜像配置，修改后应与这些策略保持一致。当前未在本地验证 Cloudflare 控制台是否自动读取 `.node-version`，请在项目设置中显式确认 Node 26.x 与 pnpm 12.x。
 
 Firebase 配置优先使用 `VITE_FIREBASE_*`；迁移窗口内仍兼容 `REACT_APP_FIREBASE_*`，新旧变量同时存在且冲突时以 `VITE_*` 为准。外部控制面变量需在确认新变量已配置后再移除旧变量。
 

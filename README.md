@@ -25,7 +25,7 @@ OTONEI 是一个基于 React 19 + Vite 8 的在线音乐搜索、播放、下载
 要求：
 
 - Node.js 26.x（以 `.node-version` 和 `engines.node` 的主版本范围为准）
-- pnpm 12.x（`>=12 <13`，以 `engines.pnpm` / `devEngines.packageManager` 为准）
+- pnpm 12.x（`>=12 <13`，以 `package.json#engines.pnpm` 为准）
 
 安装和启动：
 

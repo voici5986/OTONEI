@@ -7,7 +7,7 @@
 - Oxlint/Oxfmt 已替换 ESLint/Prettier，主质量脚本和 `lint-staged` 已切换到 Ox。
 - Oxlint React 插件已启用；`set-state-in-effect`、`purity`、`refs` 保留现有项目例外。
 - Playwright 普通/PWA E2E、关键 service 测试和渐进 TypeScript 基建已加入质量链。
-- Node/pnpm 的最终支持范围仍以 `package.json`、`.node-version` 和 CI 配置为准；pnpm 使用 `devEngines` 范围，不固定单一版本。
+- Node/pnpm 的最终支持范围仍以 `package.json`、`.node-version` 和 CI 配置为准；pnpm 只使用 `engines.pnpm` 范围，不固定单一版本，也不声明 `devEngines.packageManager`（否则 pnpm 12 会把自管理版本写进 `pnpm-lock.yaml`）。
 
 ## 1. 当前状态
 
@@ -509,20 +509,13 @@ pnpm 使用范围约束：
 {
   "engines": {
     "pnpm": ">=12 <13"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": ">=12 <13",
-      "onFail": "warn"
-    }
   }
 }
 ```
 
-不使用顶层 `packageManager` 固定单一版本；锁文件仅记录本次解析结果。
+不使用顶层 `packageManager` 固定单一版本，也不声明 `devEngines.packageManager`：后者会让 pnpm 12 自管理包管理器版本，把解析结果以额外的 `---` 文档头 + `packageManagerDependencies`（含 `@pnpm/exe` 二进制）写进 `pnpm-lock.yaml`，锁文件就不再只记录本次依赖解析结果。
 
-然后本地和 CI 都由 Corepack / pnpm setup 读取。
+CI 由 `pnpm/setup` 显式安装该范围内的 pnpm；仓库未启用 `engine-strict`，`engines.pnpm` 只声明允许范围，越界版本告警但不硬失败。
 
 目标：
 
