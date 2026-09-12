@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const expectedNode = (await readFile(new URL('../.node-version', import.meta.url), 'utf8')).trim();
 const dockerfile = await readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
+const lockfile = await readFile(new URL('../pnpm-lock.yaml', import.meta.url), 'utf8');
 const dockerNode = dockerfile.match(/^ARG NODE_VERSION=(.+)$/m)?.[1]?.trim();
 const userAgentVersion = process.env.npm_config_user_agent?.match(/pnpm\/(\S+)/)?.[1];
 
@@ -25,8 +26,6 @@ const expectedEngine =
   expectedNodeMajor === undefined ? undefined : `>=${expectedNodeMajor} <${expectedNodeMajor + 1}`;
 const expectedPnpmRange = packageJson.engines?.pnpm;
 const expectedPnpm = parseMajorRange(expectedPnpmRange);
-const devEnginePackageManager = packageJson.devEngines?.packageManager;
-const devPnpmRange = parseMajorRange(devEnginePackageManager?.version);
 const actualNodeMajor = Number(process.versions.node.split('.')[0]);
 const actualPnpmMajor = userAgentVersion ? Number(userAgentVersion.split('.')[0]) : undefined;
 const dockerNodeMajor = parseNodeMajor(dockerNode);
@@ -48,8 +47,11 @@ if (!expectedEngine || packageJson.engines?.node !== expectedEngine) {
   );
 }
 if (packageJson.packageManager) {
+  problems.push('package.json#packageManager 不应固定 pnpm 单一版本，请只使用 engines.pnpm 范围');
+}
+if (packageJson.devEngines?.packageManager) {
   problems.push(
-    'package.json#packageManager 不应固定单一版本，请使用 devEngines.packageManager 范围'
+    'package.json#devEngines.packageManager 不应声明；pnpm 12 会把自管理版本（含 @pnpm/exe 二进制)写进 pnpm-lock.yaml，请只使用 engines.pnpm 范围'
   );
 }
 if (!expectedPnpm) {
@@ -57,16 +59,14 @@ if (!expectedPnpm) {
     `package.json#engines.pnpm 必须是可解析的主版本范围（当前 ${expectedPnpmRange || '(缺失)'})`
   );
 }
-if (
-  !devEnginePackageManager ||
-  devEnginePackageManager.name !== 'pnpm' ||
-  !devPnpmRange ||
-  !expectedPnpm ||
-  devPnpmRange.min !== expectedPnpm.min ||
-  devPnpmRange.max !== expectedPnpm.max
-) {
+if (!lockfile.startsWith('lockfileVersion:')) {
   problems.push(
-    `package.json#devEngines.packageManager 必须声明 pnpm 且与 engines.pnpm 使用同一范围（期望 ${expectedPnpmRange || '(缺失)'})`
+    'pnpm-lock.yaml 必须是以 lockfileVersion 开头的单文档 YAML（当前存在残留的 --- 文档头或前置段落，pnpm 会报 ERR_PNPM_NO_LOCKFILE)；请运行 pnpm install --lockfile-only 重新生成'
+  );
+}
+if (/^[ \t]+packageManagerDependencies:/m.test(lockfile)) {
+  problems.push(
+    'pnpm-lock.yaml 仍包含 packageManagerDependencies（devEngines.packageManager 的产物)；从 package.json 删除该字段后运行 pnpm install --lockfile-only 重新生成锁文件'
   );
 }
 if (!userAgentVersion) {
