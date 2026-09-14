@@ -1,11 +1,11 @@
-GD Studio's Online Music Platform API
-To report any unlawful activity or to protect your local authority, please contact us: gdstudio@email.com
+# GD Studio's Online Music Platform API
+
+> 上游 API 参考；稳定音源和频率限制可能随 GD Studio 调整。
+> To report any unlawful activity or to protect your local authority, please contact us: gdstudio@email.com
 
 Written by GD Studio. License: CC BY-NC 4.0
 
 This platform is for study purposes only. Do NOT use it commercially!
-
-
 
 免责声明：本站资源来自网络，仅限本人学习参考，严禁下载、传播或商用，如侵权请与我联系删除。继续使用将视为同意本声明
 
@@ -17,13 +17,16 @@ This platform is for study purposes only. Do NOT use it commercially!
 
 更新日期：2026-06-26
 
+## OTONEI 集成说明
+
+以上内容是 GD Studio 的上游 API 参考，稳定音源和频率限制可能随上游调整。OTONEI 当前 Cloudflare Functions 代理允许的音源为：`netease`、`kuwo`、`joox`、`bilibili`、`ytmusic`；应用首页默认展示前四项，收藏导入会在 `netease` 与 `ytmusic` 之间回退。以仓库中的代理白名单和实际上游响应为准，不要仅依据本文件推断线上可用性。
 
 搜索
 API：https://music-api.gdstudio.xyz/api.php?types=search&source=[MUSIC SOURCE]&name=[KEYWORD]&count=[PAGE LENGTH]&pages=[PAGE NUM]
 
 source：音乐源。选填，参数值netease（默认）、tencent、kuwo、tidal、qobuz、joox、bilibili、apple、ytmusic、spotify。部分音乐源暂不开放，建议使用稳定音乐源
 
-* 高级用法：在音乐源后加上“_album”，如“netease_album”，可获取专辑中的曲目列表
+- 高级用法：在音乐源后加上“_album”，如“netease_album”，可获取专辑中的曲目列表
 
 name：关键字。必填，关键字可以是曲目名、歌手名、专辑名
 
@@ -32,7 +35,6 @@ count：页面长度。选填，一次返回显示多少内容，默认为20条
 pages：页码。选填，返回搜索结果第几页，默认为第1页
 
 返回：id（曲目ID，即track_id）、name（歌曲名）、artist（歌手列表）、album（专辑名）、pic_id（专辑图ID）、url_id（URL ID，废弃）、lyric_id（歌词ID）、source（音乐源）
-
 
 获取歌曲
 API：https://music-api.gdstudio.xyz/api.php?types=url&source=[MUSIC SOURCE]&id=[TRACK ID]&br=[128/192/320/740/999]
@@ -45,7 +47,6 @@ br：音质。选填，可选128、192、320、740、999（默认），其中740
 
 返回：url（音乐链接）、br（实际返回音质）、size（文件大小，单位为KB）
 
-
 获取专辑图
 API：https://music-api.gdstudio.xyz/api.php?types=pic&source=[MUSIC SOURCE]&id=[PIC ID]&size=[300/500]
 
@@ -57,7 +58,6 @@ size：图片尺寸。选填，可选300（默认）、500，其中300为小图�
 
 返回：url（专辑图链接）
 
-
 获取歌词
 API：https://music-api.gdstudio.xyz/api.php?types=lyric&source=[MUSIC SOURCE]&id=[LYRIC ID]
 
@@ -67,12 +67,10 @@ id：歌词ID。必填，歌词ID即lyric_id（一般与曲目ID相同），可�
 
 返回：lyric（LRC格式的原语种歌词）、tlyric（LRC格式的中文翻译歌词，不一定会返回值）
 
-
 更多项目
 Embeat：基于声学特征的音乐推荐系统
 
 https://github.com/gdstudio-org/Embeat
 说明：在你的服务器上部署一个Spotify级别的音乐推荐系统，完全开源，欢迎Star！
-
 
 复制

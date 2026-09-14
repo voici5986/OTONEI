@@ -2,11 +2,12 @@
 
 > 评估目标：在尽量不扰动业务功能的前提下，降低前端工具链维护成本、提升测试可信度，并为后续 TypeScript 化和长期维护打基础。
 
-## 实施状态（2026-08-26）
+## 实施状态（2026-09-14）
 
 - Oxlint/Oxfmt 已替换 ESLint/Prettier，主质量脚本和 `lint-staged` 已切换到 Ox。
 - Oxlint React 插件已启用；`set-state-in-effect`、`purity`、`refs` 保留现有项目例外。
-- Playwright 普通/PWA E2E、关键 service 测试和渐进 TypeScript 基建已加入质量链。
+- Playwright 普通/PWA E2E、关键 service 测试和渐进 TypeScript 基建已加入质量链；当前仓库包含 17 个测试文件和 2 组 E2E 规格。
+- 当前代码是 JavaScript/JSX 与 TypeScript/TSX 混合形态，核心类型、工具、服务、Hooks、多个 Context 和部分 UI 边界已经迁移，Auth/Player Context 与大型页面仍保留 JS。
 - Node/pnpm 的最终支持范围仍以 `package.json`、`.node-version` 和 CI 配置为准；pnpm 只使用 `engines.pnpm` 范围，不固定单一版本，也不声明 `devEngines.packageManager`（否则 pnpm 12 会把自管理版本写进 `pnpm-lock.yaml`）。
 
 ## 1. 当前状态
@@ -15,7 +16,7 @@ OTONEI 当前主要技术栈：
 
 - React 19
 - Vite 8
-- JavaScript / JSX
+- JavaScript / JSX + TypeScript / TSX（渐进迁移中）
 - Oxlint
 - Oxfmt
 - Vitest
@@ -39,7 +40,9 @@ Vitest + coverage
   ↓
 Vite Build
   ↓
-pnpm audit --prod
+  Playwright 普通/PWA E2E
+  ↓
+  pnpm audit --prod
 ```
 
 GitHub Actions 通过 `verify:release` 运行：
@@ -56,14 +59,8 @@ pnpm run test:e2e:pwa
 pnpm audit --prod
 ```
 
-目前测试数量偏少，主要集中在：
-
-- Cloudflare API Proxy
-- Data Validator
-- Track Formatter
-- useSearch Hook
-
-也就是说，当前测试更偏“局部逻辑测试”，对完整用户流程覆盖不足。
+当前测试已覆盖 API 代理、数据校验、格式化、搜索、存储、同步、Firebase 降级、音频状态和环境配置等关键逻辑，并包含搜索、播放、收藏、降级模式和 PWA 流程。
+仍需持续补强的是边界设备、真实 Firebase 多设备收敛和生产部署环境验证；本地 E2E 使用固定 fixture，不依赖第三方音乐 API。
 
 ---
 
@@ -73,15 +70,15 @@ pnpm audit --prod
 
 ### 建议做
 
-1. ESLint → Oxlint
-2. Prettier → Oxfmt
-3. 保留 Vitest
-4. 新增 Playwright E2E
-5. 新增 Coverage 门槛
-6. 逐步 JavaScript → TypeScript
-7. 统一 Node / pnpm 版本来源
-8. 逐步清理 CRA 时代的 `REACT_APP_*` 兼容层
-9. GitHub Actions 全部锁定完整 Commit SHA
+1. ESLint → Oxlint（已完成）
+2. Prettier → Oxfmt（已完成）
+3. 保留 Vitest（当前方案）
+4. 新增 Playwright E2E（已完成首轮）
+5. 新增 Coverage 门槛（已完成首轮）
+6. 逐步 JavaScript → TypeScript（已完成当前批次）
+7. 统一 Node / pnpm 版本来源（已完成）
+8. 逐步清理 CRA 时代的 `REACT_APP_*` 兼容层（兼容窗口仍保留）
+9. GitHub Actions 全部锁定完整 Commit SHA（已完成当前工作流）
 
 ### 暂时不建议做
 
@@ -222,7 +219,7 @@ react/set-state-in-render = error
 react/set-state-in-effect = warn
 ```
 
-OTONEI 当前 ESLint 明确关闭了：
+迁移期间曾保留的 React 规则例外，当前由 Oxlint 配置明确记录：
 
 ```text
 react-hooks/set-state-in-effect
@@ -246,7 +243,7 @@ react-hooks/refs
 
 # 4. 第二优先级：补 Playwright E2E
 
-OTONEI 目前最明显的质量缺口，不是 Lint，而是没有真正覆盖完整用户流程。
+OTONEI 当前的质量重点已从“补齐基础 E2E”转为持续扩大边界覆盖，并把本地验证与真实部署验收明确区分。
 
 ## 推荐至少增加 5 条 E2E
 
@@ -311,9 +308,9 @@ service worker 可以注册
 
 # 5. 第三优先级：增加测试覆盖率门槛
 
-目前 Vitest 有测试，但没有覆盖率门槛。
+Vitest 已接入覆盖率门槛；当前全局门槛与显式 include 文件的门槛定义在 `vite.config.mjs`。
 
-建议加入：
+覆盖率工具已加入：
 
 ```text
 @vitest/coverage-v8
@@ -581,16 +578,16 @@ vite-plugin-env-compatible
 
 ## 9.1 Action 锁完整 Commit SHA
 
-由：
+历史建议由：
 
 ```yaml
 uses: actions/checkout@v6
 ```
 
-改为：
+当前工作流已改为：
 
 ```yaml
-uses: actions/checkout@<full commit sha>
+uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 ```
 
 Docker Action 同样处理：
@@ -647,7 +644,6 @@ playwright
 
 ```text
 linux/amd64
-linux/arm/v7
 linux/arm64
 ```
 
@@ -722,10 +718,10 @@ types
 ## Phase D：工具链收尾（部分完成）
 
 ```text
-Node / pnpm 单一来源
-REACT_APP_* → VITE_*（保留兼容窗口）
-GitHub Actions SHA pin
-Docker workflow 现代化
+Node / pnpm 单一来源（已完成）
+REACT_APP_* → VITE_*（应用侧已切换，兼容窗口仍保留）
+GitHub Actions SHA pin（已完成当前工作流）
+Docker workflow 现代化（已完成当前工作流）
 ```
 
 应用代码已统一从 `src/config/env.ts` 读取 Vite 变量，并保留旧变量回退；`vite-plugin-env-compatible` 暂不删除，待外部部署控制面完成切换后再清理。
@@ -787,9 +783,9 @@ format
 
 ## 最终判断
 
-OTONEI 值得迁 Ox。
+Oxlint/Oxfmt 迁移已经完成。后续收益主要来自：
 
-但真正决定项目稳定性的优先事项不是 Ox 本身，而是：
+真正决定项目稳定性的优先事项是：
 
 ```text
 Playwright

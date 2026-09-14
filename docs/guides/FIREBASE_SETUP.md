@@ -76,7 +76,9 @@ VITE_FIREBASE_APP_ID=your-app-id
 
 ### 增量同步机制
 
-OTONEI 现在使用增量同步机制，这种方式可以显著减少数据传输量和 Firebase 操作次数：
+OTONEI 现在使用基于本地时间戳的增量同步机制，这种方式在时钟正常且数据规模较小时可以减少数据传输量和 Firebase 操作次数。
+
+> **重要限制**：`modifiedAt`、历史 `timestamp`、同步游标和冲突排序目前依赖客户端 `Date.now()`。多设备时钟偏差、手动改时或离线时间漂移可能导致变更被提前/延后筛选，不能把本地通过视为真实多设备收敛验证。若要消除该风险，需要服务端拥有的更新时间、持久化 outbox/dirty 状态和确定性的冲突 tie-breaker；仅增加 `serverUpdatedAt` 不足以解决问题。
 
 1. **工作原理**：
    - 系统记录上次同步的时间戳
@@ -160,3 +162,5 @@ Firebase存储结构设计：
 1. 使用 Firebase Emulator 测试规则与同步，不要放宽线上规则
 2. 添加多个测试账号测试同步功能
 3. 公开部署可进一步启用 Firebase App Check；这需要先在 Firebase Console 注册 Web 应用和验证提供商，仅修改仓库代码不能完成该步骤。
+
+本地单元测试和规则模拟器只能证明局部逻辑与规则语法；上线前仍需单独验证真实 Firebase 项目、多设备并发/离线收敛、App Check、TLS 和部署环境配置。

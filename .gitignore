@@ -35,7 +35,6 @@
 .env*.local
 
 # API Documentation and Private Configs
-API.txt
 API_DOC.md
 config_backup.json
 
@@ -98,4 +97,3 @@ ui-debug.log
 # PWA相关
 **/public/workbox-*.js
 **/public/sw.js
-docs/code-review-checklist.md

@@ -1,6 +1,6 @@
 # OTONEI Z-Index 层级审计文档 (Z-Index Audit)
 
-本文档记录了项目中 `z-index` 的层级关系及其对应的 CSS 变量。目前所有魔法数字已成功替换为变量系统。
+本文档记录了项目中 `z-index` 的层级关系及其对应的 CSS 变量。核心层级已集中到变量系统，但当前仍存在少量历史兼容值和内联弹窗层级，不能将其视为“所有魔法数字已替换”。
 
 ## 1. 层级变量定义 (theme.css)
 
@@ -38,12 +38,12 @@
 ## 2. 实施状态
 
 - [x] **定义变量**：已在 `src/styles/theme.css` 中定义全套变量。
-- [x] **JS 替换**：`MobileMiniPlayer.js`, `InstallPWA.js`, `OrientationPrompt.js`, `DeviceDebugger.js` 中的内联样式已改为 `var()` 引用。
-- [x] **CSS 替换**：`AudioPlayer.mobile.css`, `AudioPlayer.desktop.css`, `index.css`, `App.css`, `AudioPlayer.animations.css` 已全部完成变量替换。
-- [x] **例外保留**：`index.html` 中的首屏 Loading (9999) 保持硬编码，以确保在 CSS 变量加载前生效。
+- [x] **主要 JS/CSS 层级**：播放器、导航、通知、PWA 提示和调试工具已使用语义化变量。
+- [ ] **清理剩余硬编码**：当前仍有 `Header.desktop.css`/`Header.mobile.css` 的 `1000/1100`、`ClearDataButton.jsx` 的 `10000/10001`、`UserProfile.jsx` 的 `2000`、`index.html` 首屏 Loading 的 `9999`，以及少量 CSS 历史兼容值。
+- [x] **首屏例外说明**：`index.html` 中的首屏 Loading 保留硬编码，以确保 CSS 变量加载前生效。
 
 ## 3. 维护规范
 
-1.  **禁止硬编码**：新开发的组件禁止使用 `zIndex: 123`，必须从 `theme.css` 中选择合适的变量。
+1.  **禁止新增硬编码**：新开发的组件禁止使用新的 `zIndex: 123`，必须从 `theme.css` 中选择合适的变量。
 2.  **新增层级**：如需新增层级，请先更新 `theme.css` 和本文档。
 3.  **语义化优先**：选择变量时优先考虑其语义（如 `toast`, `navbar`），而非仅仅看数值大小。
