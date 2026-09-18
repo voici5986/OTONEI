@@ -25,6 +25,51 @@ const ALLOWED_TYPES = new Set(['search', 'url', 'lyric', 'pic']);
 const ALLOWED_SOURCES = new Set(['netease', 'kuwo', 'joox', 'bilibili', 'ytmusic']);
 const ALLOWED_BITRATES = new Set(['128', '192', '320', '740', '999']);
 
+// Pages Functions instances are short lived, so this is deliberately a soft
+// per-instance guard rather than a durable/global quota. It protects an
+// instance and the upstream from bursts while leaving durable enforcement to
+// a platform rate-limit/WAF product when one is configured.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 60;
+const RATE_LIMIT_MAX_KEYS = 1_000;
+const requestCounters = new Map();
+
+const createRequestId = () => {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  }
+};
+
+const getClientKey = (request) => {
+  // CF-Connecting-IP is set by Cloudflare. Do not trust a client-supplied
+  // X-Forwarded-For value, which would let callers evade the soft guard.
+  return request.headers.get('CF-Connecting-IP')?.trim().slice(0, 100) || 'unknown';
+};
+
+const checkSoftRateLimit = (request) => {
+  const now = Date.now();
+  const key = getClientKey(request);
+  const current = requestCounters.get(key);
+  if (!current || now - current.startedAt >= RATE_LIMIT_WINDOW_MS) {
+    if (requestCounters.size >= RATE_LIMIT_MAX_KEYS) {
+      for (const [entryKey, entry] of requestCounters) {
+        if (now - entry.startedAt >= RATE_LIMIT_WINDOW_MS) requestCounters.delete(entryKey);
+      }
+      if (requestCounters.size >= RATE_LIMIT_MAX_KEYS) requestCounters.clear();
+    }
+    requestCounters.set(key, { startedAt: now, count: 1 });
+    return { allowed: true };
+  }
+
+  current.count += 1;
+  return {
+    allowed: current.count <= RATE_LIMIT_MAX_REQUESTS,
+    retryAfter: Math.max(1, Math.ceil((RATE_LIMIT_WINDOW_MS - (now - current.startedAt)) / 1000)),
+  };
+};
+
 const isIntegerInRange = (value, min, max) => {
   if (!/^\d+$/.test(value || '')) return false;
   const number = Number(value);
@@ -63,24 +108,27 @@ const validateQuery = (searchParams) => {
   return null;
 };
 
-const jsonResponse = (body, status) =>
+const jsonResponse = (body, status, requestId, extraHeaders = {}) =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
+      'X-Request-Id': requestId,
+      ...extraHeaders,
     },
   });
 
 export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
+  const requestId = createRequestId();
 
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: { Allow: 'GET, OPTIONS' },
+      headers: { Allow: 'GET, OPTIONS', 'X-Request-Id': requestId },
     });
   }
 
@@ -89,17 +137,25 @@ export async function onRequest(context) {
       status: 405,
       headers: {
         Allow: 'GET, OPTIONS',
+        'X-Request-Id': requestId,
       },
     });
   }
 
+  const rateLimit = checkSoftRateLimit(request);
+  if (!rateLimit.allowed) {
+    return jsonResponse({ error: 'Too Many Requests', requestId }, 429, requestId, {
+      'Retry-After': String(rateLimit.retryAfter),
+    });
+  }
+
   if (!ALLOWED_PATHS.has(url.pathname)) {
-    return jsonResponse({ error: 'Not Found', message: 'Unsupported API proxy path' }, 404);
+    return jsonResponse({ error: 'Not Found', requestId }, 404, requestId);
   }
 
   const queryError = validateQuery(url.searchParams);
   if (queryError) {
-    return jsonResponse({ error: 'Bad Request', message: queryError }, 400);
+    return jsonResponse({ error: 'Bad Request', message: queryError, requestId }, 400, requestId);
   }
 
   const targetUrlString = `${TARGET_API_BASE}${TARGET_PATH_ACTUAL}${url.search}`;
@@ -114,15 +170,22 @@ export async function onRequest(context) {
     const response = await fetch(targetUrlString, {
       method: 'GET',
       headers: upstreamHeaders,
-      redirect: 'follow',
+      // The proxy is intentionally single-origin. Following an upstream
+      // redirect would turn this fixed-target proxy into an open fetcher.
+      redirect: 'manual',
     });
 
-    // 临时诊断日志：定位 upstream 返回与 /api-v1 可访问性问题，随后移除
+    if (response.status >= 300 && response.status < 400) {
+      console.warn('[API proxy] upstream redirect rejected', {
+        requestId,
+        status: response.status,
+      });
+      return jsonResponse({ error: 'Upstream Redirect', requestId }, 502, requestId);
+    }
+
     console.log('[API proxy] upstream response', {
+      requestId,
       status: response.status,
-      statusText: response.statusText,
-      server: response.headers.get('server'),
-      cfRay: response.headers.get('cf-ray'),
       contentType: response.headers.get('content-type'),
       contentLength: response.headers.get('content-length'),
     });
@@ -132,6 +195,7 @@ export async function onRequest(context) {
     responseHeaders.delete('Access-Control-Allow-Credentials');
     responseHeaders.set('Cache-Control', 'no-store');
     responseHeaders.set('X-Content-Type-Options', 'nosniff');
+    responseHeaders.set('X-Request-Id', requestId);
     responseHeaders.delete('X-Powered-By');
     responseHeaders.delete('Server');
 
@@ -141,8 +205,7 @@ export async function onRequest(context) {
       headers: responseHeaders,
     });
   } catch (error) {
-    // 临时诊断日志：定位 fetch 失败原因，随后移除
-    console.error('[API proxy] fetch failed', error);
-    return jsonResponse({ error: 'Proxy Fetch Failed', message: error.message }, 502);
+    console.error('[API proxy] fetch failed', { requestId, errorName: error?.name || 'Error' });
+    return jsonResponse({ error: 'Proxy Fetch Failed', requestId }, 502, requestId);
   }
 }

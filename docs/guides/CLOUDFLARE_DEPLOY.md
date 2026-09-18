@@ -8,6 +8,8 @@
 - `public/_headers`：静态资源安全头和基础缓存策略
 - `wrangler.toml`：声明 Pages 输出目录和 Functions 兼容日期
 
+API Function 在单个运行实例内按 Cloudflare 注入的客户端 IP 做 60 秒 60 次软限流，并为响应附带 `X-Request-Id`。Pages Function 实例会回收或横向扩展，因此这不是全局配额；公开部署仍应在 Cloudflare WAF / Rate Limiting 中为 `/api-v1*` 配置持久限频。
+
 ## Cloudflare Pages 设置
 
 在 Cloudflare Dashboard 创建 Pages 项目，连接 Git 仓库后使用这些设置：

@@ -5,6 +5,7 @@ on:
     paths:
       - firestore.rules
       - firebase.json
+      - scripts/test-firestore-rules.mjs
       - .github/workflows/firestore-rules.yml
   push:
     branches:
@@ -12,6 +13,7 @@ on:
     paths:
       - firestore.rules
       - firebase.json
+      - scripts/test-firestore-rules.mjs
       - .github/workflows/firestore-rules.yml
   workflow_dispatch:
 
@@ -24,6 +26,7 @@ concurrency:
 
 env:
   FIREBASE_TOOLS_VERSION: '15.30.0'
+  FIREBASE_RULES_TESTING_VERSION: '5.0.2'
 
 jobs:
   validate:
@@ -46,9 +49,18 @@ jobs:
         with:
           node-version: '22'
 
-      # 本地模拟器解析 firestore.rules：语法/结构错误会让模拟器启动失败并以非零退出
-      - name: Validate Firestore rules syntax
-        run: npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" emulators:exec --only firestore "node -e \"console.log('firestore rules OK')\""
+      - name: Install Firestore rules behavior test dependencies
+        run: >-
+          npm install --no-save --no-package-lock --ignore-scripts
+          "@firebase/rules-unit-testing@${FIREBASE_RULES_TESTING_VERSION}"
+          "firebase@12.19.0"
+
+      # 模拟器启动同时覆盖规则语法，脚本再覆盖关键 allow/deny 场景。
+      - name: Test Firestore rules behavior
+        run: >-
+          npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}"
+          emulators:exec --only firestore
+          "node scripts/test-firestore-rules.mjs"
 
   deploy:
     runs-on: ubuntu-latest

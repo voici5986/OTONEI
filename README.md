@@ -183,4 +183,4 @@ OTONEI 自有代码使用 MIT 许可证。
 
 - 字体：界面内置使用 MiSans，字体版权归小米科技有限责任公司及相关权利人所有，使用受 [MiSans 字体知识产权许可协议](https://hyperos.mi.com/font-download/MiSans%E5%AD%97%E4%BD%93%E7%9F%A5%E8%AF%86%E4%BA%A7%E6%9D%83%E8%AE%B8%E5%8F%AF%E5%8D%8F%E8%AE%AE.pdf) 约束。
 - 音乐数据：搜索、音频地址、封面和歌词由 [GD 音乐台](https://music.gdstudio.xyz/) API 提供。该服务及音乐内容不属于 OTONEI 的 MIT 许可范围，仅应在对方条款和音乐版权允许的范围内使用。请支持正版音乐。
-- 浏览器内的请求计数只用于正常客户端节流，不是服务端防滥用边界。公开部署应在 Cloudflare WAF / Rate Limiting 中另行为 `/api-v1*` 配置限频。
+- 浏览器内的请求计数只用于正常客户端节流；Pages Function 另外提供每实例、按 Cloudflare 客户端 IP 的软限流（60 秒 60 次），不等于持久化的全局配额。公开部署仍应在 Cloudflare WAF / Rate Limiting 中另行为 `/api-v1*` 配置持久限频。

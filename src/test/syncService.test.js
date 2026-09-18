@@ -477,6 +477,40 @@ describe('sync service safeguards', () => {
     removeSyncListener(SyncEvents.SYNC_COMPLETED, completed);
   });
 
+  it('does not return the old account promise after an account switch', async () => {
+    firebaseState.available = true;
+    checkFirebaseAvailability.mockResolvedValue(true);
+    firestoreGetDocs.mockResolvedValue({ forEach: vi.fn() });
+
+    let releaseFirstSync;
+    let markFirstReadStarted;
+    const firstSyncBlocked = new Promise((resolve) => {
+      releaseFirstSync = resolve;
+    });
+    const firstReadStarted = new Promise((resolve) => {
+      markFirstReadStarted = resolve;
+    });
+
+    firestoreGetDoc.mockImplementation(async (reference) => {
+      if (String(reference).includes('user-1')) {
+        markFirstReadStarted();
+        await firstSyncBlocked;
+      }
+      return { exists: () => true, data: () => ({ lastUpdated: 0 }) };
+    });
+
+    const first = requestSync('user-1', 'manual');
+    await firstReadStarted;
+    const switched = requestSync('user-2', 'manual');
+
+    expect(switched).not.toBe(first);
+    releaseFirstSync();
+
+    await expect(first).resolves.toMatchObject({ success: true });
+    await expect(switched).resolves.toMatchObject({ success: true });
+    expect(firestoreGetDoc).toHaveBeenLastCalledWith(expect.stringContaining('/users/user-2'));
+  });
+
   it('does not report success or advance the timestamp when a cloud read fails', async () => {
     firebaseState.available = true;
     checkFirebaseAvailability.mockResolvedValue(true);

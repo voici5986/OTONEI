@@ -57,8 +57,10 @@ let syncWatchdogTimer = null;
 
 // 同步调度状态：任何时刻最多一轮在跑 + 一轮补跑
 let syncInFlight = null;
+let syncInFlightUid = null;
 let queuedRerun = false;
 let queuedRerunUid = null;
+let queuedRerunWaiters = [];
 
 // 批量操作限制
 const BATCH_SIZE = 100; // Firestore每批次最多500个操作，我们保守使用100
@@ -854,6 +856,13 @@ export const resetSyncScheduler = () => {
   offlineRetryUsed = false;
   queuedRerun = false;
   queuedRerunUid = null;
+  if (queuedRerunWaiters.length > 0) {
+    const waiters = queuedRerunWaiters;
+    queuedRerunWaiters = [];
+    waiters.forEach((resolve) =>
+      resolve({ success: false, error: '账号已切换，排队中的同步请求已取消' })
+    );
+  }
   return cleared;
 };
 
@@ -924,9 +933,22 @@ export const requestSync = async (uid, reason = 'unknown') => {
   offlineRetryUsed = false;
 
   if (syncInFlight) {
+    // 同一账号的请求继续复用当前 Promise；账号切换必须等旧账号完成后
+    // 重新开始，并且不能把旧账号的结果返回给新账号的调用方。
+    if (syncInFlightUid === uid) return syncInFlight;
+
+    if (queuedRerunUid !== uid) {
+      if (queuedRerunWaiters.length > 0) {
+        const staleWaiters = queuedRerunWaiters;
+        queuedRerunWaiters = [];
+        staleWaiters.forEach((resolve) =>
+          resolve({ success: false, error: '账号已切换，排队中的同步请求已取消' })
+        );
+      }
+      queuedRerunUid = uid;
+    }
     queuedRerun = true;
-    queuedRerunUid = uid;
-    return syncInFlight;
+    return new Promise((resolve) => queuedRerunWaiters.push(resolve));
   }
 
   logger.log(`请求同步 (${reason})`);
@@ -939,15 +961,27 @@ export const requestSync = async (uid, reason = 'unknown') => {
     } finally {
       clearSyncWatchdog();
       syncInFlight = null;
+      syncInFlightUid = null;
 
       if (queuedRerun) {
         const nextUid = queuedRerunUid;
+        const waiters = queuedRerunWaiters;
         queuedRerun = false;
         queuedRerunUid = null;
-        if (nextUid) void requestSync(nextUid, 'queued');
+        queuedRerunWaiters = [];
+        if (nextUid) {
+          void requestSync(nextUid, 'queued').then((result) => {
+            waiters.forEach((resolve) => resolve(result));
+          });
+        } else {
+          waiters.forEach((resolve) =>
+            resolve({ success: false, error: '排队中的同步请求已取消' })
+          );
+        }
       }
     }
   })();
+  syncInFlightUid = uid;
 
   return syncInFlight;
 };

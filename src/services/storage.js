@@ -1,6 +1,7 @@
 import localforage from 'localforage';
 import logger from '../utils/logger.js';
 import { getTrackKey, normalizeTrackIdentity } from '../utils/trackIdentity';
+import { getTrackArtist } from '../utils/trackFormatter';
 
 const GUEST_SCOPE = 'guest';
 let activeDataScope = GUEST_SCOPE;
@@ -197,11 +198,28 @@ export async function clearExpiredCovers(options = {}) {
  * 收藏歌曲操作
  */
 // 设置收藏上限为500条
-const MAX_FAVORITES_ITEMS = 500;
+export const MAX_FAVORITES_ITEMS = 500;
+// 删除标记只需保留一个有界的近期窗口，用于跨设备传播删除操作。
+// 旧标记超过窗口后不再占用本地存储，最新标记优先保留。
+export const MAX_FAVORITE_TOMBSTONES = 500;
+
+const toPersistedTrack = (track) => {
+  const normalized = normalizeTrackIdentity(track);
+  const album = typeof normalized.album === 'string' ? normalized.album : normalized.album?.name;
+  return {
+    ...normalized,
+    // Firestore 的共享字段始终使用标量字符串；本地仍保留其它来源字段，
+    // 以便播放/封面等现有功能继续读取它们。
+    artist: getTrackArtist(normalized),
+    album: String(album ?? '').slice(0, 300),
+    pic_id: normalized.pic_id == null ? null : String(normalized.pic_id).slice(0, 500),
+    lyric_id: normalized.lyric_id == null ? null : String(normalized.lyric_id).slice(0, 500),
+  };
+};
 
 export async function getFavoritesStrict(userId) {
   const data = await getScopedItem(favoritesStore, 'items', userId);
-  return (data || []).map(normalizeTrackIdentity);
+  return (data || []).map(toPersistedTrack);
 }
 
 export async function getFavorites(userId) {
@@ -215,7 +233,7 @@ export async function getFavorites(userId) {
 
 export async function saveFavorites(favoritesArray, userId) {
   try {
-    const normalizedFavorites = favoritesArray.map(normalizeTrackIdentity);
+    const normalizedFavorites = favoritesArray.slice(0, MAX_FAVORITES_ITEMS).map(toPersistedTrack);
     await favoritesStore.setItem(scopedKey('items', userId), normalizedFavorites);
     return true;
   } catch (error) {
@@ -228,7 +246,7 @@ export async function saveFavorites(favoritesArray, userId) {
 export async function getFavoriteTombstones(userId) {
   try {
     const tombstones = (await getScopedItem(favoriteTombstonesStore, 'items', userId)) || [];
-    return tombstones.map(normalizeTrackIdentity);
+    return tombstones.map(toPersistedTrack);
   } catch (error) {
     logger.error('获取收藏删除标记失败:', error);
     throw error;
@@ -236,7 +254,11 @@ export async function getFavoriteTombstones(userId) {
 }
 
 export async function saveFavoriteTombstones(tombstones, userId) {
-  await favoriteTombstonesStore.setItem(scopedKey('items', userId), tombstones);
+  const normalized = tombstones
+    .map(toPersistedTrack)
+    .sort((a, b) => (b.modifiedAt || b.deletedAt || 0) - (a.modifiedAt || a.deletedAt || 0))
+    .slice(0, MAX_FAVORITE_TOMBSTONES);
+  await favoriteTombstonesStore.setItem(scopedKey('items', userId), normalized);
   return true;
 }
 
@@ -269,7 +291,7 @@ export async function toggleFavorite(track, userId) {
     }
     // 未收藏，则添加到列表开头，并添加修改时间戳
     const trackWithTimestamp = {
-      ...normalizedTrack,
+      ...toPersistedTrack(normalizedTrack),
       modifiedAt: Date.now(), // 添加修改时间戳
     };
     favorites.unshift(trackWithTimestamp);
@@ -468,7 +490,7 @@ export async function getHistoryStrict(userId) {
   const data = await getScopedItem(historyStore, 'items', userId);
   return (data || []).map((item) => ({
     ...item,
-    song: item.song ? normalizeTrackIdentity(item.song) : item.song,
+    song: item.song ? toPersistedTrack(item.song) : item.song,
   }));
 }
 
@@ -476,7 +498,7 @@ export async function getHistoryStrict(userId) {
 export async function saveHistory(historyArray, userId) {
   const normalizedHistory = historyArray.map((item) => ({
     ...item,
-    song: item.song ? normalizeTrackIdentity(item.song) : item.song,
+    song: item.song ? toPersistedTrack(item.song) : item.song,
   }));
   return saveHistoryGeneric(historyStore, normalizedHistory, MAX_HISTORY_ITEMS, userId);
 }
@@ -484,7 +506,7 @@ export async function saveHistory(historyArray, userId) {
 // 添加到播放历史
 export async function addToHistory(track, userId) {
   try {
-    const normalizedTrack = normalizeTrackIdentity(track);
+    const normalizedTrack = toPersistedTrack(track);
     const history = await getHistoryStrict(userId);
     const existingIndex = history.findIndex((item) => {
       const song = item.song || item;
@@ -508,17 +530,17 @@ export async function clearHistory(userId) {
  * 搜索历史操作
  */
 // 获取搜索历史
-export async function getSearchHistory() {
-  return getHistoryGeneric(searchHistoryStore);
+export async function getSearchHistory(userId) {
+  return getHistoryGeneric(searchHistoryStore, userId);
 }
 
 // 保存搜索历史
-export async function saveSearchHistory(historyArray) {
-  return saveHistoryGeneric(searchHistoryStore, historyArray, MAX_SEARCH_HISTORY_ITEMS);
+export async function saveSearchHistory(historyArray, userId) {
+  return saveHistoryGeneric(searchHistoryStore, historyArray, MAX_SEARCH_HISTORY_ITEMS, userId);
 }
 
 // 添加搜索历史
-export async function addSearchHistory(query, source) {
+export async function addSearchHistory(query, source, userId) {
   return addToHistoryGeneric(
     searchHistoryStore,
     { query, source },
@@ -528,13 +550,14 @@ export async function addSearchHistory(query, source) {
       timestamp: Date.now(),
       query: query,
       source: source,
-    })
+    }),
+    userId
   );
 }
 
 // 清空搜索历史
-export async function clearSearchHistory() {
-  return clearHistoryGeneric(searchHistoryStore);
+export async function clearSearchHistory(userId) {
+  return clearHistoryGeneric(searchHistoryStore, userId);
 }
 
 /**

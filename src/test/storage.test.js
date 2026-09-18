@@ -51,6 +51,7 @@ import {
   getSearchHistory,
   getCoverFromStorage,
   getFavoriteTombstones,
+  MAX_FAVORITE_TOMBSTONES,
   incrementPendingChanges,
   resetPendingChanges,
   saveHistory,
@@ -59,6 +60,7 @@ import {
   saveSearchHistory,
   saveCoverToStorage,
   saveFavorites,
+  saveFavoriteTombstones,
   saveSyncStatus,
   setStorageScope,
   toggleFavorite,
@@ -178,6 +180,50 @@ describe('storage service', () => {
       error: 'favorites_limit',
     });
     await expect(getFavorites()).resolves.toHaveLength(500);
+  });
+
+  it('bounds bulk favorite saves and keeps shared track fields scalar', async () => {
+    const favorites = Array.from({ length: 501 }, (_, index) => ({
+      id: index,
+      source: 'netease',
+      artist: { name: `Artist ${index}` },
+      album: { name: `Album ${index}` },
+    }));
+
+    await expect(saveFavorites(favorites)).resolves.toBe(true);
+    const saved = await getFavorites();
+    expect(saved).toHaveLength(500);
+    expect(saved[0]).toMatchObject({ id: '0', artist: 'Artist 0', album: 'Album 0' });
+    expect(
+      saved.every((item) => typeof item.artist === 'string' && typeof item.album === 'string')
+    ).toBe(true);
+  });
+
+  it('bounds favorite tombstones to a recent window', async () => {
+    const tombstones = Array.from({ length: MAX_FAVORITE_TOMBSTONES + 1 }, (_, index) => ({
+      id: index,
+      source: 'netease',
+      modifiedAt: index,
+      deletedAt: index,
+    }));
+    await expect(saveFavoriteTombstones(tombstones)).resolves.toBe(true);
+    const saved = await getFavoriteTombstones();
+    expect(saved).toHaveLength(MAX_FAVORITE_TOMBSTONES);
+    expect(saved[0].id).toBe(String(MAX_FAVORITE_TOMBSTONES));
+  });
+
+  it('keeps search history isolated across guest and user scopes', async () => {
+    setStorageScope(null);
+    await addSearchHistory('guest-query', 'netease');
+    setStorageScope({ uid: 'user-a' });
+    await addSearchHistory('user-query', 'netease');
+    await expect(getSearchHistory()).resolves.toEqual([
+      expect.objectContaining({ query: 'user-query' }),
+    ]);
+    setStorageScope(null);
+    await expect(getSearchHistory()).resolves.toEqual([
+      expect.objectContaining({ query: 'guest-query' }),
+    ]);
   });
 
   it('cleans expired cover entries in batches', async () => {
