@@ -62,7 +62,7 @@
 
   .play-pause-button:hover {
     transform: scale(1.05);
-    background-color: #e06d6d; /* 稍微亮一点的红色 */
+    background-color: var(--color-accent-light);
   }
 
   .play-pause-button:active {

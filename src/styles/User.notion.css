@@ -21,6 +21,20 @@
   cursor: pointer;
 }
 
+button.stats-item-notion {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.stats-item-notion:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .stats-item-notion:hover {
   background-color: var(--color-background-alt);
 }
@@ -60,8 +74,8 @@
 /* 按钮微调 */
 .stats-card-notion .minimal-action-btn {
   font-size: 14px;
-  height: 36px;
-  transition: all 0.2s ease;
+  min-height: var(--button-min-height);
+  transition: var(--control-transition);
 }
 
 .stats-card-notion .minimal-action-btn:hover {

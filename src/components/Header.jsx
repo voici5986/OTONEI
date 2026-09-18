@@ -19,8 +19,10 @@ const Header = ({
   onSuggestionPick,
   onShowMore,
   selectedIndex = -1,
+  activeSuggestionId,
 }) => {
   const { currentUser } = useAuth();
+  const getSuggestionOptionId = (extraClass, index) => `suggestion-option-${extraClass}-${index}`;
 
   // 获取用户初始
   const getUserInitial = () => {
@@ -73,6 +75,9 @@ const Header = ({
 
       return (
         <div
+          id={`search-suggestions-${extraClass}`}
+          role="listbox"
+          aria-label="搜索建议"
           className={`header-search-suggestions ${extraClass || ''}`.trim()}
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -81,9 +86,13 @@ const Header = ({
               <div className="suggestion-section-title d-flex justify-content-between align-items-center">
                 <span>最近搜索</span>
                 {historyTotal > 0 && (
-                  <span className="clear-history-link" onClick={handleClearHistory}>
+                  <button
+                    type="button"
+                    className="clear-history-link ui-text-button"
+                    onClick={handleClearHistory}
+                  >
                     清空
-                  </span>
+                  </button>
                 )}
               </div>
               {historyTotal > 0 ? (
@@ -94,6 +103,9 @@ const Header = ({
                       type="button"
                       key={item.id}
                       className={`suggestion-item ${isSelected ? 'selected' : ''}`}
+                      id={getSuggestionOptionId(extraClass, idx)}
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => onSuggestionPick && onSuggestionPick(item)}
                     >
                       <span className="suggestion-title">{item.name}</span>
@@ -125,6 +137,9 @@ const Header = ({
 
     return (
       <div
+        id={`search-suggestions-${extraClass}`}
+        role="listbox"
+        aria-label="搜索建议"
         className={`header-search-suggestions ${extraClass || ''}`.trim()}
         onMouseDown={(e) => e.preventDefault()}
       >
@@ -133,13 +148,17 @@ const Header = ({
             <div className="suggestion-section-title">收藏中</div>
             {displayFavorites.length > 0 ? (
               displayFavorites.map((item) => {
-                const isSelected = globalIdx === selectedIndex;
+                const optionIndex = globalIdx;
+                const isSelected = optionIndex === selectedIndex;
                 globalIdx++;
                 return (
                   <button
                     type="button"
                     key={item.id}
                     className={`suggestion-item ${isSelected ? 'selected' : ''}`}
+                    id={getSuggestionOptionId(extraClass, optionIndex)}
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => onSuggestionPick && onSuggestionPick(item)}
                   >
                     <span className="suggestion-title">{item.name}</span>
@@ -152,15 +171,20 @@ const Header = ({
             )}
             {favExtraCount > 0 &&
               (() => {
-                const isSelected = globalIdx === selectedIndex;
+                const optionIndex = globalIdx;
+                const isSelected = optionIndex === selectedIndex;
                 globalIdx++;
                 return (
-                  <div
+                  <button
+                    type="button"
                     className={`suggestion-more ${isSelected ? 'selected' : ''}`}
+                    id={getSuggestionOptionId(extraClass, optionIndex)}
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => onShowMore && onShowMore('favorites')}
                   >
                     还有 {favExtraCount} 首收藏 →
-                  </div>
+                  </button>
                 );
               })()}
           </div>
@@ -171,13 +195,17 @@ const Header = ({
             <div className="suggestion-section-title">历史记录</div>
             {displayHistory.length > 0 ? (
               displayHistory.map((item) => {
-                const isSelected = globalIdx === selectedIndex;
+                const optionIndex = globalIdx;
+                const isSelected = optionIndex === selectedIndex;
                 globalIdx++;
                 return (
                   <button
                     type="button"
                     key={item.id}
                     className={`suggestion-item ${isSelected ? 'selected' : ''}`}
+                    id={getSuggestionOptionId(extraClass, optionIndex)}
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => onSuggestionPick && onSuggestionPick(item)}
                   >
                     <span className="suggestion-title">{item.name}</span>
@@ -190,15 +218,20 @@ const Header = ({
             )}
             {histExtraCount > 0 &&
               (() => {
-                const isSelected = globalIdx === selectedIndex;
+                const optionIndex = globalIdx;
+                const isSelected = optionIndex === selectedIndex;
                 globalIdx++;
                 return (
-                  <div
+                  <button
+                    type="button"
                     className={`suggestion-more ${isSelected ? 'selected' : ''}`}
+                    id={getSuggestionOptionId(extraClass, optionIndex)}
+                    role="option"
+                    aria-selected={isSelected}
                     onClick={() => onShowMore && onShowMore('history')}
                   >
                     还有 {histExtraCount} 首历史 →
-                  </div>
+                  </button>
                 );
               })()}
           </div>
@@ -230,13 +263,23 @@ const Header = ({
                 onFocus={onSearchFocus}
                 onBlur={onSearchBlur}
                 onKeyDown={onKeyDown}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={suggestionsOpen}
+                aria-controls="search-suggestions-desktop-search-suggestions"
+                aria-activedescendant={
+                  activeSuggestionId
+                    ? getSuggestionOptionId('desktop-search-suggestions', activeSuggestionId)
+                    : undefined
+                }
                 className="header-search-input"
                 autoComplete="off"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  className="search-clear-btn"
+                  className="search-clear-btn ui-icon-button"
+                  aria-label="清除搜索"
                   onClick={handleClear}
                   onMouseDown={(e) => e.preventDefault()}
                 >
@@ -249,10 +292,10 @@ const Header = ({
         </div>
 
         <div className="header-user-container ms-auto">
-          <div
+          <button
+            type="button"
             className="header-user-profile d-flex align-items-center"
             onClick={() => onTabChange('user')}
-            style={{ cursor: 'pointer' }}
           >
             <div className="header-user-info text-end me-3 d-none d-xl-block">
               <div className="user-name small fw-bold text-truncate" style={{ maxWidth: '120px' }}>
@@ -300,7 +343,7 @@ const Header = ({
                 }
               />
             </div>
-          </div>
+          </button>
         </div>
       </header>
 
@@ -318,13 +361,23 @@ const Header = ({
                 onFocus={onSearchFocus}
                 onBlur={onSearchBlur}
                 onKeyDown={onKeyDown}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={suggestionsOpen}
+                aria-controls="search-suggestions-mobile-search-suggestions"
+                aria-activedescendant={
+                  activeSuggestionId
+                    ? getSuggestionOptionId('mobile-search-suggestions', activeSuggestionId)
+                    : undefined
+                }
                 className="mobile-search-input"
                 autoComplete="off"
               />
               {searchQuery && (
                 <button
                   type="button"
-                  className="mobile-search-clear-btn"
+                  className="mobile-search-clear-btn ui-icon-button"
+                  aria-label="清除搜索"
                   onClick={handleClear}
                   onMouseDown={(e) => e.preventDefault()}
                 >

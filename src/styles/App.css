@@ -115,7 +115,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--spacing-sm);
 }
 
 /* 统一的操作按钮样式：无背景、无边框、大图标 */
@@ -123,19 +123,23 @@
 .music-card-actions button {
   background: transparent !important;
   border: none !important;
-  padding: 4px !important;
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
+  padding: 0 !important;
+  border-radius: var(--control-radius);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--color-text-tertiary) !important;
-  transition: all 0.2s ease !important;
+  transition: var(--control-transition) !important;
   box-shadow: none !important;
 }
 
 /* 悬停效果：轻微放大和颜色加深 */
 .music-card-actions .btn:hover:not(:disabled),
 .music-card-actions button:hover:not(:disabled) {
-  transform: scale(1.2);
+  transform: none;
+  background-color: var(--control-hover-background) !important;
   color: var(--color-text-primary) !important;
   box-shadow: none !important;
 }
@@ -162,13 +166,14 @@
   color: var(--color-text-secondary) !important;
   border-radius: var(--border-radius-md) !important;
   box-shadow: none !important;
-  padding: 6px 12px;
+  min-height: var(--button-min-height);
+  padding: var(--spacing-sm) var(--spacing-md);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
-  transition: var(--transition-fast);
+  transition: var(--control-transition);
 }
 
 .minimal-action-btn:hover:not(:disabled) {
@@ -180,10 +185,11 @@
   color: white !important;
   border: none !important;
   border-radius: var(--border-radius-md) !important;
-  padding: 8px 16px;
+  min-height: var(--button-min-height);
+  padding: var(--spacing-sm) var(--spacing-md);
   font-weight: 500;
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: var(--control-transition);
 }
 
 .btn-primary-custom:hover:not(:disabled) {
@@ -366,6 +372,20 @@
     background 0.15s ease,
     transform 0.12s ease !important;
   cursor: pointer;
+}
+
+button.music-card {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.music-card:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .stats-card-interactive:hover {

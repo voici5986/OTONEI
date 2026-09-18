@@ -242,6 +242,10 @@
 }
 
 .dropdown-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
   padding: 14px 18px;
   font-size: 15px;
   color: var(--color-text-primary);
@@ -311,6 +315,12 @@
   /* 移除默认阴影，保持扁平 */
   position: relative;
   overflow: hidden;
+}
+
+.long-card:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .long-card:hover,

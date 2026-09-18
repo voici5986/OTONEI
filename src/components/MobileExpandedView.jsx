@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTimes } from 'react-icons/fa';
+import { FaChevronLeft, FaTimes } from 'react-icons/fa';
 import MobileAlbumCover from './MobileAlbumCover';
 import { LyricLine } from './PlayerSubComponents';
 
@@ -34,20 +34,23 @@ const MobileExpandedView = ({
       }}
     >
       <button
+        type="button"
         onClick={toggleLyric}
-        className="close-lyrics-btn"
-        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}
+        className="close-lyrics-btn ui-icon-button"
+        aria-label="收起播放器"
       >
         <FaTimes />
       </button>
 
-      <div
-        className="expanded-main-wrapper"
-        onClick={() => {
-          if (window.innerWidth <= 768) setShowMobileLyrics(!showMobileLyrics);
-        }}
-      >
-        <div className="album-info-section">
+      <div className="expanded-main-wrapper">
+        <button
+          type="button"
+          className="album-info-section"
+          aria-label={showMobileLyrics ? '显示专辑信息' : '显示歌词'}
+          onClick={() => {
+            if (window.innerWidth <= 768) setShowMobileLyrics(!showMobileLyrics);
+          }}
+        >
           <div className="album-cover-container">
             <MobileAlbumCover
               track={currentTrack}
@@ -56,8 +59,17 @@ const MobileExpandedView = ({
               imgSize={500}
             />
           </div>
-        </div>
+        </button>
         <div className="lyrics-section">
+          <button
+            type="button"
+            className="mobile-lyrics-toggle ui-icon-button"
+            aria-label="显示专辑信息"
+            title="显示专辑信息"
+            onClick={() => setShowMobileLyrics(false)}
+          >
+            <FaChevronLeft aria-hidden="true" />
+          </button>
           <div className="lyrics-scroll-container" ref={lyricsContainerRef}>
             {processedLyrics.map((line, idx) => (
               <LyricLine key={idx} line={line} isActive={idx === currentLyricIndex} />

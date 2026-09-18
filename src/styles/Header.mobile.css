@@ -29,19 +29,19 @@
     position: relative;
     display: flex;
     align-items: center;
-    background-color: #ffffff !important;
+    background-color: var(--color-background) !important;
     height: 36px;
     /* 对齐桌面端高度 */
     border-radius: 8px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(15, 15, 15, 0.1);
+    border: 1px solid var(--color-border-subtle);
     /* 对齐桌面端边框色 */
   }
 
   /* 合体逻辑：聚焦时抹平底部 */
   .mobile-search-container:focus-within .mobile-search-field-wrapper {
-    background-color: #ffffff !important;
-    border-color: rgba(15, 15, 15, 0.15);
+    background-color: var(--color-background) !important;
+    border-color: var(--color-border-subtle);
     box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.08);
     /* 恢复极其轻微的深灰阴影，不显脏 */
     border-bottom-left-radius: 0;
@@ -52,7 +52,7 @@
   .mobile-search-icon {
     position: absolute;
     left: 12px;
-    color: #91918e;
+    color: var(--color-text-tertiary);
     font-size: 14px;
     pointer-events: none;
   }
@@ -67,8 +67,14 @@
     appearance: none;
     font-size: 14px;
     font-weight: 400;
-    color: #37352f;
+    color: var(--color-text-primary);
     outline: none !important;
+  }
+
+  .mobile-search-input:focus-visible,
+  .mobile-search-clear-btn:focus-visible {
+    outline: var(--focus-ring) !important;
+    outline-offset: 2px;
   }
 
   /* 彻底移除原生 X，避免视觉重叠 */
@@ -86,13 +92,13 @@
     top: 36px;
     left: 0;
     right: 0;
-    background-color: #ffffff;
+    background-color: var(--color-background);
     z-index: 1100;
     max-height: 70vh;
     display: flex;
     /* 改为 flex 布局 */
     flex-direction: column;
-    border: 1px solid rgba(15, 15, 15, 0.15);
+    border: 1px solid var(--color-border-subtle);
     border-top: none;
     border-bottom-left-radius: 12px;
     border-bottom-right-radius: 12px;
@@ -102,13 +108,20 @@
 
   .mobile-search-clear-btn {
     position: absolute;
-    right: 8px;
-    color: #91918e;
+    top: 50%;
+    right: 4px;
+    width: var(--control-hit-size);
+    height: var(--control-hit-size);
+    min-width: var(--control-hit-size);
+    min-height: var(--control-hit-size);
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
     background: transparent;
     border: none;
-    padding: 8px;
+    padding: 0;
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
   @keyframes slideDownMobile {
@@ -137,5 +150,5 @@
 }
 
 .header-user-profile:hover {
-  background-color: #f1f1ef;
+  background-color: var(--color-hover-strong);
 }

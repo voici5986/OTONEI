@@ -42,20 +42,12 @@ const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
   const iconSize = typeof size === 'number' ? size : undefined;
   return (
     <button
-      className={className}
+      type="button"
+      className={`ui-icon-button ${isFav ? 'is-active' : ''} ${isToggling ? 'is-busy' : ''} ${className}`.trim()}
       onClick={handleToggleFavorite}
       disabled={isToggling}
       title={isFav ? '取消收藏' : '收藏'}
-      style={{
-        background: 'transparent',
-        border: 'none',
-        padding: '4px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: isToggling ? 'not-allowed' : 'pointer',
-        color: isFav ? 'var(--color-accent)' : 'var(--color-text-tertiary)',
-      }}
+      aria-label={isFav ? '取消收藏' : '收藏'}
     >
       {isFav ? <FaHeart size={iconSize} /> : <FaRegHeart size={iconSize} />}
     </button>

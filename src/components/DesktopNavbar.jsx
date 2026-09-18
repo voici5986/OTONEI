@@ -54,9 +54,12 @@ const DesktopNavbar = ({
         {!isSidebar && (
           <div className="order-lg-last ms-auto me-2 d-flex align-items-center">
             {currentUser ? (
-              <div
+              <button
+                type="button"
                 onClick={() => handleNavItemClick('user')}
                 className={`d-flex align-items-center justify-content-center nav-link nav-item ${activeTab === 'user' ? 'active' : ''}`}
+                aria-label="我的"
+                aria-current={activeTab === 'user' ? 'page' : undefined}
                 style={{ width: '40px', height: '40px', cursor: 'pointer' }}
               >
                 <AvatarImage
@@ -84,7 +87,7 @@ const DesktopNavbar = ({
                     )
                   }
                 />
-              </div>
+              </button>
             ) : (
               <button
                 className="d-flex align-items-center justify-content-center minimal-action-btn"
@@ -118,17 +121,19 @@ const DesktopNavbar = ({
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   onClick={() => handleNavItemClick(item.id)}
                   className={`nav-link d-flex align-items-center ${isSidebar ? '' : 'mx-2 mx-md-4'} nav-item ${activeTab === item.id ? 'active' : ''}`}
-                  style={{ cursor: 'pointer' }}
+                  aria-label={item.title}
+                  aria-current={activeTab === item.id ? 'page' : undefined}
                 >
                   <span className={`${isSidebar ? 'me-3' : 'me-1'} nav-icon`}>
                     <Icon />
                   </span>{' '}
                   {item.title}
-                </div>
+                </button>
               );
             })}
           </div>

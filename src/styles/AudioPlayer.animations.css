@@ -130,4 +130,12 @@
     visibility: visible !important;
     pointer-events: auto;
   }
+
+  .mobile-lyrics-toggle {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    z-index: var(--z-index-mobile-expanded-top);
+    color: var(--color-text-secondary);
+  }
 }

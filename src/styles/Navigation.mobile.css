@@ -22,6 +22,16 @@
   text-decoration: none !important;
   transition: var(--transition-fast);
   position: relative;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mobile-tab-item:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: -3px;
 }
 
 /* 选中态的胶囊背景框 */

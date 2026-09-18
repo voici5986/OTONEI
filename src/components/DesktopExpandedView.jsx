@@ -20,10 +20,10 @@ const DesktopExpandedView = ({
     <div className="player-expanded-view desktop-expanded-view">
       {/* 关闭按钮 */}
       <button
+        type="button"
         onClick={toggleLyric}
-        className="close-lyrics-btn"
+        className="close-lyrics-btn ui-icon-button"
         title="收起播放器"
-        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit' }}
       >
         <FaTimes />
       </button>

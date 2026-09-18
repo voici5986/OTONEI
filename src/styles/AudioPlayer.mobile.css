@@ -1,6 +1,31 @@
 /* 移动端基础布局与交互样式 */
 
 @media (max-width: 768px) {
+  .mobile-mini-player {
+    position: relative;
+  }
+
+  .mobile-mini-player .track-info-container {
+    min-width: 0;
+    padding-right: 10px;
+  }
+
+  .player-mini-actions {
+    padding-right: 12px !important;
+  }
+
+  .mobile-expanded-play-button {
+    background: transparent;
+    border-radius: 0;
+    color: var(--color-accent);
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+  }
+
   /* 通过提高权重 (body .audio-player) 来减少对 !important 的依赖 */
   body .audio-player .player-inner {
     padding: 8px 12px;

@@ -38,6 +38,10 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.7);
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
   z-index: var(--z-index-player-backdrop);
   opacity: 0;
   visibility: hidden;
@@ -106,6 +110,34 @@
   border-right: 1px solid var(--border-default);
 }
 
+button.album-info-section {
+  color: inherit;
+  text-align: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.player-track-summary {
+  color: inherit;
+  text-align: left;
+  border: 0;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+button.album-cover-wrapper:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+button.album-info-section:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
 .track-details {
   text-align: center;
   width: 100%;
@@ -149,25 +181,44 @@
   margin: 0 !important;
 }
 
+.player-control-slot {
+  width: var(--control-hit-size);
+  min-width: var(--control-hit-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-control-slot--play {
+  width: 56px;
+  min-width: 56px;
+}
+
 .control-button {
-  transition: transform 0.2s ease;
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
+  transition: var(--control-transition);
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   margin: 0 5px;
-  padding: 4px !important;
+  padding: 0 !important;
   color: var(--color-text-secondary) !important;
 }
 
 .control-button:hover {
-  transform: scale(1.1);
+  transform: none;
+  background-color: var(--control-hover-background) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .control-button:active {
-  transform: scale(0.95);
+  transform: none;
 }
 
 .control-icon-btn {
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -175,7 +226,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px !important;
+  padding: 0 !important;
   color: var(--color-text-secondary) !important;
 }
 
@@ -285,10 +336,17 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   z-index: var(--z-index-above);
-  width: 40px;
-  height: 40px;
+  width: var(--control-hit-size);
+  height: var(--control-hit-size);
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 0;
+}
+
+.mobile-expanded-close {
+  z-index: var(--z-index-mobile-expanded-top);
 }

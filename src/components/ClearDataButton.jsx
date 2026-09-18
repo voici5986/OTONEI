@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { FaTrash, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -33,15 +33,56 @@ const ClearDataButton = ({
     cache: true,
     syncTimestamp: true,
   });
+  const dialogRef = useRef(null);
+  const triggerRef = useRef(null);
 
   const { currentUser } = useAuth();
 
   const handleClose = () => setShowModal(false);
   const handleShow = (e) => {
     if (e) e.stopPropagation();
+    if (e?.currentTarget) triggerRef.current = e.currentTarget;
     if (onClick) onClick();
     setShowModal(true);
   };
+
+  useEffect(() => {
+    if (!showModal) return undefined;
+    const previous = document.activeElement;
+    dialogRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleClose();
+        return;
+      }
+      if (event.key === 'Tab') {
+        const focusable = Array.from(
+          dialogRef.current?.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+          ) || []
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      (triggerRef.current || previous)?.focus?.();
+    };
+  }, [showModal]);
 
   const handleOptionChange = (option) => {
     setSelectedOptions({
@@ -138,12 +179,24 @@ const ClearDataButton = ({
         >
           <div
             className="modal-container-custom"
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-data-modal-title"
+            tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
             style={{ pointerEvents: 'auto' }} // 恢复子元素的交互
           >
             <div className="modal-header-custom border-0 pb-0">
-              <h5 className="modal-title-custom fw-bold">清除本地数据</h5>
-              <button className="modal-close-custom" onClick={handleClose}>
+              <h5 id="clear-data-modal-title" className="modal-title-custom fw-bold">
+                清除本地数据
+              </h5>
+              <button
+                type="button"
+                aria-label="关闭清除本地数据对话框"
+                className="modal-close-custom"
+                onClick={handleClose}
+              >
                 <FaTimes size={18} />
               </button>
             </div>
@@ -159,7 +212,7 @@ const ClearDataButton = ({
                   {
                     id: 'clearSyncTimestamp',
                     key: 'syncTimestamp',
-                    label: '同步状态 (重置云端同步)',
+                    label: '同步游标（下次重新核对云端）',
                   },
                 ].map((option) => (
                   <div
@@ -207,7 +260,10 @@ const ClearDataButton = ({
                   <div className="small fw-bold" style={{ whiteSpace: 'nowrap' }}>
                     注意:
                   </div>
-                  <div className="ms-2 small">此操作无法撤销。清除后的本地数据将无法恢复。</div>
+                  <div className="ms-2 small">
+                    此操作无法撤销。这里只清除当前设备的本地副本，不会删除云端数据；重置同步游标后，
+                    下次同步可能重新下载云端内容。
+                  </div>
                 </div>
               </div>
             </div>
@@ -274,13 +330,15 @@ const ClearDataButton = ({
   if (showAsMenuItem) {
     return (
       <>
-        <div
+        <button
+          type="button"
+          role="menuitem"
           className={`dropdown-item ${variant === 'danger' ? 'danger' : ''} ${className}`}
           onClick={handleShow}
           style={style}
         >
           {icon} {text}
-        </div>
+        </button>
         {renderModal()}
       </>
     );
@@ -290,6 +348,8 @@ const ClearDataButton = ({
   return (
     <>
       <button
+        ref={triggerRef}
+        type="button"
         className={`minimal-action-btn ${variant === 'danger' ? 'text-danger' : ''} d-flex align-items-center justify-content-center ${className}`}
         onClick={handleShow}
         style={{

@@ -549,6 +549,7 @@ const AppContent = () => {
         onSearchBlur={handleSearchBlur}
         onKeyDown={handleKeyDown}
         selectedIndex={selectedIndex}
+        activeSuggestionId={selectedIndex >= 0 ? String(selectedIndex) : undefined}
         onSuggestionPick={handleSuggestionPick}
         onShowMore={handleShowMore}
         loading={loading}

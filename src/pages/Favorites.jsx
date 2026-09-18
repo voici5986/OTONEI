@@ -239,9 +239,13 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   const renderLoginReminder = () => {
     if (!currentUser) {
       return (
-        <div className="login-prompt-container" onClick={() => onTabChange('user')}>
+        <button
+          type="button"
+          className="login-prompt-container"
+          onClick={() => onTabChange('user')}
+        >
           <p className="login-prompt-desc">立即登录，在任何设备继续音乐旅程</p>
-        </div>
+        </button>
       );
     }
     return null;
@@ -286,6 +290,21 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
               <div
                 className={`music-card ${currentTrack && getTrackKey(currentTrack) === getTrackKey(track) ? 'is-active' : ''}`}
                 onClick={() => handleTrackPlay(track)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleTrackPlay(track);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`播放 ${track.name} - ${getTrackArtist(track) || '未知歌手'}`}
+                aria-current={
+                  currentTrack && getTrackKey(currentTrack) === getTrackKey(track)
+                    ? 'true'
+                    : undefined
+                }
               >
                 <div className="music-card-row">
                   <div className="music-card-info">

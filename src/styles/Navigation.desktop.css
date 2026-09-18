@@ -25,10 +25,21 @@
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
   overflow: hidden;
+  min-height: var(--button-min-height);
   padding: 0.5rem 0.8rem !important;
   margin: 0 0.3rem;
   border-radius: 8px;
   font-weight: 500;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.navbar .nav-link:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .navbar .nav-link:after {
@@ -213,9 +224,16 @@
 }
 
 .navigation-sidebar .order-lg-last .nav-link {
-  padding: 8px !important;
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
+  padding: 0 !important;
   width: auto !important;
   border-radius: 50% !important;
+}
+
+.navbar .order-lg-last .nav-link {
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
 }
 
 .navigation-sidebar .user-info-sidebar {

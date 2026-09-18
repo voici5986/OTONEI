@@ -41,29 +41,29 @@ const DesktopPlayerControl = ({
       {/* 中间：播放控制 */}
       <div className="player-center-section">
         <div className="d-flex align-items-center justify-content-center">
-          <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
+          <div className="player-control-slot">
             <button
+              type="button"
               onClick={handleTogglePlayMode}
-              className="control-icon-btn p-0"
+              className="control-icon-btn ui-icon-button p-0"
               title={getPlayModeTitle()}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
             >
               {renderPlayModeIcon()}
             </button>
           </div>
 
           <button
+            type="button"
             onClick={handlePrevious}
-            className="control-icon-btn p-0 ms-3"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            className="control-icon-btn ui-icon-button p-0 ms-3"
           >
             <MdSkipPrevious size={28} />
           </button>
 
           <button
+            type="button"
             onClick={togglePlay}
-            className="control-icon-btn accent-control mx-3 p-0"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            className="control-icon-btn ui-icon-button ui-icon-button--play accent-control mx-3 p-0"
           >
             <div className="play-pause-button">
               {isPlaying ? <FaPause size={20} /> : <FaPlay size={20} className="play-icon" />}
@@ -71,14 +71,14 @@ const DesktopPlayerControl = ({
           </button>
 
           <button
+            type="button"
             onClick={handleNext}
-            className="control-icon-btn p-0 me-3"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            className="control-icon-btn ui-icon-button p-0 me-3"
           >
             <MdSkipNext size={28} />
           </button>
 
-          <div style={{ width: '40px', display: 'flex', justifyContent: 'center' }}>
+          <div className="player-control-slot">
             <HeartButton
               track={currentTrack}
               size={20}
@@ -97,10 +97,10 @@ const DesktopPlayerControl = ({
           className="p-2 control-button"
         />
         <button
-          className="p-2 control-button ms-2"
+          type="button"
+          className="ui-icon-button control-button ms-2"
           title="下载歌曲"
           onClick={() => handleDownload(currentTrack)}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
         >
           <FaDownload size={18} />
         </button>

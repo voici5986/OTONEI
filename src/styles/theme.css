@@ -36,6 +36,9 @@
   --color-background: #ffffff;
   --color-background-alt: #f7f7f5;
   --color-hover-notion: #efefee;
+  --color-hover-strong: #f1f1ef;
+  --color-border-subtle: rgba(15, 15, 15, 0.1);
+  --color-accent-light: #e06d6d;
   --color-border: #e5e5e5;
   /* 归一化为浅灰描边 */
   --color-border-active: #2383e2;
@@ -54,6 +57,18 @@
   --font-weight-medium: 500;
   --font-weight-bold: 700;
   --line-height-base: 1.5;
+
+  /* ===== 交互控件 ===== */
+  /* 命中区与图标视觉尺寸分离，避免为了可触控而放大图标。 */
+  --control-hit-size: 40px;
+  --control-hit-size-coarse: 44px;
+  --control-visual-size: 20px;
+  --control-radius: 8px;
+  --control-hover-background: var(--color-hover-notion);
+  --button-min-height: 40px;
+  --focus-ring: 3px solid var(--color-primary);
+  --focus-ring-offset: 2px;
+  --control-transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
 
   /* ===== 间距 ===== */
   --spacing-xs: 0.25rem;
@@ -432,7 +447,11 @@
   background: transparent;
   border: none;
   font-size: 1.5rem;
-  padding: 0.5rem;
+  width: var(--control-hit-size);
+  height: var(--control-hit-size);
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
+  padding: 0;
   margin: -0.5rem -0.5rem -0.5rem auto;
   cursor: pointer;
   color: var(--color-text-muted);
@@ -440,6 +459,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.modal-close-custom:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .modal-close-custom:hover {
@@ -621,6 +645,14 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-height: var(--button-min-height);
+  color: inherit;
+  font: inherit;
+}
+
+.login-prompt-container:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .login-prompt-container:hover {
@@ -648,5 +680,12 @@
     --spacing-lg: 1.25rem;
     --spacing-xl: 1.75rem;
     --card-hover-transform: translateY(-3px);
+  }
+}
+
+/* 触摸设备优先使用 44px 命中区；图标仍由组件自身的 size/font-size 控制。 */
+@media (pointer: coarse), (max-width: 768px) {
+  :root {
+    --control-hit-size: var(--control-hit-size-coarse);
   }
 }

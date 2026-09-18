@@ -30,14 +30,20 @@ const History = ({ globalSearchQuery, onTabChange }) => {
     const filtered = currentHistory.filter((item) => {
       const song = getHistoryTrack(item);
       const nameMatch = song.name && song.name.toLowerCase().includes(trimmedQuery);
-      const albumMatch = song.album && song.album.toLowerCase().includes(trimmedQuery);
+      const albumName =
+        typeof song.album === 'string'
+          ? song.album
+          : song.album && typeof song.album === 'object'
+            ? song.album.name || ''
+            : '';
+      const albumMatch = albumName.toLowerCase().includes(trimmedQuery);
 
       let artistMatch = false;
       if (typeof song.artist === 'string') {
         artistMatch = song.artist.toLowerCase().includes(trimmedQuery);
       } else if (Array.isArray(song.artists)) {
         artistMatch = song.artists.some((a) =>
-          (typeof a === 'string' ? a : a.name).toLowerCase().includes(trimmedQuery)
+          (typeof a === 'string' ? a : a?.name || '').toLowerCase().includes(trimmedQuery)
         );
       }
 
@@ -163,9 +169,13 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   const renderLoginReminder = () => {
     if (!currentUser) {
       return (
-        <div className="login-prompt-container" onClick={() => onTabChange('user')}>
+        <button
+          type="button"
+          className="login-prompt-container"
+          onClick={() => onTabChange('user')}
+        >
           <p className="login-prompt-desc">立即登录，在任何设备继续音乐旅程</p>
-        </div>
+        </button>
       );
     }
     return null;
@@ -201,6 +211,21 @@ const History = ({ globalSearchQuery, onTabChange }) => {
                 <div
                   className={`music-card ${currentTrack && getTrackKey(currentTrack) === getTrackKey(track) ? 'is-active' : ''}`}
                   onClick={() => handleTrackPlay(track)}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleTrackPlay(track);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`播放 ${track.name} - ${getTrackArtist(track) || '未知歌手'}`}
+                  aria-current={
+                    currentTrack && getTrackKey(currentTrack) === getTrackKey(track)
+                      ? 'true'
+                      : undefined
+                  }
                 >
                   <div className="music-card-row">
                     <div className="music-card-info">

@@ -4,6 +4,7 @@ import {
   getFavorites,
   getHistory,
   incrementPendingChanges,
+  MAX_FAVORITES_ITEMS,
   saveFavorites,
 } from '../services/storage';
 import {
@@ -46,6 +47,8 @@ const UserProfile = ({ onTabChange }) => {
   const [importProgress, setImportProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = React.useRef(null);
+  const importDialogRef = React.useRef(null);
+  const importTriggerRef = React.useRef(null);
   const syncCooldownTimerRef = React.useRef(null);
   const activeUserIdRef = React.useRef(currentUser?.uid);
   activeUserIdRef.current = currentUser?.uid;
@@ -304,6 +307,12 @@ const UserProfile = ({ onTabChange }) => {
       setImportProgress(Math.floor((i / importData.favorites.length) * 100));
 
       try {
+        if (newFavorites.length >= MAX_FAVORITES_ITEMS) {
+          newStatus[i] = { status: 'limit', message: `已达到${MAX_FAVORITES_ITEMS}首上限` };
+          setImportStatus([...newStatus]);
+          continue;
+        }
+
         const existingByIdIndex = currentFavorites.findIndex(
           (item) => getTrackKey(item) === getTrackKey(track)
         );
@@ -395,7 +404,42 @@ const UserProfile = ({ onTabChange }) => {
     setImportProgress(0);
     setIsImporting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    importTriggerRef.current?.focus?.();
   };
+
+  useEffect(() => {
+    if (!showImportModal) return undefined;
+    importDialogRef.current?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleCloseImport();
+        return;
+      }
+      if (event.key === 'Tab') {
+        const focusable = Array.from(
+          importDialogRef.current?.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+          ) || []
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [showImportModal]);
 
   // --- 导入导出逻辑结束 ---
 
@@ -449,7 +493,11 @@ const UserProfile = ({ onTabChange }) => {
       {/* 2. 功能卡片列表 */}
       <div className="card-list">
         {/* 收藏卡片 */}
-        <div className="long-card" onClick={() => handleStatsCardClick('favorites')}>
+        <button
+          type="button"
+          className="long-card"
+          onClick={() => handleStatsCardClick('favorites')}
+        >
           <div className="card-icon" style={{ color: '#EB5757' }}>
             <FaHeart />
           </div>
@@ -458,10 +506,10 @@ const UserProfile = ({ onTabChange }) => {
           <div className="card-arrow">
             <FaChevronRight />
           </div>
-        </div>
+        </button>
 
         {/* 历史卡片 */}
-        <div className="long-card" onClick={() => handleStatsCardClick('history')}>
+        <button type="button" className="long-card" onClick={() => handleStatsCardClick('history')}>
           <div className="card-icon" style={{ color: '#787774' }}>
             <FaHistory />
           </div>
@@ -470,10 +518,10 @@ const UserProfile = ({ onTabChange }) => {
           <div className="card-arrow">
             <FaChevronRight />
           </div>
-        </div>
+        </button>
 
         {/* 云端同步 */}
-        <div className="long-card" onClick={handleManualSync}>
+        <button type="button" className="long-card" onClick={handleManualSync}>
           <div className="card-icon" style={{ color: '#4A90E2' }}>
             <FaCloud />
           </div>
@@ -491,35 +539,56 @@ const UserProfile = ({ onTabChange }) => {
           <div className="card-arrow">
             <FaChevronRight />
           </div>
-        </div>
+        </button>
 
         {/* 数据管理下拉 */}
         <div className="data-mgmt-container">
-          <div
+          <button
+            type="button"
             className={`long-card ${showDataMgmt ? 'active' : ''}`}
             onClick={() => setShowDataMgmt(!showDataMgmt)}
+            aria-expanded={showDataMgmt}
+            aria-controls="user-data-management-menu"
           >
             <div className="card-icon" style={{ color: 'var(--color-text-muted)' }}>
               <FaDatabase />
             </div>
             <div className="card-label">数据管理</div>
             <div className="card-arrow">{showDataMgmt ? <FaChevronUp /> : <FaChevronDown />}</div>
-          </div>
+          </button>
 
           {showDataMgmt && (
-            <div className="data-mgmt-dropdown">
-              <div className="dropdown-item" onClick={handleExport}>
+            <div id="user-data-management-menu" className="data-mgmt-dropdown" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                className="dropdown-item"
+                onClick={handleExport}
+              >
                 <FaFileExport className="me-2" /> 导出收藏数据
-              </div>
-              <div className="dropdown-item" onClick={() => fileInputRef.current.click()}>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="dropdown-item"
+                onClick={(event) => {
+                  importTriggerRef.current = event.currentTarget;
+                  fileInputRef.current.click();
+                }}
+              >
                 <FaFileImport className="me-2" /> 导入收藏数据
-              </div>
+              </button>
               <div className="dropdown-item p-0">
                 <ClearDataButton showAsMenuItem={true} text="清除本地数据" />
               </div>
-              <div className="dropdown-item logout" onClick={handleLogout}>
+              <button
+                type="button"
+                role="menuitem"
+                className="dropdown-item logout"
+                onClick={handleLogout}
+              >
                 <FaSignOutAlt className="me-2" /> 退出登录
-              </div>
+              </button>
             </div>
           )}
         </div>
@@ -538,12 +607,24 @@ const UserProfile = ({ onTabChange }) => {
         <div className="modal-overlay-custom" onClick={handleCloseImport} style={{ zIndex: 2000 }}>
           <div
             className="modal-container-custom"
+            ref={importDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-favorites-modal-title"
+            tabIndex={-1}
             style={{ maxWidth: '800px', width: '90%' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header-custom">
-              <h5 className="modal-title-custom">导入收藏</h5>
-              <button className="modal-close-custom" onClick={handleCloseImport}>
+              <h5 id="import-favorites-modal-title" className="modal-title-custom">
+                导入收藏
+              </h5>
+              <button
+                type="button"
+                aria-label="关闭导入收藏对话框"
+                className="modal-close-custom"
+                onClick={handleCloseImport}
+              >
                 <FaTimes size={18} />
               </button>
             </div>

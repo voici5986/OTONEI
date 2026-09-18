@@ -13,11 +13,11 @@ export const LyricToggleButton = ({
 }) => {
   return (
     <button
+      type="button"
       onClick={onToggle}
-      className={`${className} control-button`}
+      className={`${className} control-button ui-icon-button`}
       aria-label={expanded ? '收起歌词' : '展开歌词'}
       title={expanded ? '收起歌词' : '展开歌词'}
-      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
     >
       {customIcon ? (
         customIcon
@@ -158,12 +158,12 @@ export const PlayerControlButton = ({
 }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`control-button control-icon-btn ${className}`}
+      className={`control-button control-icon-btn ui-icon-button ${className}`}
       aria-label={ariaLabel}
       title={title}
-      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
     >
       {children}
     </button>

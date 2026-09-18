@@ -34,10 +34,12 @@ const MobilePlayerView = ({
 
   return (
     <>
-      <div
+      <button
+        type="button"
         className={`player-backdrop ${lyricExpanded ? 'visible' : ''}`}
         onClick={toggleLyric}
-      ></div>
+        aria-label="关闭歌词视图"
+      ></button>
       <div className={`audio-player ${lyricExpanded ? 'expanded' : 'collapsed'}`}>
         <div className="player-inner">
           <div className="progress-control-container">

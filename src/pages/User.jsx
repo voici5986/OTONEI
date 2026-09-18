@@ -87,7 +87,8 @@ const User = ({ onTabChange }) => {
               </div>
 
               <div className="d-flex flex-column gap-2 flex-grow-1">
-                <div
+                <button
+                  type="button"
                   className="stats-item-notion clickable"
                   onClick={() => handleStatsCardClick('favorites')}
                 >
@@ -98,9 +99,10 @@ const User = ({ onTabChange }) => {
                     <div className="stats-label-notion">我的收藏</div>
                   </div>
                   <div className="stats-value-notion">{favoritesCount}</div>
-                </div>
+                </button>
 
-                <div
+                <button
+                  type="button"
                   className="stats-item-notion clickable"
                   onClick={() => handleStatsCardClick('history')}
                 >
@@ -111,7 +113,7 @@ const User = ({ onTabChange }) => {
                     <div className="stats-label-notion">播放历史</div>
                   </div>
                   <div className="stats-value-notion">{historyCount}</div>
-                </div>
+                </button>
               </div>
 
               {/* 隐私与存储 - 移入统计卡片底部或单独放置 */}

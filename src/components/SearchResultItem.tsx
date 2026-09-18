@@ -52,6 +52,19 @@ const SearchResultItem = ({ track, searchResults, quality }: SearchResultItemPro
     <div
       className={`music-card ${currentTrack && getTrackKey(currentTrack) === getTrackKey(track) ? 'is-active' : ''}`}
       onClick={() => handleTrackPlay(track)}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleTrackPlay(track);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`播放 ${track.name} - ${getTrackArtist(track) || '未知歌手'}`}
+      aria-current={
+        currentTrack && getTrackKey(currentTrack) === getTrackKey(track) ? 'true' : undefined
+      }
     >
       <div className="music-card-row">
         <div className="music-card-info">

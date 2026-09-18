@@ -26,7 +26,9 @@ const MusicCardActions = ({
       {/* 删除按钮 - 如果明确需要独立删除按钮则显示 */}
       {showDelete && onDelete && (
         <button
-          className="me-1 btn-outline-danger"
+          type="button"
+          className="ui-icon-button me-1 btn-outline-danger"
+          aria-label={`删除 ${track.name}`}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(track);
@@ -38,7 +40,10 @@ const MusicCardActions = ({
 
       {/* 下载按钮 - 统一下载状态反馈 */}
       <button
-        className="btn-outline-success"
+        type="button"
+        className="ui-icon-button btn-outline-success"
+        aria-label={`下载 ${track.name}`}
+        title={`下载 ${track.name}`}
         onClick={(e) => {
           e.stopPropagation();
           onDownload(track);
