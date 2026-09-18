@@ -5,6 +5,7 @@ import { MdRepeatOne } from 'react-icons/md';
 import logger from '../utils/logger.js';
 import { getTrackArtist } from '../utils/trackFormatter';
 import { getTrackCoverUrl } from '../utils/trackCover';
+import { alignTranslatedLyrics } from '../utils/lyricAlignment';
 import type { LyricData, LyricLine, Track } from '../types';
 
 type PlayMode = 'random' | 'repeat-one' | 'repeat-all' | string;
@@ -149,10 +150,7 @@ const useAudioPlayerViewState = (): AudioPlayerViewState => {
   const processedLyrics = useMemo(() => {
     if (!lyricData.parsedLyric) return [];
     const translatedLines = lyricData.tLyric ? parseLyric(lyricData.tLyric) : [];
-    return lyricData.parsedLyric.map((line, index) => ({
-      ...line,
-      translatedText: translatedLines[index]?.text || '',
-    }));
+    return alignTranslatedLyrics(lyricData.parsedLyric, translatedLines);
   }, [lyricData, parseLyric]);
 
   useEffect(() => {

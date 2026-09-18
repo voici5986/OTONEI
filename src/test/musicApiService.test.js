@@ -47,6 +47,7 @@ describe('music API service', () => {
     apiGet.mockReset();
     cache.clear();
     loadTrack.mockReset();
+    loadTrack.mockResolvedValue(true);
     setError.mockReset();
     const localStorageData = new Map();
     const localStorageMock = {
@@ -74,6 +75,13 @@ describe('music API service', () => {
     expect(apiGet).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects legacy or unknown sources before contacting the upstream API', async () => {
+    const track = { id: '1', name: 'Legacy song', source: 'unknown' };
+
+    await expect(getAudioUrl(track, 320)).rejects.toMatchObject({ code: 'UNSUPPORTED_SOURCE' });
+    expect(apiGet).not.toHaveBeenCalled();
+  });
+
   it('coalesces audio URL requests and delegates playback to the state manager', async () => {
     const track = { id: '1', name: 'Song', source: 'netease', pic_id: 'cover' };
     apiGet.mockResolvedValueOnce({ data: { url: '/song.mp3', size: 123 } });
@@ -89,6 +97,67 @@ describe('music API service', () => {
     apiGet.mockResolvedValueOnce({ data: { url: '/song.mp3', size: 123 } });
     await expect(playMusic(track)).resolves.toEqual({ url: '/song.mp3', fileSize: 123 });
     expect(loadTrack).toHaveBeenCalledWith(track, '/song.mp3');
+    expect(setError).not.toHaveBeenCalled();
+  });
+
+  it('does not report playback history success when autoplay is blocked', async () => {
+    const track = { id: 'blocked', name: 'Blocked', source: 'netease' };
+    loadTrack.mockResolvedValue(false);
+    apiGet.mockResolvedValueOnce({ data: { url: '/blocked.mp3' } });
+
+    await expect(playMusic(track)).rejects.toMatchObject({ code: 'PLAYBACK_NOT_STARTED' });
+    expect(setError).not.toHaveBeenCalled();
+  });
+
+  it('does not report a superseded playback request as an error', async () => {
+    const track = { id: 'replaced', name: 'Replaced', source: 'netease' };
+    const error = Object.assign(new Error('play request replaced'), {
+      code: 'PLAYBACK_REQUEST_REPLACED',
+    });
+    loadTrack.mockRejectedValueOnce(error);
+    apiGet.mockResolvedValueOnce({ data: { url: '/replaced.mp3' } });
+
+    await expect(playMusic(track)).rejects.toMatchObject({ code: 'PLAYBACK_REQUEST_REPLACED' });
+    expect(setError).not.toHaveBeenCalled();
+  });
+
+  it('drops a stale URL response before loading audio', async () => {
+    const track = { id: 'late-success', name: 'Late success', source: 'netease' };
+    let resolveAudio;
+    let current = true;
+    apiGet.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveAudio = resolve;
+        })
+    );
+
+    const request = playMusic(track, 999, true, () => current);
+    current = false;
+    resolveAudio({ data: { url: '/late.mp3' } });
+
+    await expect(request).rejects.toMatchObject({ code: 'PLAYBACK_REQUEST_REPLACED' });
+    expect(loadTrack).not.toHaveBeenCalled();
+    expect(setError).not.toHaveBeenCalled();
+  });
+
+  it('does not report a stale URL failure as a playback error', async () => {
+    const track = { id: 'late-failure', name: 'Late failure', source: 'netease' };
+    let rejectAudio;
+    let current = true;
+    apiGet.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectAudio = reject;
+        })
+    );
+
+    const request = playMusic(track, 999, true, () => current);
+    current = false;
+    rejectAudio(new Error('late URL failure'));
+
+    await expect(request).rejects.toMatchObject({ code: 'PLAYBACK_REQUEST_REPLACED' });
+    expect(loadTrack).not.toHaveBeenCalled();
     expect(setError).not.toHaveBeenCalled();
   });
 

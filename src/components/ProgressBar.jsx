@@ -1,10 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
-import audioEngine from '../services/AudioEngine';
+import audioStateManager from '../services/audioStateManager';
 
 const ProgressBar = () => {
-  const { currentTrack, playProgress, totalSeconds, seekTo, formatTime, isPlaying, setIsPlaying } =
-    usePlayer();
+  const { currentTrack, playProgress, totalSeconds, seekTo, formatTime, isPlaying } = usePlayer();
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
@@ -53,8 +52,7 @@ const ProgressBar = () => {
 
       // 如果之前在播放，真正恢复播放（而非仅改 React 状态）
       if (wasPlayingRef.current) {
-        audioEngine.play();
-        setIsPlaying(true);
+        audioStateManager.play();
       }
     };
 
@@ -69,7 +67,7 @@ const ProgressBar = () => {
       document.removeEventListener('mouseup', handleDragEnd);
       document.removeEventListener('touchend', handleDragEnd);
     };
-  }, [isDragging, setIsPlaying, currentTrack, seekTo, totalSeconds]);
+  }, [isDragging, currentTrack, seekTo, totalSeconds]);
 
   // 只保留 MouseDown/TouchStart 在元素上
   const handleMouseDown = useCallback(
@@ -80,7 +78,7 @@ const ProgressBar = () => {
       // e.preventDefault();
 
       wasPlayingRef.current = isPlaying;
-      if (isPlaying) audioEngine.pause();
+      if (isPlaying) audioStateManager.pause();
       setIsDragging(true);
       if (e.touches) setIsTouched(true);
 

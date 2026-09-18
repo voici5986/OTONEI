@@ -6,12 +6,21 @@ import { apiClient } from './apiClient';
 import { withRateLimit } from './rateLimiter';
 import { getMemoryCache, setMemoryCache, CACHE_TYPES } from './memoryCache';
 import audioStateManager from './audioStateManager';
+import { isPlaybackRequestReplacedError, PlaybackRequestReplacedError } from './AudioEngine';
 import { validateSearchResults } from '../utils/dataValidator';
 import '../types';
 import logger from '../utils/logger';
 
 // Constants
 const REQUEST_TIMEOUT = 12000; // 12秒请求超时
+const SUPPORTED_API_SOURCES = new Set(['netease', 'kuwo', 'joox', 'bilibili', 'ytmusic']);
+
+const assertSupportedApiSource = (source) => {
+  if (SUPPORTED_API_SOURCES.has(source)) return;
+  const error = new Error('当前歌曲来源不支持在线播放');
+  error.code = 'UNSUPPORTED_SOURCE';
+  throw error;
+};
 
 // 添加防重复请求映射
 const pendingUrlRequests = new Map();
@@ -52,6 +61,7 @@ const releaseCoverSlot = () => {
  */
 export const searchMusic = async (query, source, count = 20, page = 1, signal) => {
   try {
+    assertSupportedApiSource(source);
     // 生成缓存键
     const cacheKey = `${query}_${source}_${count}_${page}`;
 
@@ -143,6 +153,7 @@ export const searchMusic = async (query, source, count = 20, page = 1, signal) =
  */
 export const getAudioUrl = async (track, quality = 999, forceRefresh = false) => {
   try {
+    assertSupportedApiSource(track.source);
     // 生成请求唯一标识符
     const requestId = `${track.source}_${track.id}_${quality}_${Date.now()}`;
 
@@ -224,6 +235,7 @@ export const getLyrics = async (track) => {
     if (!track.lyric_id) {
       return { raw: '', translated: '' };
     }
+    assertSupportedApiSource(track.source);
 
     // 生成请求唯一标识符
     const requestId = `${track.source}_${track.lyric_id}_${Date.now()}`;
@@ -336,6 +348,7 @@ export const getLyrics = async (track) => {
  */
 export const forceGetCoverImage = async (source, picId, size = 500) => {
   try {
+    assertSupportedApiSource(source);
     const cacheKey = `${source}_${picId}_${size}`;
     const cachedUrl = getMemoryCache(CACHE_TYPES.COVER_IMAGES, cacheKey);
     if (cachedUrl && !cachedUrl.includes('default_cover')) return cachedUrl;
@@ -372,18 +385,34 @@ export const forceGetCoverImage = async (source, picId, size = 500) => {
  * @param {boolean} forceRefresh - 是否强制刷新URL（不使用缓存）
  * @returns {Promise<Object>} - 包含URL、歌词和文件大小的对象
  */
-export const playMusic = async (track, quality = 999, forceRefresh = false) => {
+export const playMusic = async (
+  track,
+  quality = 999,
+  forceRefresh = false,
+  isRequestCurrent = () => true
+) => {
   try {
     logger.log(`[playMusic] 开始请求: ${track.name} (${track.id}), 强制刷新: ${forceRefresh}`);
 
     // 先获取音频数据
     const audioData = await getAudioUrl(track, quality, forceRefresh);
+    if (!isRequestCurrent()) throw new PlaybackRequestReplacedError();
     const url = audioData?.url?.replace(/\\/g, '');
 
     if (!url) throw new Error('无效的音频链接');
 
-    // 将播放任务交给状态管理器（底层分发到 AudioEngine）
-    audioStateManager.loadTrack(track, url);
+    if (!isRequestCurrent()) throw new PlaybackRequestReplacedError();
+
+    // 将播放任务交给状态管理器，并等待浏览器确认播放已经启动。
+    // 这样调用方不会把“自动播放被浏览器拦截”记录成一次播放历史。
+    const started = await audioStateManager.loadTrack(track, url);
+    if (!started) {
+      const error = new Error('播放尚未启动，请点击播放按钮');
+      error.code = 'PLAYBACK_NOT_STARTED';
+      throw error;
+    }
+
+    if (!isRequestCurrent()) throw new PlaybackRequestReplacedError();
 
     // 后台异步补全 500 尺寸高清封面
     forceGetCoverImage(track.source, track.pic_id, 500).catch(() => {});
@@ -393,8 +422,16 @@ export const playMusic = async (track, quality = 999, forceRefresh = false) => {
       fileSize: audioData.size,
     };
   } catch (error) {
+    if (!isRequestCurrent() || isPlaybackRequestReplacedError(error)) {
+      // 快速切歌时旧的 play() 被浏览器中止；它已经被新请求取代，
+      // 不应写入错误态，也不应触发音质降级或旧歌重试。
+      logger.log('[playMusic] 旧播放请求已被新请求取代，忽略结果');
+      throw new PlaybackRequestReplacedError();
+    }
     logger.error('[playMusic] 播放音乐失败:', error);
-    audioStateManager.setError(error);
+    if (error?.code !== 'PLAYBACK_NOT_STARTED') {
+      audioStateManager.setError(error);
+    }
     throw error;
   }
 };

@@ -5,12 +5,13 @@ import { addToHistory, getCoverFromStorage, saveCoverToStorage } from '../servic
 import { handleError, ErrorTypes, ErrorSeverity } from '../utils/errorHandler';
 import useNetworkStatus from '../hooks/useNetworkStatus';
 import audioStateManager from '../services/audioStateManager';
-import audioEngine from '../services/AudioEngine';
+import audioEngine, { isPlaybackRequestReplacedError } from '../services/AudioEngine';
 import '../types';
 import logger from '../utils/logger';
 import { useAuth } from './AuthContext';
 import { incrementPendingChanges } from '../services/storage';
 import { triggerDelayedSync } from '../services/syncService';
+import { getTrackKey } from '../utils/trackIdentity';
 
 const DEFAULT_COVER = '/default_cover.svg';
 const PlayerContext = createContext();
@@ -36,6 +37,9 @@ export const PlayerProvider = ({ children }) => {
   const coverCacheRef = useRef({});
   const lyricIndexRef = useRef(-1);
   const retryCountRef = useRef(0); // 记录单曲播放重试次数
+  const playRequestIdRef = useRef(0);
+  const historyRecordedKeyRef = useRef(null);
+  const historyRecordingPromiseRef = useRef(null);
   const MAX_RETRIES = 1; // 每个曲目最多自动刷新一次 URL
 
   const lyricsContainerRef = useRef(null);
@@ -68,11 +72,52 @@ export const PlayerProvider = ({ children }) => {
   // 播放控制
   const togglePlay = useCallback(() => {
     if (isPlaying) {
-      audioEngine.pause();
+      audioStateManager.pause();
     } else {
-      audioEngine.play();
+      audioStateManager.play();
     }
   }, [isPlaying]);
+
+  const recordPlaybackHistory = useCallback(
+    async (track) => {
+      if (!track) return false;
+      const scopeKey = currentUser?.uid || 'guest';
+      const recordKey = `${scopeKey}:${getTrackKey(track)}`;
+      if (historyRecordedKeyRef.current === recordKey) return true;
+      if (historyRecordingPromiseRef.current?.key === recordKey) {
+        return historyRecordingPromiseRef.current.promise;
+      }
+
+      const promise = (async () => {
+        const historySaved = await addToHistory(track, currentUser?.uid);
+        if (!historySaved) return false;
+
+        historyRecordedKeyRef.current = recordKey;
+        if (currentUser && !currentUser.isLocal) {
+          await incrementPendingChanges('history', currentUser.uid);
+          void triggerDelayedSync(currentUser.uid, 'history');
+        }
+        return true;
+      })();
+      historyRecordingPromiseRef.current = { key: recordKey, promise };
+      try {
+        return await promise;
+      } finally {
+        if (historyRecordingPromiseRef.current?.promise === promise) {
+          historyRecordingPromiseRef.current = null;
+        }
+      }
+    },
+    [currentUser]
+  );
+
+  // 用户在自动播放被拦截后手动点击播放，也应在真正开始播放时写入历史。
+  useEffect(() => {
+    return audioEngine.on('playing', () => {
+      const track = audioStateManager.getCurrentTrack();
+      if (track) void recordPlaybackHistory(track);
+    });
+  }, [recordPlaybackHistory]);
 
   // 按需获取歌词的方法
   const fetchLyrics = useCallback(
@@ -148,6 +193,9 @@ export const PlayerProvider = ({ children }) => {
 
   const handlePlay = useCallback(
     async (track, index = -1, playlist = null, quality = 999, forceRefresh = false) => {
+      const requestId = ++playRequestIdRef.current;
+      const isSuperseded = () => requestId !== playRequestIdRef.current;
+
       try {
         if (!isOnline) {
           toast.warn('离线状态无法播放在线音乐'); // 假设全局有toast或通过其他方式提示
@@ -174,31 +222,38 @@ export const PlayerProvider = ({ children }) => {
 
         // 加载并播放
         try {
-          await playMusic(track, quality, forceRefresh);
+          await playMusic(track, quality, forceRefresh, () => !isSuperseded());
+          if (isSuperseded()) return;
         } catch (error) {
+          if (isSuperseded() || isPlaybackRequestReplacedError(error)) return;
+          if (error?.code === 'PLAYBACK_NOT_STARTED') {
+            toast.info('浏览器阻止了自动播放，请点击播放按钮继续');
+            return;
+          }
           logger.warn(`[PlayerContext] 音质 ${quality} 请求失败，尝试降级到 320:`, error);
           if (quality !== 320) {
-            await playMusic(track, 320, forceRefresh);
+            if (isSuperseded()) return;
+            await playMusic(track, 320, forceRefresh, () => !isSuperseded());
+            if (isSuperseded()) return;
           } else {
             throw error; // 如果已经是 320 还失败，则抛出
           }
         }
 
+        if (isSuperseded()) return;
         if (!forceRefresh) {
-          const historySaved = await addToHistory(track, currentUser?.uid);
-          if (historySaved && currentUser && !currentUser.isLocal) {
-            await incrementPendingChanges('history', currentUser.uid);
-            void triggerDelayedSync(currentUser.uid, 'history');
-          }
+          await recordPlaybackHistory(track);
         }
 
+        if (isSuperseded()) return;
         // 核心流程：仅请求并补全 500 尺寸的高清封面
         fetchCover(track.source, track.pic_id, 500).catch(() => {});
       } catch (error) {
+        if (isSuperseded() || isPlaybackRequestReplacedError(error)) return;
         logger.error('[PlayerContext] handlePlay error:', error);
       }
     },
-    [isOnline, fetchCover, currentUser]
+    [isOnline, fetchCover, recordPlaybackHistory]
   );
 
   const handleNext = useCallback(() => {

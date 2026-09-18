@@ -1,5 +1,9 @@
 import type { Track } from '../types';
-import audioEngine, { type AudioEngineEvent } from './AudioEngine';
+import audioEngine, {
+  isPlaybackRequestReplacedError,
+  PlaybackRequestReplacedError,
+  type AudioEngineEvent,
+} from './AudioEngine';
 import logger from '../utils/logger.js';
 
 export const AUDIO_STATES = {
@@ -28,6 +32,7 @@ class AudioStateManager {
   private currentTrack: Track | null = null;
   private isLoading = false;
   private error: unknown = null;
+  private loadRequestId = 0;
   private readonly listeners: StateListener[] = [];
 
   constructor() {
@@ -94,13 +99,43 @@ class AudioStateManager {
     this.listeners.forEach((listener) => listener(snapshot));
   }
 
-  loadTrack(track: Track, url?: string): void {
+  async loadTrack(track: Track, url?: string): Promise<boolean> {
+    const requestId = ++this.loadRequestId;
     logger.log('[AudioStateManager] 开始加载曲目:', track.name);
     this.currentTrack = track;
     this.isLoading = true;
     this.error = null;
     this.updateState(AUDIO_STATES.LOADING);
-    if (url) void audioEngine.setSource(url, track);
+    if (!url) {
+      this.isLoading = false;
+      this.updateState(AUDIO_STATES.PAUSED);
+      return false;
+    }
+
+    try {
+      const started = await audioEngine.setSource(url, track);
+      if (requestId !== this.loadRequestId) {
+        throw new PlaybackRequestReplacedError();
+      }
+
+      this.isLoading = false;
+      if (!started) {
+        // 浏览器拒绝自动播放时，保持可重试的暂停态，不把它误报成播放错误。
+        this.updateState(AUDIO_STATES.PAUSED);
+      } else {
+        // play() 已经 settle，避免快照残留 loading=true。
+        this.notifyListeners();
+      }
+      return started;
+    } catch (error) {
+      if (requestId === this.loadRequestId) {
+        this.isLoading = false;
+        if (!isPlaybackRequestReplacedError(error)) {
+          this.notifyListeners();
+        }
+      }
+      throw error;
+    }
   }
 
   play(): void {
@@ -108,12 +143,25 @@ class AudioStateManager {
   }
 
   pause(): void {
+    this.loadRequestId += 1;
+    this.isLoading = false;
     audioEngine.pause();
+    if (this.currentState === AUDIO_STATES.PAUSED) {
+      this.notifyListeners();
+    } else {
+      this.updateState(AUDIO_STATES.PAUSED);
+    }
   }
 
   stop(): void {
+    this.loadRequestId += 1;
+    this.isLoading = false;
     audioEngine.pause();
-    this.updateState(AUDIO_STATES.STOPPED);
+    if (this.currentState === AUDIO_STATES.STOPPED) {
+      this.notifyListeners();
+    } else {
+      this.updateState(AUDIO_STATES.STOPPED);
+    }
   }
 
   setError(error: unknown): void {
