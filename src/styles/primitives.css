@@ -33,11 +33,6 @@
   color: var(--color-text-primary);
 }
 
-.ui-icon-button:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-}
-
 .ui-icon-button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -47,6 +42,15 @@
 .ui-icon-button.accent-action,
 .ui-icon-button.accent-control {
   color: var(--color-accent);
+}
+
+/* 忙碌态必须压过收藏按钮的强调色，给用户明确的处理中反馈。 */
+.ui-icon-button.is-busy,
+.ui-icon-button.is-busy.accent-action,
+.ui-icon-button.is-busy.accent-control {
+  color: var(--color-text-muted) !important;
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .ui-icon-button--play {
@@ -63,17 +67,12 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-sm);
   appearance: none;
   font: inherit;
   line-height: 1.2;
   cursor: pointer;
   transition: var(--control-transition);
-}
-
-.ui-button:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
 }
 
 .ui-button:disabled {
@@ -85,7 +84,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border: 0;
   background: var(--color-primary);
-  color: var(--color-background);
+  color: var(--color-on-solid);
 }
 
 .ui-button--primary:hover:not(:disabled) {
@@ -124,9 +123,4 @@
 
 .ui-text-button:hover {
   background: var(--control-hover-background);
-}
-
-.ui-text-button:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
 }

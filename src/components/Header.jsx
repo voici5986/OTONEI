@@ -251,7 +251,7 @@ const Header = ({
     <>
       {/* 桌面端 Header */}
       <header className="app-header-desktop d-none d-lg-flex">
-        <div className="header-search-container">
+        <div className={`header-search-container${suggestionsOpen ? ' is-suggestions-open' : ''}`}>
           <form onSubmit={onSearchSubmit} className="w-100">
             <div className="header-search-field-wrapper">
               <FaSearch className="header-search-icon" />
@@ -349,7 +349,7 @@ const Header = ({
 
       {/* 移动端全局搜索 Header */}
       <div className="app-header-mobile d-lg-none">
-        <div className="mobile-search-container">
+        <div className={`mobile-search-container${suggestionsOpen ? ' is-suggestions-open' : ''}`}>
           <form onSubmit={onSearchSubmit} className="w-100">
             <div className="mobile-search-field-wrapper">
               <FaSearch className="mobile-search-icon" />

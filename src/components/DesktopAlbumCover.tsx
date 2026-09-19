@@ -54,7 +54,7 @@ const DesktopAlbumCover = ({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: 'var(--color-background-alt)',
-    borderRadius: 'var(--border-radius-sm)',
+    borderRadius: 'var(--radius-sm)',
     ...(interactive
       ? {
           border: 0,

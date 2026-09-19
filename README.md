@@ -156,8 +156,21 @@ src/
   utils/        工具函数
 functions/      Cloudflare Pages Functions
 conf/           Nginx 配置
-docs/           补充文档
+docs/           设计规范、指南与参考文档
 ```
+
+## 文档
+
+| 文档                                                                   | 内容                                                  |
+| :--------------------------------------------------------------------- | :---------------------------------------------------- |
+| [`docs/guides/UI_DESIGN_SPEC.md`](docs/guides/UI_DESIGN_SPEC.md)       | **UI 设计规范（权威）**：令牌语义、组件形态、禁止事项 |
+| [`docs/guides/UI_STYLE_SYSTEM.md`](docs/guides/UI_STYLE_SYSTEM.md)     | UI 原语与交互尺寸的实现细节                           |
+| [`docs/guides/ZINDEX_AUDIT.md`](docs/guides/ZINDEX_AUDIT.md)           | z-index 层级清单与硬编码清理状态                      |
+| [`docs/guides/CLOUDFLARE_DEPLOY.md`](docs/guides/CLOUDFLARE_DEPLOY.md) | Cloudflare Pages 部署                                 |
+| [`docs/guides/FIREBASE_SETUP.md`](docs/guides/FIREBASE_SETUP.md)       | Firebase 配置                                         |
+| [`docs/reference/GD_STUDIO_API.md`](docs/reference/GD_STUDIO_API.md)   | 上游音乐 API 参考                                     |
+
+改动界面代码前先读 `UI_DESIGN_SPEC.md`。`docs/archive/` 下为历史文档，不作开发依据。
 
 ## 质量检查
 

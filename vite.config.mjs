@@ -25,8 +25,9 @@ export default defineConfig({
         short_name: 'OTONEI',
         description: '在线音乐搜索、播放和下载，支持多平台音乐资源',
         lang: 'zh-CN',
-        theme_color: '#f5f5f7',
-        background_color: '#f5f5f7',
+        // 与 theme.css 的 --color-background-alt 保持一致（PWA 清单不能用 CSS 变量，只能写成字面量）
+        theme_color: '#f7f7f5',
+        background_color: '#f7f7f5',
         display: 'standalone',
         scope: '/',
         start_url: '/',

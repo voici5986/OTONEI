@@ -50,18 +50,6 @@
     display: none; /* 隐藏原有的绝对定位进度条，使用内部的新进度条 */
   }
 
-  /* 修复移动端收起模式下进度条过粗的问题 */
-  /* 必须使用 !important 覆盖 index.css 中的全局设置 (.progress { height: var(--progress-height) !important; }) */
-  body .audio-player .progress-control-container .progress {
-    height: 3px !important;
-    min-height: 3px !important;
-  }
-
-  /* 当交互时（触摸、拖拽）变粗，配合 ProgressBar.js 中的 is-active 类 */
-  body .audio-player .progress-control-container .progress.is-active {
-    height: 6px !important;
-  }
-
   .mobile-progress-container {
     margin: 10px 0;
     padding: 0px; /* 这里调整进度条的左右间距 */
@@ -74,12 +62,14 @@
     cursor: pointer;
   }
 
-  /* 移动端进度条视觉优化：容器大但条纤细 */
+  /* 移动端进度条视觉优化：容器大但条纤细。
+     高度固定为 -mini（不随交互变粗），因此必须用 !important 压过 ProgressBar.jsx
+     按播放状态给出的内联高度。 */
   .mobile-progress-container .progress {
-    height: 4px !important; /* 视觉高度保持纤细 */
+    height: var(--progress-height-mini) !important;
     width: 100%;
     background-color: rgba(0, 0, 0, 0.05) !important;
-    border-radius: 2px !important;
+    border-radius: var(--radius-xs) !important;
   }
 
   .mobile-progress-container .progress-bar {

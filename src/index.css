@@ -12,9 +12,56 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* ===== 焦点环策略：仅键盘导航可见 =====
+ * 指针操作（鼠标 / 触摸）一律不显示焦点环。这一步无法只靠 :focus-visible 完成——
+ * 浏览器会把 input 和 select 视为"必须给出焦点提示"的元素，鼠标点击时同样匹配
+ * :focus-visible。因此由 src/utils/inputModality.js 在 <html> 上记录最后一次
+ * 交互方式（data-nav），此处按该属性决定是否显示焦点环。
+ * 键盘导航时统一使用 --focus-ring，所有元素样式一致。
+ */
+html[data-nav='pointer'] :focus,
+html[data-nav='pointer'] :focus-visible {
+  outline: none !important;
+}
+
+/* 用长写而非 outline 简写：简写会被 Bootstrap 的 .nav-link:focus-visible { outline: 0 }
+ * 之类的规则拆散，出现"粗细来自这里、颜色来自那里"的混合结果。
+ * !important 同样是冲着 Bootstrap 去的——焦点环是全局无障碍策略，不允许被组件样式库覆盖。
+ * Bootstrap 移除后（见 UI_DESIGN_SPEC.md 15.3）这段可以去掉 !important。 */
+html[data-nav='keyboard'] :focus-visible {
+  outline-style: solid !important;
+  outline-width: var(--focus-ring-width) !important;
+  outline-color: var(--focus-ring-color) !important;
+  outline-offset: var(--focus-ring-offset) !important;
+}
+
+/* 焦点环必须即时出现。组件里有
+     .navigation-sidebar .navbar-nav .nav-link { transition: all 0.2s ease !important }
+   这类声明：transition: all 会把 outline-color / outline-offset 也纳入过渡，
+   于是焦点环从 currentColor 淡入（先灰后蓝），不同元素的出现速度不一致。
+   该声明的权重是 (0,3,0)，普通写法压不住，因此这里用等价的冗余条件
+   :focus-visible:focus 把权重提到 (0,3,1)。 */
+html[data-nav='keyboard'] :focus-visible:focus {
+  transition-property: none !important;
+}
+
+/* 搜索输入框自身不画环：它的焦点环由外层 .header-search-field-wrapper 承担，
+   因为图标和清除按钮是输入框的兄弟节点，挂在输入框上的环包不住它们。 */
+html[data-nav='keyboard'] .header-search-input:focus-visible,
+html[data-nav='keyboard'] .mobile-search-input:focus-visible {
+  outline: none !important;
+}
+
+/* Bootstrap 给导航链接和按钮加了 rgba(13, 110, 253, 0.25) 的蓝色光晕，
+ * 那是 Bootstrap 自己的蓝，与我们的焦点环重复且撞色，需要中和。 */
+html[data-nav='keyboard'] .nav-link:focus-visible,
+html[data-nav='keyboard'] .btn:focus-visible {
+  box-shadow: none;
+}
+
 /* 美化按钮 */
 .btn {
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-sm);
   transition: background 0.12s ease-in;
   position: relative;
   overflow: hidden;
@@ -27,7 +74,7 @@ body {
 .btn-primary {
   background: var(--color-text-primary);
   border: none;
-  color: #ffffff;
+  color: var(--color-on-solid);
   box-shadow: none !important;
 }
 
@@ -43,20 +90,18 @@ body {
 .btn-outline-primary:hover {
   background: var(--color-text-primary);
   border-color: var(--color-text-primary);
-  color: #ffffff;
+  color: var(--color-on-solid);
 }
 
-/* 美化进度条 */
+/* 美化进度条
+   这里刻意不声明 height：高度由 ProgressBar.jsx 依据播放状态引用同一组令牌给出。
+   过去两边都写 height，导致 CSS 必须用 !important 才压得住内联样式，
+   组件里还有 4 处规则叠着覆盖同一个值。 */
 .progress {
-  height: var(--progress-height) !important;
   border-radius: var(--progress-border-radius);
   overflow: hidden;
   background-color: var(--progress-background);
   transition: height 0.2s var(--ease-out-circ);
-}
-
-.progress:hover {
-  height: var(--progress-height-hover) !important;
 }
 
 .progress-bar {
@@ -96,7 +141,7 @@ body {
 
 /* 美化专辑封面 (移除投影与缩放) */
 img.rounded {
-  border-radius: var(--border-radius) !important;
+  border-radius: var(--radius-md) !important;
   transition: all 0.2s ease;
 }
 
@@ -105,7 +150,7 @@ img.rounded {
   position: relative;
   overflow: hidden;
   background-color: var(--color-background-alt);
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-md);
   transition: all 0.2s ease;
 }
 
@@ -113,19 +158,10 @@ img.rounded {
 .form-control,
 .form-select,
 .dropdown-toggle {
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   padding: 0.6rem 1rem;
   transition: all 0.3s var(--ease-in-out);
-}
-
-.form-control:focus,
-.form-select:focus {
-  box-shadow: 0 0 0 1px var(--color-border-active);
-  /* 对齐 2px 实线感 */
-  border-color: var(--color-border-active);
-  transform: none;
-  /* 移除位移 */
 }
 
 /* 
@@ -193,7 +229,7 @@ img.rounded {
   );
   background-size: 800px 104px;
   animation: shimmer 1.5s linear infinite;
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-xs);
   height: 15px;
   width: 100%;
   margin-bottom: 10px;
@@ -202,7 +238,7 @@ img.rounded {
 .skeleton-img {
   width: 60px;
   height: 60px;
-  border-radius: var(--border-radius);
+  border-radius: var(--radius-sm);
 }
 
 .skeleton-title {
@@ -238,7 +274,7 @@ img.rounded {
   transform: scale(1.05);
   color: var(--color-text-primary) !important;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding-left: 5px !important;
   padding-right: 5px !important;
 }
@@ -246,7 +282,7 @@ img.rounded {
 /* 下一句歌词样式 */
 .lyric-line.next-active {
   transform: scale(1.02);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding-left: 3px !important;
   padding-right: 3px !important;
 }
@@ -258,7 +294,7 @@ img.rounded {
   justify-content: flex-end;
   max-width: 100%;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   transition: all 0.3s ease;
 }
 
@@ -286,5 +322,27 @@ img.rounded {
 @media (max-width: 768px) {
   .lyrics-preview-container {
     justify-content: center;
+  }
+}
+
+/* ===== 动效偏好 =====
+ * 尊重系统的"减少动效"设置。播放器展开、歌词滚动、骨架屏、呼吸动画等
+ * 在这里统一降级，不要求每个组件单独处理。
+ * 用 0.01ms 而不是 0，是为了让 transitionend / animationend 仍然触发。
+ */
+@media (prefers-reduced-motion: reduce) {
+  html:root *,
+  html:root *::before,
+  html:root *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+
+  html:root {
+    scroll-behavior: auto !important;
   }
 }

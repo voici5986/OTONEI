@@ -139,7 +139,7 @@ const User = ({ onTabChange }) => {
                       justifyContent: 'center',
                       backgroundColor: 'var(--color-background-alt)',
                       border: '1px solid var(--color-border)',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-sm)',
                       fontSize: '14px',
                     }}
                   />

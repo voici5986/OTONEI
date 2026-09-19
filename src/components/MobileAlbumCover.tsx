@@ -62,7 +62,7 @@ const MobileAlbumCover = ({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: 'var(--color-background-alt)',
-    borderRadius: size === 'small' ? 'var(--border-radius-sm)' : 'var(--border-radius-md)',
+    borderRadius: size === 'small' ? 'var(--radius-sm)' : 'var(--radius-md)',
     ...(interactive
       ? {
           border: 0,

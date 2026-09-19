@@ -15,9 +15,9 @@
   /* 更改为主色为 Notion 蓝 */
   --color-primary-light: #3391ee;
   --color-primary-dark: #1f71c2;
-  --color-secondary: #2f3437;
-  --color-secondary-light: #6b6f76;
-  --color-secondary-dark: #1f1f1f;
+  /* 实色表面（主色 / accent / danger / info / 深色底）上的前景色。
+     不要用 --color-background 代替——那是底色语义，主题一变就会失效。 */
+  --color-on-solid: #ffffff;
 
   /* 功能性颜色 */
   --color-success: #28a745;
@@ -25,8 +25,6 @@
   --color-warning: #ffc107;
   --color-info: #17a2b8;
   --color-accent: #d15c5c;
-  --color-notion-focus: #2383e2;
-  /* Notion 经典的聚焦蓝色 */
 
   /* 中性颜色 (Notion 风格) */
   --color-text-primary: #2f3437;
@@ -42,10 +40,6 @@
   --color-border: #e5e5e5;
   /* 归一化为浅灰描边 */
   --color-border-active: #2383e2;
-
-  /* 渐变色 (已弃用，建议改为单色) */
-  --gradient-primary: #2f3437;
-  --gradient-dark: #1f1f1f;
 
   /* ===== 排版 ===== */
   --font-family-base:
@@ -66,8 +60,13 @@
   --control-radius: 8px;
   --control-hover-background: var(--color-hover-notion);
   --button-min-height: 40px;
-  --focus-ring: 3px solid var(--color-primary);
+  /* 焦点环：拆成长写令牌，因为 index.css 的全局规则必须用长写才能压过 Bootstrap */
+  --focus-ring-width: 3px;
+  --focus-ring-color: var(--color-primary);
+  --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
   --focus-ring-offset: 2px;
+  /* 贴屏幕下沿的元素用内缩偏移，避免焦点环被裁切 */
+  --focus-ring-offset-inset: -3px;
   --control-transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
 
   /* ===== 间距 ===== */
@@ -81,595 +80,86 @@
   /* 24px */
   --spacing-xl: 2rem;
   /* 32px */
-  --safe-area-bottom: env(safe-area-inset-bottom);
-  /* PWA 底部安全区域高度 */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  /* PWA 顶部 / 底部安全区域高度 */
 
   /* ===== 边框 ===== */
-  --border-radius-sm: 8px;
-  /* 统一 8px 圆角 */
-  --border-radius-md: 10px;
-  --border-radius-lg: 10px;
+  /* 只保留四档视觉圆角；结构性圆角（0 / 50% / inherit）仍由组件按需使用。 */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-full: 999px;
+  /* 旧令牌暂保留为兼容别名，新增代码统一使用 --radius-*。 */
+  --border-radius-sm: var(--radius-sm);
+  --border-radius-md: var(--radius-sm);
+  --border-radius-lg: var(--radius-md);
   --border-width: 1px;
-  --border-radius: 10px;
-  /* 保留原有变量名以保持兼容性 */
+  --border-radius: var(--radius-md);
 
   /* ===== 阴影 (Notion 风格：极弱) ===== */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.02);
-  --card-shadow: none;
-  /* 卡片不使用投影 */
-
   /* ===== 过渡效果 ===== */
   --transition-fast: all 0.2s ease;
   --transition-normal: all 0.3s ease;
-  --transition-slow: all 0.5s ease;
-  --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
   /* ===== 动画曲线 ===== */
   --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
   --ease-out-back: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --ease-in-back: cubic-bezier(0.6, -0.28, 0.735, 0.045);
   --ease-out-circ: cubic-bezier(0.08, 0.82, 0.17, 1);
-  --ease-in-circ: cubic-bezier(0.6, 0.04, 0.98, 0.335);
 
   /* ===== 组件特定变量 ===== */
   /* 播放器 */
   --player-height-collapsed: 85px;
-  --player-height-expanded: 90vh;
-  --player-transition: var(--transition-bounce);
-  --player-shadow: 0 -4px 20px rgba(0, 0, 0, 0.07);
-
-  /* 通用卡片样式 (Music Card) */
-  --music-card-bg: var(--card-background);
-  --music-card-hover-bg: var(--card-hover-background);
-  --music-card-radius: var(--card-border-radius);
-  --music-card-transition: var(--card-transition);
-  --music-card-shadow: var(--shadow-md);
-  --music-card-hover-shadow: var(--card-hover-shadow);
-  --music-card-hover-transform: var(--card-hover-transform);
 
   /* 卡片 */
   --card-background: #ffffff;
   --card-hover-background: #f7f6f4;
-  --card-hover-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  --card-hover-transform: translateY(-5px);
-  --card-border-radius: 12px;
-  --card-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* 导航栏 */
-  --navbar-height: 60px;
+  /* 导航栏。桌面与移动是两套布局，高度确实不同，因此拆成两个令牌而不是强行统一 */
+  --navbar-height-desktop: 64px;
+  --navbar-height-mobile: 56px;
   --sidebar-width: 240px;
   /* 桌面端侧边栏宽度 */
   --mobile-tab-bar-height: 8vh;
-  --navbar-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
-  --navbar-border: 1px solid var(--color-border);
 
-  /* 进度条 */
-  --progress-height: 6px;
-  --progress-height-hover: 8px;
-  --progress-border-radius: 10px;
+  /* 进度条。高度全部由 ProgressBar.jsx 依据播放状态引用：
+     收起态取 --progress-height，悬停/拖动/触摸取 -hover；
+     移动端迷你播放器的容器更高、条更细，单独取 -mini 并在地毯式覆盖中锁住。 */
+  --progress-height: 3px;
+  --progress-height-hover: 6px;
+  --progress-height-mini: 4px;
+  --progress-border-radius: var(--radius-xs);
   --progress-background: #d3d1cb;
   --progress-fill: var(--color-text-primary);
-
-  /* 按钮 (移除动效与强投影) */
-  --button-hover-transform: none;
-  --button-active-transform: none;
-  --button-shadow: none;
-  --button-hover-shadow: none;
-
-  /* 保留原有的主要变量名以保持兼容性 */
-  --primary-gradient: linear-gradient(45deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  --search-input-border: var(--color-border);
 
   /* ===== Z-Index 层级系统 ===== */
   --z-index-negative: -1;
   --z-index-base: 1;
   --z-index-above: 10;
   --z-index-interaction: 100;
+  --z-index-sidebar: 100;
   --z-index-player-base: 1000;
   --z-index-navbar: 1020;
+  --z-index-suggestions: 1100;
   --z-index-bootstrap-fixed: 1030;
-  --z-index-backdrop: 1040;
   --z-index-mobile-nav: 1050;
-  --z-index-toast: 1070;
   --z-index-player-backdrop: 9000;
   --z-index-player-expanded: 9500;
   --z-index-overlay: 9999;
   --z-index-player-force: 10000;
+  /* 模态框：遮罩与内容拆成两层，内容层 +1；高于播放器强制展开层。 */
+  --z-index-modal: 10010;
+  --z-index-modal-content: 10011;
   --z-index-notification: 11000;
-
-  /* 表单组件样式 */
-  .form-group-custom {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .form-label-custom {
-    display: block;
-    margin-bottom: var(--spacing-xs);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    /* 次级标签: 500 */
-    color: var(--color-text-secondary);
-  }
-
-  .form-control-custom,
-  .form-select-custom {
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 14px;
-    line-height: normal;
-    color: var(--color-text-primary);
-    background-color: #ffffff;
-    border: 1px solid #e5e5e5;
-    /* 1px 浅灰描边 */
-    border-radius: 8px;
-    /* 8px 圆角 */
-    transition: border-color 0.1s ease;
-    outline: none;
-    box-shadow: none !important;
-    height: 40px;
-    /* 统一高度为 40px */
-  }
-
-  .form-control-custom:focus,
-  .form-select-custom:focus {
-    border-color: #2383e2;
-    /* 1px border + 1px box-shadow = 2px 实线感 */
-    box-shadow: 0 0 0 1px #2383e2 !important;
-  }
-
-  .form-control-custom::placeholder {
-    color: var(--color-text-muted);
-    font-weight: 400;
-    /* placeholder: 400 */
-    opacity: 1;
-  }
-
-  .form-control-custom:disabled,
-  .form-select-custom:disabled {
-    background-color: var(--color-background-alt);
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .form-select-custom {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
-    padding-right: 2.25rem;
-  }
-
-  .input-group-custom {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
-    width: 100%;
-  }
-
-  .input-group-text-custom {
-    display: flex;
-    align-items: center;
-    padding: 0.375rem 0.75rem;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: var(--color-text-secondary);
-    text-align: center;
-    white-space: nowrap;
-    background-color: var(--color-background-alt);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-md);
-  }
-
-  .alert-custom {
-    position: relative;
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
-    border-radius: var(--border-radius-md);
-    font-size: var(--font-size-sm);
-  }
-
-  .alert-danger-custom {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-  }
-
-  .alert-success-custom {
-    color: #155724;
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-  }
-
-  .alert-info-custom {
-    color: #0c5460;
-    background-color: #d1ecf1;
-    border-color: #bee5eb;
-  }
 
   /* 移动端全屏模式专有层级 (20000系列) */
   --z-index-mobile-expanded-base: 20000;
   --z-index-mobile-expanded-content: 20001;
   --z-index-mobile-expanded-info: 20003;
   --z-index-mobile-expanded-top: 20005;
-}
-
-/* Toast 基础样式 (用于替代 react-bootstrap Toast) */
-.toast-custom {
-  background-color: var(--color-background-alt);
-  border-radius: var(--border-radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  min-width: 250px;
-  max-width: 350px;
-  animation: slideInRight 0.3s ease-out;
-}
-
-.toast-header-custom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  font-weight: 600;
-}
-
-.toast-body-custom {
-  padding: 15px;
-}
-
-.toast-info-custom {
-  background-color: #17a2b8;
-  color: white;
-}
-
-.toast-info-custom .toast-header-custom {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: white;
-  border-bottom: none;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* 进度条样式 (用于替代 react-bootstrap ProgressBar) */
-.progress-custom {
-  display: flex;
-  height: 1rem;
-  overflow: hidden;
-  line-height: 0;
-  font-size: 0.75rem;
-  background-color: var(--color-background-alt);
-  border-radius: var(--border-radius-md);
-  margin-bottom: 1rem;
-}
-
-.progress-bar-custom {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-  color: #fff;
-  text-align: center;
-  white-space: nowrap;
-  background-color: var(--color-primary);
-  transition: width 0.6s ease;
-}
-
-/* 列表组样式 (用于替代 react-bootstrap ListGroup) */
-.list-group-custom {
-  display: flex;
-  flex-direction: column;
-  padding-left: 0;
-  margin-bottom: 0;
-  border-radius: var(--border-radius-md);
-}
-
-.list-group-item-custom {
-  position: relative;
-  display: block;
-  padding: 0.75rem 1rem;
-  background-color: var(--color-background-alt);
-  border: 1px solid var(--color-border);
-  margin-bottom: -1px;
-}
-
-.list-group-item-custom:first-child {
-  border-top-left-radius: inherit;
-  border-top-right-radius: inherit;
-}
-
-.list-group-item-custom:last-child {
-  border-bottom-right-radius: inherit;
-  border-bottom-left-radius: inherit;
-}
-
-/* 模态框样式 (用于替代 react-bootstrap Modal) */
-.modal-overlay-custom {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modal-container-custom {
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-lg);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: slideUpIn 0.2s ease-out;
-}
-
-.modal-header-custom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.modal-title-custom {
-  margin-bottom: 0;
-  line-height: 1.5;
-  font-weight: 700;
-  font-size: 1.25rem;
-}
-
-.modal-close-custom {
-  background: transparent;
-  border: none;
-  font-size: 1.5rem;
-  width: var(--control-hit-size);
-  height: var(--control-hit-size);
-  min-width: var(--control-hit-size);
-  min-height: var(--control-hit-size);
-  padding: 0;
-  margin: -0.5rem -0.5rem -0.5rem auto;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-close-custom:focus-visible {
-  outline: var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-}
-
-.modal-close-custom:hover {
-  color: var(--color-text-primary);
-}
-
-.modal-body-custom {
-  position: relative;
-  flex: 1 1 auto;
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
-.modal-footer-custom {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--color-border);
-  gap: 0.75rem;
-}
-
-/* 下拉菜单样式 (用于替代 react-bootstrap Dropdown) */
-.dropdown-custom {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-menu-custom {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 1000;
-  display: none;
-  min-width: 10rem;
-  padding: 0.5rem 0;
-  margin: 0.125rem 0 0;
-  font-size: 0.9rem;
-  color: var(--color-text-primary);
-  text-align: left;
-  list-style: none;
-  background-color: var(--color-background);
-  background-clip: padding-box;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
-}
-
-.dropdown-menu-custom.show {
-  display: block;
-}
-
-.dropdown-item-custom {
-  display: block;
-  width: 100%;
-  padding: 0.5rem 1rem;
-  clear: both;
-  font-weight: 400;
-  color: var(--color-text-primary);
-  text-align: inherit;
-  text-decoration: none;
-  white-space: nowrap;
-  background-color: transparent;
-  border: 0;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.dropdown-item-custom:hover {
-  background-color: var(--color-background-alt);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUpIn {
-  from {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.list-group-custom {
-  margin-bottom: 0;
-}
-
-/* 搜索页提交按钮样式 */
-.search-submit-btn {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md);
-  padding: 8px 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.search-submit-btn:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
-  transform: none;
-  /* 移除位移 */
-}
-
-.search-submit-btn:active:not(:disabled) {
-  transform: none;
-}
-
-.search-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.list-group-item-custom.d-flex {
-  display: flex !important;
-}
-
-/* 身份验证通用样式 */
-.text-accent {
-  color: var(--color-accent) !important;
-  font-weight: 500;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.15s ease;
-  font-size: 14px;
-}
-
-.text-accent:hover {
-  background-color: var(--color-hover-notion);
-}
-
-.text-link {
-  color: var(--color-text-secondary);
-  font-weight: 400;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background 0.15s ease;
-  font-size: 14px;
-}
-
-.text-link:hover {
-  background-color: var(--color-hover-notion);
-}
-
-/* ===== 通用组件样式 ===== */
-
-/* 登录提示按钮 (Notion 风格) */
-.login-prompt-container {
-  background-color: var(--color-background-alt);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  padding: 10px 16px;
-  margin-bottom: 12px;
-  transition: background 0.15s ease;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: var(--button-min-height);
-  color: inherit;
-  font: inherit;
-}
-
-.login-prompt-container:focus-visible {
-  outline: 3px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.login-prompt-container:hover {
-  background-color: var(--color-hover-notion);
-}
-
-.login-prompt-desc {
-  color: var(--color-text-secondary);
-  font-size: 0.85rem;
-  margin-bottom: 0;
-  font-weight: 500;
-}
-
-@media (max-width: 768px) {
-  .login-prompt-container {
-    padding: 12px;
-  }
 }
 
 /* 移动端导航栏样式已移至 Navigation.mobile.css */
@@ -679,7 +169,6 @@
   :root {
     --spacing-lg: 1.25rem;
     --spacing-xl: 1.75rem;
-    --card-hover-transform: translateY(-3px);
   }
 }
 

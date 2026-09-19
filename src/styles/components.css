@@ -1,0 +1,347 @@
+/*
+ * 组件样式（Bootstrap 的替代实现）
+ *
+ * 这些类原先混居在 theme.css 中，其中一部分还写在 `:root {}` 内部（等价于 `:root .foo`，
+ * 权重 0-2-0）。迁出后 theme.css 只保留 CSS 变量定义，§1.1 的"令牌例外"因此能收紧为
+ * "仅 :root 内的 --* 变量定义"。
+ *
+ * 迁移前提（2026-09-19 核查）：全仓没有任何其他 CSS 文件定义过这些类名，使用它们的元素上
+ * 也不存在与它们争同一声明的普通选择器，因此权重从 0-2-0 降到 0-1-0 不改变任何属性的
+ * 最终胜者。两条前提需要保持，否则结论失效：
+ *   1. 本文件在 index.jsx 中的导入位置与原 theme.css 相同（早于 App.css 与 bootstrap.min.css）；
+ *   2. 不要给这些元素补 Bootstrap 原生类（如 class="modal-body modal-body-custom"）——
+ *      那会让 Bootstrap 的同类规则参与竞争，权重下降才会真的改变渲染。
+ *
+ * 迁移方式为原样搬运，仅三处偏离：`fadeIn` 改名（见下方注释）、5 处可无损替换的颜色字面量
+ * 换成令牌，以及删除已确认无运行时引用的旧选择器。其余保持原文档顺序不变。
+ */
+
+/* ===== 表单 ===== */
+.form-select-custom {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: normal;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  /* 1px 浅灰描边 */
+  border-radius: var(--radius-sm);
+  /* 8px 圆角 */
+  transition: border-color 0.1s ease;
+  outline: none;
+  box-shadow: none !important;
+  height: 40px;
+  /* 统一高度为 40px */
+}
+
+.form-select-custom:disabled {
+  background-color: var(--color-background-alt);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-select-custom {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.25rem;
+}
+
+/* ===== 告警 ===== */
+.alert-custom {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.alert-danger-custom {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-success-custom {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-info-custom {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+/* ===== Toast ===== */
+.toast-custom {
+  background-color: var(--color-background-alt);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  min-width: 250px;
+  max-width: 350px;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.toast-header-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.toast-body-custom {
+  padding: 15px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ===== 进度条 ===== */
+.progress-custom {
+  display: flex;
+  height: 1rem;
+  overflow: hidden;
+  line-height: 0;
+  font-size: 0.75rem;
+  background-color: var(--color-background-alt);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.progress-bar-custom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--color-on-solid);
+  text-align: center;
+  white-space: nowrap;
+  background-color: var(--color-primary);
+  transition: width 0.6s ease;
+}
+
+/* ===== 模态框 ===== */
+.modal-overlay-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-index-modal);
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+.modal-container-custom {
+  background-color: var(--color-background);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUpIn 0.2s ease-out;
+}
+
+.modal-header-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title-custom {
+  margin-bottom: 0;
+  line-height: 1.5;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.modal-close-custom {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  width: var(--control-hit-size);
+  height: var(--control-hit-size);
+  min-width: var(--control-hit-size);
+  min-height: var(--control-hit-size);
+  padding: 0;
+  margin: -0.5rem -0.5rem -0.5rem auto;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-custom:hover {
+  color: var(--color-text-primary);
+}
+
+.modal-body-custom {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal-footer-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  gap: 0.75rem;
+}
+
+/* 原名 fadeIn，与 App.css 的同名 keyframes 内容不同；同名的以文档中靠后者为准，
+ * 所以 .modal-overlay-custom 一直在"借用" App.css 的版本（含 translateY(10px)）。
+ * 这里改名并复制当前实际生效的内容，行为不变，同时消除同名耦合。 */
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===== 搜索页提交按钮 ===== */
+.search-submit-btn {
+  background-color: var(--color-primary);
+  color: var(--color-on-solid);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-submit-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+  transform: none;
+  /* 移除位移 */
+}
+
+.search-submit-btn:active:not(:disabled) {
+  transform: none;
+}
+
+.search-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== 身份验证通用样式 ===== */
+.text-accent {
+  color: var(--color-accent) !important;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  transition: background 0.15s ease;
+  font-size: 14px;
+}
+
+.text-accent:hover {
+  background-color: var(--color-hover-notion);
+}
+
+.text-link {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  transition: background 0.15s ease;
+  font-size: 14px;
+}
+
+.text-link:hover {
+  background-color: var(--color-hover-notion);
+}
+
+/* ===== 登录提示按钮 (Notion 风格) ===== */
+.login-prompt-container {
+  background-color: var(--color-background-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--button-min-height);
+  color: inherit;
+  font: inherit;
+}
+
+.login-prompt-container:hover {
+  background-color: var(--color-hover-notion);
+}
+
+.login-prompt-desc {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .login-prompt-container {
+    padding: 12px;
+  }
+}

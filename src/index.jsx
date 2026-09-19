@@ -2,6 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 // 首先导入主题文件
 import './styles/theme.css';
+// 组件样式（Bootstrap 替代实现）。导入位置与原先在 theme.css 中时一致，
+// 早于 App.css 与 bootstrap.min.css，改动前请先读该文件顶部的迁移前提。
+import './styles/components.css';
 import './index.css';
 // 其他样式文件
 import './styles/App.css';
@@ -20,6 +23,10 @@ import { SyncProvider } from './contexts/SyncContext';
 import { PlayerProvider } from './contexts/PlayerContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { DownloadProvider } from './contexts/DownloadContext';
+import { initInputModality } from './utils/inputModality';
+
+// 焦点环只在键盘导航时出现，需要先记录交互方式再挂载应用
+initInputModality();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- 添加屏幕方向锁定，强制竖屏 -->
     <meta name="screen-orientation" content="portrait" />
     <meta name="x5-orientation" content="portrait" />
     <meta name="msapplication-orientation" content="portrait" />
-    <meta name="theme-color" content="#f5f5f7" />
+    <!-- 与 theme.css 的 --color-background-alt 保持一致，改令牌时同步这里与 vite.config.mjs -->
+    <meta name="theme-color" content="#f7f7f5" />
     <meta
       name="description"
       content="OTONEI音乐播放器 - 在线音乐搜索、播放、下载，支持多平台音乐资源"
@@ -29,7 +30,8 @@
         right: 0;
         bottom: 0;
         z-index: 9999;
-        background: #f5f5f7; /* 浅灰色背景 */
+        /* 与 theme-color / --color-background-alt 保持一致，避免启动屏与状态栏出现色差 */
+        background: #f7f7f5;
         display: flex;
         justify-content: center;
         align-items: center;

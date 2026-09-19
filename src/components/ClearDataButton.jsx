@@ -159,11 +159,10 @@ const ClearDataButton = ({
     const modalContent = (
       <>
         {/* 背景遮罩 - 独立层 */}
-        <div className="modal-overlay-custom" onClick={handleClose} style={{ zIndex: 10000 }} />
+        <div className="modal-overlay-custom" onClick={handleClose} />
 
         {/* 弹窗内容 - 独立层，确保不响应父级点击 */}
         <div
-          className="modal-container-wrapper-custom"
           style={{
             position: 'fixed',
             top: 0,
@@ -173,7 +172,7 @@ const ClearDataButton = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 10001,
+            zIndex: 'var(--z-index-modal-content)',
             pointerEvents: 'none', // 让容器本身不响应点击，只响应子元素
           }}
         >
@@ -281,7 +280,7 @@ const ClearDataButton = ({
                 disabled={loading || !Object.values(selectedOptions).some((v) => v)}
                 style={{
                   padding: '8px 20px',
-                  borderRadius: 'var(--border-radius-md)',
+                  borderRadius: 'var(--radius-sm)',
                   backgroundColor: 'var(--bs-danger)',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
@@ -354,7 +353,7 @@ const ClearDataButton = ({
         onClick={handleShow}
         style={{
           padding: '8px 16px',
-          borderRadius: '10px',
+          borderRadius: 'var(--radius-sm)',
           backgroundColor: 'transparent',
           border: 'none',
           fontSize: '15px',

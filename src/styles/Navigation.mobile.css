@@ -29,9 +29,11 @@
   cursor: pointer;
 }
 
-.mobile-tab-item:focus-visible {
-  outline: 3px solid var(--color-primary);
-  outline-offset: -3px;
+/* 底部导航贴屏幕下沿，外扩的焦点环会被裁切，因此这一处改用内缩偏移。
+   颜色与粗细仍与全局焦点环一致（见 index.css 顶部的焦点环策略）。 */
+html[data-nav='keyboard'] .mobile-tab-item:focus-visible {
+  outline: var(--focus-ring) !important;
+  outline-offset: var(--focus-ring-offset-inset) !important;
 }
 
 /* 选中态的胶囊背景框 */
@@ -41,7 +43,7 @@
   width: 64px;
   height: 32px;
   background-color: var(--color-background-alt); /* 稍微深一点的背景色作为胶囊 */
-  border-radius: 16px;
+  border-radius: var(--radius-full);
   z-index: var(--z-index-negative);
   opacity: 0;
   transition: all 0.3s ease;

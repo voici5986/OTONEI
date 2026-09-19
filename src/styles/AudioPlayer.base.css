@@ -61,15 +61,6 @@
   position: relative;
 }
 
-.no-focus-outline:focus,
-.no-focus-outline:active,
-.no-focus-outline:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  background: none !important;
-}
-
 /* 桌面端布局样式已移至 AudioPlayer.desktop.css */
 
 /* 基础全屏视图结构 */
@@ -126,16 +117,6 @@ button.player-track-summary {
   font: inherit;
   background: transparent;
   cursor: pointer;
-}
-
-button.album-cover-wrapper:focus-visible {
-  outline: 3px solid var(--color-primary);
-  outline-offset: 3px;
-}
-
-button.album-info-section:focus-visible {
-  outline: 3px solid var(--color-primary);
-  outline-offset: 4px;
 }
 
 .track-details {
@@ -249,7 +230,7 @@ button.album-info-section:focus-visible {
   height: 100% !important;
   max-width: 400px;
   max-height: 400px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   object-fit: cover;
 }

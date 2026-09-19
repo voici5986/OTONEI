@@ -604,7 +604,7 @@ const UserProfile = ({ onTabChange }) => {
       />
 
       {showImportModal && (
-        <div className="modal-overlay-custom" onClick={handleCloseImport} style={{ zIndex: 2000 }}>
+        <div className="modal-overlay-custom" onClick={handleCloseImport}>
           <div
             className="modal-container-custom"
             ref={importDialogRef}
@@ -635,7 +635,7 @@ const UserProfile = ({ onTabChange }) => {
                     className="alert-custom alert-info-custom mb-3"
                     style={{
                       padding: '12px',
-                      borderRadius: 'var(--border-radius-md)',
+                      borderRadius: 'var(--radius-md)',
                       backgroundColor: 'rgba(52, 152, 219, 0.1)',
                       border: '1px solid rgba(52, 152, 219, 0.2)',
                       fontSize: '0.9rem',
@@ -652,7 +652,7 @@ const UserProfile = ({ onTabChange }) => {
                     style={{
                       height: '8px',
                       backgroundColor: 'var(--color-border)',
-                      borderRadius: '4px',
+                      borderRadius: 'var(--radius-xs)',
                       overflow: 'hidden',
                     }}
                   >
@@ -674,7 +674,7 @@ const UserProfile = ({ onTabChange }) => {
                       overflowY: 'auto',
                       padding: '10px',
                       backgroundColor: 'var(--color-background-alt)',
-                      borderRadius: 'var(--border-radius-md)',
+                      borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--color-border)',
                     }}
                   >
@@ -712,7 +712,7 @@ const UserProfile = ({ onTabChange }) => {
                 className="minimal-action-btn"
                 onClick={handleCloseImport}
                 disabled={isImporting}
-                style={{ borderRadius: 'var(--border-radius)', padding: '6px 16px' }}
+                style={{ borderRadius: 'var(--radius-sm)', padding: '6px 16px' }}
               >
                 取消
               </button>
@@ -720,7 +720,7 @@ const UserProfile = ({ onTabChange }) => {
                 className="btn-primary-custom ms-2"
                 onClick={startImport}
                 disabled={!importData || isImporting}
-                style={{ borderRadius: 'var(--border-radius)', padding: '6px 20px' }}
+                style={{ borderRadius: 'var(--radius-sm)', padding: '6px 20px' }}
               >
                 {isImporting ? '导入中...' : '开始导入'}
               </button>

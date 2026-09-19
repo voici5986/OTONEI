@@ -19,7 +19,7 @@ const DeviceDebugger = ({ show = false }) => {
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         color: 'white',
         padding: '10px',
-        borderRadius: '5px',
+        borderRadius: 'var(--radius-xs)',
         fontSize: '12px',
         zIndex: 'var(--z-index-overlay)',
         maxWidth: '300px',

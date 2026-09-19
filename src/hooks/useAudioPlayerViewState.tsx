@@ -156,7 +156,13 @@ const useAudioPlayerViewState = (): AudioPlayerViewState => {
   useEffect(() => {
     if (lyricExpanded && currentLyricIndex >= 0 && lyricsContainerRef.current) {
       const activeLine = lyricsContainerRef.current.querySelector('.active');
-      activeLine?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      activeLine?.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'center',
+      });
     }
   }, [currentLyricIndex, lyricExpanded, lyricsContainerRef]);
 

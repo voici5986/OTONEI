@@ -8,13 +8,14 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 56px;
+    height: calc(var(--navbar-height-mobile) + var(--safe-area-top));
+    box-sizing: border-box;
     background-color: transparent;
     /* 改为透明 */
-    z-index: 1000;
+    z-index: var(--z-index-navbar);
     display: flex;
     align-items: center;
-    padding: 0 16px;
+    padding: var(--safe-area-top) 16px 0;
     border-bottom: none;
     /* 移除底边框，追求极致极简 */
   }
@@ -32,21 +33,38 @@
     background-color: var(--color-background) !important;
     height: 36px;
     /* 对齐桌面端高度 */
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--color-border-subtle);
     /* 对齐桌面端边框色 */
   }
 
-  /* 合体逻辑：聚焦时抹平底部 */
+  /* 聚焦状态：与联想面板合体。这是形态变化，指针操作时同样保留。 */
   .mobile-search-container:focus-within .mobile-search-field-wrapper {
     background-color: var(--color-background) !important;
-    border-color: var(--color-border-subtle);
     box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.08);
     /* 恢复极其轻微的深灰阴影，不显脏 */
+  }
+
+  /* 蓝框只在键盘导航时出现，覆盖整个搜索框（图标 + 输入框 + 清除按钮）。
+     transition-property: none 是因为容器自身的 transition: all 会让焦点提示淡入。 */
+  html[data-nav='keyboard'] .mobile-search-container:focus-within .mobile-search-field-wrapper {
+    border-color: var(--color-border-active);
+    transition-property: none;
+  }
+
+  /* 联想面板展开时：搜索条底部让位给面板，蓝框由面板接续，两者仍是一体 */
+  .mobile-search-container.is-suggestions-open:focus-within .mobile-search-field-wrapper {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     border-bottom-color: transparent;
+  }
+
+  html[data-nav='keyboard']
+    .mobile-search-container.is-suggestions-open:focus-within
+    .mobile-search-suggestions {
+    border-top: none;
+    border-color: var(--color-border-active);
   }
 
   .mobile-search-icon {
@@ -71,12 +89,6 @@
     outline: none !important;
   }
 
-  .mobile-search-input:focus-visible,
-  .mobile-search-clear-btn:focus-visible {
-    outline: var(--focus-ring) !important;
-    outline-offset: 2px;
-  }
-
   /* 彻底移除原生 X，避免视觉重叠 */
   .mobile-search-input::-webkit-search-cancel-button,
   .mobile-search-input::-webkit-search-decoration,
@@ -93,15 +105,15 @@
     left: 0;
     right: 0;
     background-color: var(--color-background);
-    z-index: 1100;
+    z-index: var(--z-index-suggestions);
     max-height: 70vh;
     display: flex;
     /* 改为 flex 布局 */
     flex-direction: column;
     border: 1px solid var(--color-border-subtle);
     border-top: none;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
     box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
     animation: slideDownMobile 0.2s ease-out;
   }
@@ -137,14 +149,14 @@
   }
 
   .app-container:not(.desktop-layout) .main-content {
-    padding-top: 54px;
+    padding-top: calc(var(--navbar-height-mobile) + var(--safe-area-top));
   }
 }
 
 /* 4. 用户头像与主内容间距 (移动端通用) */
 .header-user-profile {
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   transition: background 0.1s ease;
 }

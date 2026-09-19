@@ -1,8 +1,10 @@
 # OTONEI UI 样式系统
 
-最近复核：2026-09-18
+最近复核：2026-09-19
 
-本项目保留 Bootstrap 的 grid、flex 和 spacing 工具类；组件的视觉规则、交互状态和控件命中区使用 `src/styles/theme.css` 的设计令牌与 `src/styles/primitives.css` 的基础原语。这样可以逐步收拢样式，而不要求一次性重写现有页面。
+> 本文只描述原语与交互尺寸的**实现细节**。视觉规则、令牌语义、组件形态和禁止事项以 [`UI_DESIGN_SPEC.md`](./UI_DESIGN_SPEC.md) 为准。
+
+本项目保留 Bootstrap 的 grid、flex 和 spacing 工具类；组件的视觉规则、交互状态、圆角和控件命中区使用 `src/styles/theme.css` 的设计令牌与 `src/styles/primitives.css` 的基础原语。圆角统一使用 `--radius-xs`、`--radius-sm`、`--radius-md`、`--radius-full` 四档；旧 `--border-radius-*` 只作为兼容别名保留。
 
 ## 交互尺寸
 

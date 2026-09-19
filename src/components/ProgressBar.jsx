@@ -102,6 +102,10 @@ const ProgressBar = () => {
 
   const currentTimeInSeconds = (totalSeconds * displayProgress) / 100;
 
+  // 静置时是细线，悬停 / 拖动 / 触摸时变粗。高度只在这里决定，并引用令牌，
+  // 不要在 CSS 里再写一遍——两边都写就得靠 !important 互相压制。
+  const isProgressActive = isHovering || isDragging || isTouched;
+
   return (
     <div
       className="progress-wrapper"
@@ -137,7 +141,7 @@ const ProgressBar = () => {
             whiteSpace: 'nowrap',
             backgroundColor: 'var(--card-background, #fff)', // 使用主题背景色
             padding: '4px 10px',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius-sm)',
             boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
             zIndex: 'var(--z-index-player-base)',
             border: '1px solid var(--color-border, rgba(0,0,0,0.1))',
@@ -164,10 +168,10 @@ const ProgressBar = () => {
       )}
 
       <div
-        className={`progress ${isHovering || isDragging || isTouched ? 'is-active' : ''}`}
+        className={`progress ${isProgressActive ? 'is-active' : ''}`}
         style={{
-          height: isHovering || isDragging || isTouched ? '6px' : '3px',
-          minHeight: '3px',
+          height: isProgressActive ? 'var(--progress-height-hover)' : 'var(--progress-height)',
+          minHeight: 'var(--progress-height)',
           position: 'relative',
           transition: 'height 0.2s ease',
           backgroundColor: 'transparent',
@@ -181,7 +185,7 @@ const ProgressBar = () => {
           style={{
             width: `${displayProgress}%`,
             height: '100%',
-            minHeight: '3px',
+            minHeight: 'var(--progress-height)',
             transition: 'none',
             backgroundColor: 'var(--color-accent, #ff4d4f)',
             border: 'none',
