@@ -63,6 +63,9 @@ logs
 .project
 .classpath
 
+# AI 助手在本地的记忆/索引目录，不参与构建与检查
+.workbuddy-ai/
+
 # 操作系统文件
 Thumbs.db
 ehthumbs.db

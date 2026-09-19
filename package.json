@@ -22,6 +22,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "lint": "oxlint . --deny-warnings",
+    "lint:css": "stylelint \"src/**/*.css\" --max-warnings=41",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "test": "vitest run",
@@ -34,7 +35,7 @@
     "lint:ox:check": "oxlint . --deny-warnings",
     "format:ox": "oxfmt --write .",
     "format:ox:check": "oxfmt --check .",
-    "verify:release": "pnpm run check:toolchain && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test:coverage && pnpm run build && pnpm run test:e2e && pnpm run test:e2e:pwa && pnpm audit --prod",
+    "verify:release": "pnpm run check:toolchain && pnpm run format:check && pnpm run lint && pnpm run lint:css && pnpm run typecheck && pnpm run test:coverage && pnpm run build && pnpm run test:e2e && pnpm run test:e2e:pwa && pnpm audit --prod",
     "prepare": "husky",
     "release": "semantic-release --no-ci"
   },
@@ -45,6 +46,9 @@
     ],
     "*.{json,jsonc,json5,css,scss,html,md,yaml,yml}": [
       "pnpm exec oxfmt --write"
+    ],
+    "*.css": [
+      "pnpm exec stylelint"
     ]
   },
   "browserslist": {
@@ -82,6 +86,7 @@
     "oxfmt": "^0.68.0",
     "oxlint": "^1.83.0",
     "semantic-release": "^25.0.9",
+    "stylelint": "^17.15.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0",
     "vite-plugin-env-compatible": "^2.0.1",
