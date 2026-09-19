@@ -85,26 +85,58 @@
 
 ### 2.1 语义令牌
 
-| 令牌                     | 值        | 用途                         | 禁止                     |
-| :----------------------- | :-------- | :--------------------------- | :----------------------- |
-| `--color-primary`        | `#2383e2` | 主操作、焦点环、链接、选中态 | 大面积背景填充           |
-| `--color-primary-light`  | `#3391ee` | 主色 hover（仅按钮）         | 文字色                   |
-| `--color-primary-dark`   | `#1f71c2` | 主色 active / hover 加深     | 文字色                   |
-| `--color-on-solid`       | `#ffffff` | 实色表面上的前景色           | 用作背景填充             |
-| `--color-background`     | `#ffffff` | 页面与容器底色               | **用作文字色**（见 2.4） |
-| `--color-background-alt` | `#f7f7f5` | 次级区域、输入框底、hover 底 | 大面积主背景             |
-| `--color-hover-notion`   | `#efefee` | 列表项、卡片 hover           | 静态背景                 |
-| `--color-text-primary`   | `#2f3437` | 标题、正文、图标默认色       | —                        |
-| `--color-text-secondary` | `#6b6f76` | 描述文字、次级按钮文字       | 长段落正文               |
-| `--color-text-tertiary`  | `#91918e` | 图标默认色、弱提示           | 关键信息                 |
-| `--color-text-muted`     | `#9b9a97` | placeholder、禁用态          | 可读信息                 |
-| `--color-border`         | `#e5e5e5` | 容器边界、结构性分隔         | 装饰性强调               |
-| `--color-border-active`  | `#2383e2` | 输入框聚焦边框               | —                        |
-| `--color-accent`         | `#d15c5c` | 收藏（红心）、强调动作       | 主操作按钮               |
-| `--color-danger`         | `#e74c3c` | 危险操作、错误提示           | 普通强调                 |
-| `--color-success`        | `#28a745` | 成功状态                     | —                        |
-| `--color-warning`        | `#ffc107` | 警告状态                     | —                        |
-| `--color-info`           | `#17a2b8` | 信息提示                     | —                        |
+| 令牌                             | 值                          | 用途                         | 禁止                     |
+| :------------------------------- | :-------------------------- | :--------------------------- | :----------------------- |
+| `--color-primary`                | `#2383e2`                   | 主操作、焦点环、链接、选中态 | 大面积背景填充           |
+| `--color-primary-light`          | `#3391ee`                   | 主色 hover（仅按钮）         | 文字色                   |
+| `--color-primary-dark`           | `#1f71c2`                   | 主色 active / hover 加深     | 文字色                   |
+| `--color-on-solid`               | `#ffffff`                   | 实色表面上的前景色           | 用作背景填充             |
+| `--color-danger-dark`            | `#dc3545`                   | 危险按钮底色（白字）         | 普通强调                 |
+| `--color-danger-hover`           | `#d32f2f`                   | 危险按钮 hover / active      | 普通强调                 |
+| `--color-accent-light`           | `#e06d6d`                   | 强调色 hover                 | 主操作按钮               |
+| `--color-background`             | `#ffffff`                   | 页面与容器底色               | **用作文字色**（见 2.4） |
+| `--color-background-alt`         | `#f7f7f5`                   | 次级区域、输入框底、hover 底 | 大面积主背景             |
+| `--color-hover-notion`           | `#efefee`                   | 列表项、卡片 hover           | 静态背景                 |
+| `--color-hover-strong`           | `#f1f1ef`                   | 强 hover / 选中背景          | 静态主背景               |
+| `--color-text-primary`           | `#2f3437`                   | 标题、正文、图标默认色       | —                        |
+| `--color-text-secondary`         | `#6b6f76`                   | 描述文字、次级按钮文字       | 长段落正文               |
+| `--color-text-tertiary`          | `#91918e`                   | 图标默认色、弱提示           | 关键信息                 |
+| `--color-text-muted`             | `#9b9a97`                   | placeholder、禁用态          | 可读信息                 |
+| `--color-border`                 | `#e5e5e5`                   | 容器边界、结构性分隔         | 装饰性强调               |
+| `--color-border-active`          | `#2383e2`                   | 输入框聚焦边框               | —                        |
+| `--color-border-subtle`          | `rgba(15, 15, 15, 0.1)`     | 轻量边界、顶栏分隔           | 强结构边界               |
+| `--color-accent`                 | `#d15c5c`                   | 收藏（红心）、强调动作       | 主操作按钮               |
+| `--color-danger`                 | `#e74c3c`                   | 危险操作、错误提示           | 普通强调                 |
+| `--color-danger-text`            | `#721c24`                   | 危险提示文字                 | 普通正文                 |
+| `--color-danger-background`      | `#f8d7da`                   | 危险提示背景                 | 页面主背景               |
+| `--color-danger-border`          | `#f5c6cb`                   | 危险提示边框                 | 装饰性边框               |
+| `--color-success`                | `#28a745`                   | 成功状态                     | —                        |
+| `--color-success-text`           | `#155724`                   | 成功提示文字                 | 普通正文                 |
+| `--color-success-background`     | `#d4edda`                   | 成功提示背景                 | 页面主背景               |
+| `--color-success-border`         | `#c3e6cb`                   | 成功提示边框                 | 装饰性边框               |
+| `--color-warning`                | `#ffc107`                   | 警告状态                     | —                        |
+| `--color-info`                   | `#17a2b8`                   | 信息提示                     | —                        |
+| `--color-info-text`              | `#0c5460`                   | 信息提示文字                 | 普通正文                 |
+| `--color-info-background`        | `#d1ecf1`                   | 信息提示背景                 | 页面主背景               |
+| `--color-info-border`            | `#bee5eb`                   | 信息提示边框                 | 装饰性边框               |
+| `--color-danger-soft`            | `#fef2f2`                   | 危险区域浅色背景             | 页面主背景               |
+| `--color-danger-strong`          | `#eb5757`                   | 危险提示强调文字             | 普通正文                 |
+| `--color-danger-soft-strong`     | `#fee2e2`                   | 危险区域 hover / 强调背景    | 页面主背景               |
+| `--color-overlay-dark`           | `rgba(0, 0, 0, 0.7)`        | 深色遮罩、播放器遮罩         | 普通背景                 |
+| `--color-overlay-backdrop`       | `rgba(0, 0, 0, 0.4)`        | 模态/抽屉遮罩                | 内容背景                 |
+| `--color-overlay-heavy`          | `rgba(0, 0, 0, 0.25)`       | 强阴影、重叠层               | 文字色                   |
+| `--color-overlay-strong`         | `rgba(0, 0, 0, 0.2)`        | 浮层阴影、强调遮罩           | 文字色                   |
+| `--color-overlay-medium`         | `rgba(0, 0, 0, 0.15)`       | 中等阴影、分隔层             | 文字色                   |
+| `--color-overlay-light`          | `rgba(0, 0, 0, 0.1)`        | 轻量阴影、边界层             | 文字色                   |
+| `--color-overlay-subtle`         | `rgba(0, 0, 0, 0.05)`       | 微弱分隔、骨架层             | 文字色                   |
+| `--color-white-overlay`          | `rgba(255, 255, 255, 0.2)`  | 白色高光叠层                 | 普通背景                 |
+| `--color-white-transparent`      | `rgba(255, 255, 255, 0)`    | 透明白色渐变端点             | 可见填充                 |
+| `--color-surface-translucent`    | `rgba(255, 255, 255, 0.85)` | 半透明顶栏表面               | 不透明内容背景           |
+| `--color-neutral-overlay-medium` | `rgba(15, 15, 15, 0.15)`    | 深灰中等阴影                 | 文字色                   |
+| `--color-neutral-overlay-subtle` | `rgba(15, 15, 15, 0.05)`    | 深灰微弱分隔                 | 文字色                   |
+| `--color-neutral-overlay-light`  | `rgba(15, 15, 15, 0.08)`    | 深灰轻量阴影                 | 文字色                   |
+| `--color-accent-overlay`         | `rgba(209, 92, 92, 0.3)`    | 收藏/强调叠层                | 主操作背景               |
+| `--color-icon-shadow`            | `rgba(31, 31, 31, 0.25)`    | 图标投影                     | 正文或背景色             |
 
 ### 2.2 文本色层级
 
@@ -310,7 +342,7 @@ MiSans 可变字体（`font-weight: 100 900`），单文件 `public/MiSansVF.wof
 | `--ease-standard`   | `ease-out`                     | 大多数状态变化       |
 | `--ease-emphasized` | `cubic-bezier(0.4, 0, 0.2, 1)` | 布局变化、大元素进出 |
 
-现状有 3 条自定义 `ease-*` 曲线（`--ease-in-out` / `--ease-out-back` / `--ease-out-circ`）。保留上述两条，其余在改动相关样式时归并。（原为 5 条，其中 `--ease-in-back` / `--ease-in-circ` 零引用，已于 2026-09-19 删除。）
+现状有 2 条自定义 `ease-*` 曲线（`--ease-in-out` / `--ease-out-circ`）。`--ease-out-back` 本轮因唯一引用已移除；原为 5 条的另外两条（`--ease-in-back` / `--ease-in-circ`）已于 2026-09-19 删除。
 
 ### 7.3 禁止
 
@@ -714,7 +746,7 @@ Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint �
 | 字重   | `--font-weight-normal` / `-medium` / `-bold`                                                                                                          | `--font-weight-semibold`                                 |
 | 间距   | `--spacing-xs` / `-sm` / `-md` / `-lg` / `-xl`                                                                                                        | `--spacing-compact` / `--spacing-2xl`                    |
 | 圆角   | `--radius-xs` / `--radius-sm` / `--radius-md` / `--radius-full`（旧 `--border-radius-*` 为兼容别名）                                                  | —                                                        |
-| 动效   | `--transition-fast` / `-normal`，`--ease-*`（3 条）                                                                                                   | `--duration-*` / `--ease-standard` / `--ease-emphasized` |
+| 动效   | `--transition-fast` / `-normal`，`--ease-*`（2 条）                                                                                                   | `--duration-*` / `--ease-standard` / `--ease-emphasized` |
 | 阴影   | `--shadow-sm` / `-md` / `-lg`                                                                                                                         | —                                                        |
 | 层级   | `--z-index-*`（全表见 `ZINDEX_AUDIT.md`）                                                                                                             | —                                                        |
 | 控件   | `--control-hit-size` / `--control-hit-size-coarse` / `--control-visual-size` / `--button-min-height` / `--focus-ring` / `--focus-ring-offset`         | —                                                        |
@@ -741,25 +773,27 @@ Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint �
 
 统计口径：`src/` 下全部 CSS 文件（`.jsx` / `.tsx` 内联样式单独标注）。颜色一项单列组件层，因为 `theme.css` 变量定义区内的色值是合法的。每行的详细口径见对应章节。
 
-| 项                             | 现状                                   | 目标      | 口径                                              |
-| :----------------------------- | :------------------------------------- | :-------- | :------------------------------------------------ |
-| 硬编码颜色（hex，组件层）      | **0 处**                               | 0         | 排除 `theme.css`，按声明统计                      |
-| 硬编码颜色（含 `rgba()`）      | **0 处**                               | 0         | 同上，注释中的示例不计入                          |
-| 硬编码颜色（`components.css`） | **0 处**                               | 0         | Stylelint 口径                                    |
-| `!important`                   | **390 处**                             | 逐步归零  | 声明级计数                                        |
-| 硬编码 `z-index`               | **0 处**（CSS/JS）                     | 0         | `index.html` 首屏 Loading 的 1 处为变量加载前例外 |
-| 字号取值                       | 25 种                                  | 7 档      | 含 `theme.css`，共 87 处                          |
-| 圆角取值                       | 4 档令牌                               | 4 档      | `0` / `50%` / `inherit` 为结构性例外              |
-| 断点取值                       | 7 种                                   | 3 档      | `@media` 的 width 数值，共 23 条                  |
-| 动效时长                       | 12 种（交互 7 / 加载 5）               | 交互 3 档 | 含 `animation-duration` / `-delay`                |
-| 缓动曲线                       | 3 条自定义 `--ease-*`                  | 2 条      | `theme.css` 变量定义；原记 5 条系误记             |
-| 图标尺寸                       | 10 种                                  | 7 档      | react-icons `size={N}`，含 `.tsx`                 |
-| 间距网格外值                   | 12 种                                  | 0         | 含 `calc()` 内 px，共 61 处                       |
-| `font-weight: 600`             | 19 处                                  | 1 个令牌  | CSS 16 + JSX 内联 3                               |
-| `aria-label`                   | 32 处                                  | 保持      | 严格匹配，不含 `aria-labelledby`                  |
-| `prefers-reduced-motion`       | 已补齐（`index.css` 末尾高特异性兜底） | 保持      | 见 §7.4                                           |
-| Stylelint 阻断级存量           | **0 处**                               | 0         | 门禁已接入，见 §14.3；`--max-warnings=0`          |
-| 令牌零采用                     | 9 个                                   | 0         | 见下方说明；目标是改为引用它们，不是删除          |
+| 项                             | 现状                                   | 目标      | 口径                                                     |
+| :----------------------------- | :------------------------------------- | :-------- | :------------------------------------------------------- |
+| 硬编码颜色（hex，组件层）      | **0 处**                               | 0         | 排除 `theme.css`，按声明统计                             |
+| 硬编码颜色（含 `rgba()`）      | **0 处**                               | 0         | 同上，注释中的示例不计入                                 |
+| 硬编码颜色（`components.css`） | **0 处**                               | 0         | Stylelint 口径                                           |
+| `!important`                   | **390 处**                             | 逐步归零  | 声明级计数                                               |
+| 硬编码 `z-index`               | **0 处**（CSS/JS）                     | 0         | `index.html` 首屏 Loading 的 1 处为变量加载前例外        |
+| 字号取值                       | 25 种                                  | 7 档      | 含 `theme.css`，共 87 处                                 |
+| 圆角取值                       | 4 档令牌                               | 4 档      | `0` / `50%` / `inherit` 为结构性例外                     |
+| 断点取值                       | 7 种                                   | 3 档      | `@media` 的 width 数值，共 23 条                         |
+| 动效时长                       | 12 种（交互 7 / 加载 5）               | 交互 3 档 | 含 `animation-duration` / `-delay`                       |
+| 缓动曲线                       | 2 条自定义 `--ease-*`                  | 2 条      | `theme.css` 变量定义；`--ease-out-back` 本轮因零引用删除 |
+| 图标尺寸                       | 10 种                                  | 7 档      | react-icons `size={N}`，含 `.tsx`                        |
+| 间距网格外值                   | 12 种                                  | 0         | 含 `calc()` 内 px，共 61 处                              |
+| `font-weight: 600`             | 19 处                                  | 1 个令牌  | CSS 16 + JSX 内联 3                                      |
+| `aria-label`                   | 32 处                                  | 保持      | 严格匹配，不含 `aria-labelledby`                         |
+| `prefers-reduced-motion`       | 已补齐（`index.css` 末尾高特异性兜底） | 保持      | 见 §7.4                                                  |
+| Stylelint 阻断级存量           | **0 处**                               | 0         | 门禁已接入，见 §14.3；`--max-warnings=0`                 |
+| 规范待采用令牌（零引用）       | 9 个                                   | 逐步采用  | 见下方说明；规范词汇保留，不因暂时零引用删除             |
+| 圆角兼容别名（零引用）         | 4 个                                   | 保留      | 兼容历史调用方，不作为新代码用法                         |
+| 基础状态色（零引用）           | 4 个                                   | 保留      | 公开语义调色板；按钮使用其可读的派生色                   |
 
 死样式文件 `UserProfile.css`、`FirebaseStatus.css` 已删除；旧组件选择器也已按运行时引用清理。颜色存量数字应以 Stylelint 实际输出为准。
 
@@ -769,20 +803,23 @@ Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint �
 
 历史上门禁口径与手工统计有差异（例如 hex 曾为手工 24 处、Stylelint 20 处），原因是 Stylelint 只解析 CSS 声明值，不计注释与 data URI。当前上表已按迁移后的零基线更新；**后续以 `pnpm run lint:css` 的数字为准**，旧手工统计仅作历史记录。
 
-**令牌零采用（9 个）**：`--font-size-base`、`--font-size-lg`、`--font-weight-normal`、`--font-weight-bold`、`--line-height-base`、`--spacing-lg`、`--spacing-xl`（含移动端媒体查询里的覆盖）、`--shadow-lg`、`--control-visual-size`。
+**零引用令牌的分类**：
 
-这 9 个**不是死令牌，不能删**——它们是规范明确要求使用、而代码在这些位置写了字面量的令牌。例如 §11.1 说图标按钮统一用 `--control-visual-size`、§3.4 说单行文本用 `--line-height-base`、§6.2 说强浮层用 `--shadow-lg`，但实际全部零引用。它们比"死令牌"更能说明收敛工作的真正难点：**令牌早就备好了，缺的是采用。**
+- **规范待采用（9 个）**：`--font-size-base`、`--font-size-lg`、`--font-weight-normal`、`--font-weight-bold`、`--line-height-base`、`--spacing-lg`、`--spacing-xl`（含移动端媒体查询里的覆盖）、`--shadow-lg`、`--control-visual-size`。这些令牌是规范词汇，目标是逐步改为引用，不能按死样式删除。
+- **兼容别名（4 个）**：`--border-radius-sm`、`--border-radius-md`、`--border-radius-lg`、`--border-radius`。它们为历史调用方保留；新代码统一使用 `--radius-*`。
+- **基础状态色（4 个）**：`--color-danger`、`--color-success`、`--color-warning`、`--color-info`。它们属于公开语义调色板，即使暂时零引用也保留；清除按钮使用 `--color-danger-dark` / `--color-danger-hover` 以满足白字对比度。
 
-2026-09-19 已清理 **30 个**真正零引用的遗留令牌；这 9 个必须保留并推广使用。
+本轮已移除唯一无引用且不属于公开规范词汇的 `--ease-out-back`；零引用清理只针对这类真正的死令牌。
 
 ### 15.3 已知冲突
 
-1. **旧圆角别名仍存在**，用于兼容历史调用方；新代码必须使用 `--radius-*` 四档令牌。
-2. **Bootstrap 依赖未移除**，导致大量 `!important` 对抗性写法（390 处）。它同时干扰焦点环：`.nav-link:focus-visible { outline: 0; box-shadow: rgba(13, 110, 253, 0.25) … }` 会覆盖焦点环并叠加 Bootstrap 自己的蓝色光晕。§12.4 的全局策略因此必须带 `!important`，移除 Bootstrap 后可以摘掉。移除 Bootstrap 是解决 `!important` 泛滥的根因，应作为独立重构任务。
-3. **移动端顶部安全区已纳入布局**：`viewport-fit=cover` 下，移动端 Header 使用 `--safe-area-top`，主内容从同一组 `--navbar-height-mobile + --safe-area-top` 计算留白，原先 54px 的 2px 差异已消除。
-4. **进度条高度已收敛**（2026-09-19）：改动前的实际状态比原先记录的更乱——高度逻辑写在 `ProgressBar.jsx` 的**内联样式**里，又被 4 处 `!important` 规则覆盖，**内联值从未生效**。现在高度只由 `ProgressBar.jsx` 引用 `--progress-height` / `--progress-height-hover` 给出，`index.css` 不再声明 `height`。唯一视觉变化是桌面悬停由 7px 收敛为 6px。详见 §10.5。
-5. **硬编码 `z-index` 已清零**（2026-09-19）：侧边栏、播放器关闭按钮、两套 Header、两套搜索联想框和输入图标均已改为语义令牌；`index.html` 首屏 Loading 保留 1 处变量加载前例外。
-6. **模态层级已与播放器错开**：`--z-index-modal` / `--z-index-modal-content` 调整为 10010 / 10011，高于播放器强制展开层，不再依赖样式表顺序。
+1. **零引用令牌按类别处理**：§15.2 的 9 个规范待采用令牌继续推广使用；4 个圆角别名和 4 个基础状态色属于兼容/API 表面，保留。只有不属于这些类别且无引用的死令牌才进入删除范围。
+2. **旧圆角别名仍存在**，用于兼容历史调用方；新代码必须使用 `--radius-*` 四档令牌。
+3. **Bootstrap 依赖未移除**，导致大量 `!important` 对抗性写法（390 处）。它同时干扰焦点环：`.nav-link:focus-visible { outline: 0; box-shadow: rgba(13, 110, 253, 0.25) … }` 会覆盖焦点环并叠加 Bootstrap 自己的蓝色光晕。§12.4 的全局策略因此必须带 `!important`，移除 Bootstrap 后可以摘掉。移除 Bootstrap 是解决 `!important` 泛滥的根因，应作为独立重构任务。
+4. **移动端顶部安全区已纳入布局**：`viewport-fit=cover` 下，移动端 Header 使用 `--safe-area-top`，主内容从同一组 `--navbar-height-mobile + --safe-area-top` 计算留白，原先 54px 的 2px 差异已消除。
+5. **进度条高度已收敛**（2026-09-19）：改动前的实际状态比原先记录的更乱——高度逻辑写在 `ProgressBar.jsx` 的**内联样式**里，又被 4 处 `!important` 规则覆盖，**内联值从未生效**。现在高度只由 `ProgressBar.jsx` 引用 `--progress-height` / `--progress-height-hover` 给出，`index.css` 不再声明 `height`。唯一视觉变化是桌面悬停由 7px 收敛为 6px。详见 §10.5。
+6. **硬编码 `z-index` 已清零**（2026-09-19）：侧边栏、播放器关闭按钮、两套 Header、两套搜索联想框和输入图标均已改为语义令牌；`index.html` 首屏 Loading 保留 1 处变量加载前例外。
+7. **模态层级已与播放器错开**：`--z-index-modal` / `--z-index-modal-content` 调整为 10010 / 10011，高于播放器强制展开层，不再依赖样式表顺序。
 
 ---
 
