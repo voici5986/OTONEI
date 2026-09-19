@@ -22,7 +22,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "lint": "oxlint . --deny-warnings",
-    "lint:css": "stylelint \"src/**/*.css\" --max-warnings=41",
+    "lint:css": "stylelint \"src/**/*.css\" --max-warnings=0",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "test": "vitest run",

@@ -1,9 +1,9 @@
 /**
  * 样式门禁（Stylelint）
  *
- * 目的不是一次清零，而是"只减不增"：现有存量以 warning 形式统计，
- * `pnpm run lint:css` 用 --max-warnings 卡住上限，新增违规会让命令失败。
- * 取到上限后应下调，不要上调。存量清单见 docs/guides/UI_DESIGN_SPEC.md §15.2。
+ * 组件层颜色字面量统一迁移到 theme.css 语义令牌，
+ * `pnpm run lint:css` 用 --max-warnings=0 保证后续不再引入新的颜色字面量。
+ * 令牌定义仍集中在 theme.css；收敛范围见 docs/guides/UI_DESIGN_SPEC.md §15.2。
  *
  * 规则说明：
  * - 只拦 UI_DESIGN_SPEC §13.1 的**阻断级**项：硬编码颜色与 z-index 魔法数字。
@@ -22,7 +22,7 @@ export default {
     // 组件样式中禁止颜色字面量
     'color-no-hex': true,
     'declaration-property-value-disallowed-list': {
-      '/^(color|background|background-color|border|border-color|border-top-color|border-bottom-color|border-left-color|border-right-color|outline|outline-color|box-shadow|fill|stroke)$/':
+      '/^(color|background|background-color|border|border-(top|right|bottom|left)(-color)?|border-color|outline|outline-color|box-shadow|fill|stroke)$/':
         [/rgb\(/, /rgba\(/, /hsl\(/, /hsla\(/],
     },
     // 层级只允许令牌或结构性取值

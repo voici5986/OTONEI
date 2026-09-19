@@ -691,15 +691,15 @@ MiSans 可变字体（`font-weight: 100 900`），单文件 `public/MiSansVF.wof
 
 Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint 承担。配置在仓库根目录的 `stylelint.config.mjs`——**本文不复制配置内容**，避免两处漂移。
 
-策略是**"只减不增"**，而不是一次性清零：
+策略是先收敛存量，再以零告警门禁防止回归：
 
 - 只拦 §13.1 的**阻断级**两项：硬编码颜色（含 `rgb()` / `rgba()` / `hsl()`——`color-no-hex` 管不住这些，必须另配 `declaration-property-value-disallowed-list`）与 `z-index` 魔法数字。
   §13.2 的圆角 / 字号存量上百处，纳入只会淹没阻断级信号，属于 §15.2 的收敛工程，暂不启用。
-- 规则统一为 `warning` 严重度，由 `pnpm run lint:css` 的 `--max-warnings` 卡住上限。新增违规会让命令失败；**修好存量的应当下调这个上限，不要上调**。
-- 当前基线 **41**。删除未使用样式并完成令牌迁移后，较上一轮 62 条告警下降；门禁只允许继续下调。
+- 规则统一为 `warning` 严重度；`package.json` 中的 `pnpm run lint:css` 固定使用 `--max-warnings=0`，拒绝任何存量或新增告警。
+- 当前基线 **0**。颜色字面量已迁移到 `theme.css` 语义令牌；后续新增违规必须在合并前修复。
 - `theme.css` 整文件放开，但这是**语义豁免**：它现在只有令牌定义，而令牌定义本身就需要字面量色值。组件类已迁到 `src/styles/components.css`，与其余组件层一样受检。
 
-上一轮基线为 62；本轮删除两个未引用样式文件、清理旧组件选择器并完成一批圆角/层级迁移后，Stylelint 实测为 41 条 warning。**基线只允许下调。**
+历史记录：上一轮基线为 62；随后删除两个未引用样式文件、清理旧组件选择器并完成圆角/层级迁移后，基线降至 41。本轮完成组件颜色令牌迁移，Stylelint 实测为 **0 条 warning**。
 
 已接进 `verify:release`，所以 CI（`.github/workflows/ci.yml`）与 `release.ps1` 都会执行。**在这条门禁建立之前，规范只能靠人工遵守，这正是它此前失效的原因。**
 
@@ -743,9 +743,9 @@ Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint �
 
 | 项                             | 现状                                   | 目标      | 口径                                              |
 | :----------------------------- | :------------------------------------- | :-------- | :------------------------------------------------ |
-| 硬编码颜色（hex，组件层）      | 24 处                                  | 0         | 排除 `theme.css`，见下方分布                      |
-| 硬编码颜色（含 `rgba()`）      | **55 处**                              | 0         | 同上，`rgba()` 占 31 处                           |
-| 硬编码颜色（`components.css`） | 12 处                                  | 0         | hex 9 + `rgba()` 3，Stylelint 口径                |
+| 硬编码颜色（hex，组件层）      | **0 处**                               | 0         | 排除 `theme.css`，按声明统计                      |
+| 硬编码颜色（含 `rgba()`）      | **0 处**                               | 0         | 同上，注释中的示例不计入                          |
+| 硬编码颜色（`components.css`） | **0 处**                               | 0         | Stylelint 口径                                    |
 | `!important`                   | **390 处**                             | 逐步归零  | 声明级计数                                        |
 | 硬编码 `z-index`               | **0 处**（CSS/JS）                     | 0         | `index.html` 首屏 Loading 的 1 处为变量加载前例外 |
 | 字号取值                       | 25 种                                  | 7 档      | 含 `theme.css`，共 87 处                          |
@@ -758,7 +758,7 @@ Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint �
 | `font-weight: 600`             | 19 处                                  | 1 个令牌  | CSS 16 + JSX 内联 3                               |
 | `aria-label`                   | 32 处                                  | 保持      | 严格匹配，不含 `aria-labelledby`                  |
 | `prefers-reduced-motion`       | 已补齐（`index.css` 末尾高特异性兜底） | 保持      | 见 §7.4                                           |
-| Stylelint 阻断级存量           | 41 处                                  | 0         | 门禁已接入，见 §14.3；基线只允许下调、不允许上调  |
+| Stylelint 阻断级存量           | **0 处**                               | 0         | 门禁已接入，见 §14.3；`--max-warnings=0`          |
 | 令牌零采用                     | 9 个                                   | 0         | 见下方说明；目标是改为引用它们，不是删除          |
 
 死样式文件 `UserProfile.css`、`FirebaseStatus.css` 已删除；旧组件选择器也已按运行时引用清理。颜色存量数字应以 Stylelint 实际输出为准。
@@ -767,7 +767,7 @@ Oxlint 不检查 CSS，Oxfmt 只管格式，样式层面的约束由 Stylelint �
 
 焦点环已于 2026-09-19 收敛（见 §12.4）：原先 **18 个选择器**各自声明焦点环，其中 8 处硬编码色值、offset 有 `var(--focus-ring-offset)` / `2px` / `3px` / `4px` / `-3px` 五种写法；还有 3 处输入类元素用 `:focus` + 蓝色边框。现在统一由 `index.css` 的全局策略提供，组件层不再保留任何焦点环声明，只留上述两处刻意例外。
 
-门禁口径与上表的手工统计有差异（例如 hex：手工 24 处、Stylelint 20 处），原因是 Stylelint 只解析 CSS 声明值，不计注释与 data URI。**后续以 `pnpm run lint:css` 的数字为准**，手工统计仅作历史记录。
+历史上门禁口径与手工统计有差异（例如 hex 曾为手工 24 处、Stylelint 20 处），原因是 Stylelint 只解析 CSS 声明值，不计注释与 data URI。当前上表已按迁移后的零基线更新；**后续以 `pnpm run lint:css` 的数字为准**，旧手工统计仅作历史记录。
 
 **令牌零采用（9 个）**：`--font-size-base`、`--font-size-lg`、`--font-weight-normal`、`--font-weight-bold`、`--line-height-base`、`--spacing-lg`、`--spacing-xl`（含移动端媒体查询里的覆盖）、`--shadow-lg`、`--control-visual-size`。
 
