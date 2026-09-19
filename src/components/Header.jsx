@@ -298,7 +298,7 @@ const Header = ({
             onClick={() => onTabChange('user')}
           >
             <div className="header-user-info text-end me-3 d-none d-xl-block">
-              <div className="user-name small fw-bold text-truncate" style={{ maxWidth: '120px' }}>
+              <div className="small fw-bold text-truncate" style={{ maxWidth: '120px' }}>
                 {currentUser ? currentUser.displayName || '已登录用户' : '未登录'}
               </div>
               <div className="user-status text-muted" style={{ fontSize: '0.7rem' }}>

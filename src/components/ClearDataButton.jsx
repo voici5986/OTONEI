@@ -281,7 +281,7 @@ const ClearDataButton = ({
                 style={{
                   padding: '8px 20px',
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'var(--bs-danger)',
+                  backgroundColor: 'var(--color-danger-dark)',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
                   display: 'inline-flex',
@@ -291,12 +291,12 @@ const ClearDataButton = ({
                 }}
                 onMouseEnter={(e) => {
                   if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = '#d32f2f';
+                    e.currentTarget.style.backgroundColor = 'var(--color-danger-hover)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = 'var(--bs-danger)';
+                    e.currentTarget.style.backgroundColor = 'var(--color-danger-dark)';
                   }
                 }}
               >

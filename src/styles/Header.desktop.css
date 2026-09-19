@@ -43,7 +43,7 @@
 /* 聚焦状态：与联想面板合体。这是形态变化，指针操作时同样保留。 */
 .header-search-container:focus-within .header-search-field-wrapper {
   background-color: var(--color-background);
-  box-shadow: 0 8px 20px -5px var(--color-neutral-overlay);
+  box-shadow: 0 8px 20px -5px var(--color-border-subtle);
 }
 
 /* 蓝框只在键盘导航时出现，覆盖整个搜索框（图标 + 输入框 + 清除按钮）。

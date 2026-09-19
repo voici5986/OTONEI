@@ -22,6 +22,8 @@
   /* 功能性颜色 */
   --color-success: #28a745;
   --color-danger: #e74c3c;
+  --color-danger-dark: #dc3545;
+  --color-danger-hover: #d32f2f;
   --color-warning: #ffc107;
   --color-info: #17a2b8;
   --color-accent: #d15c5c;
@@ -64,7 +66,6 @@
   --color-white-overlay: rgba(255, 255, 255, 0.2);
   --color-white-transparent: rgba(255, 255, 255, 0);
   --color-surface-translucent: rgba(255, 255, 255, 0.85);
-  --color-neutral-overlay: rgba(15, 15, 15, 0.1);
   --color-neutral-overlay-medium: rgba(15, 15, 15, 0.15);
   --color-neutral-overlay-subtle: rgba(15, 15, 15, 0.05);
   --color-neutral-overlay-light: rgba(15, 15, 15, 0.08);
@@ -137,7 +138,6 @@
 
   /* ===== 动画曲线 ===== */
   --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
-  --ease-out-back: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --ease-out-circ: cubic-bezier(0.08, 0.82, 0.17, 1);
 
   /* ===== 组件特定变量 ===== */

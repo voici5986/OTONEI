@@ -230,7 +230,7 @@
 }
 
 .data-mgmt-dropdown {
-  background: var(--color-surface);
+  background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   margin-top: 4px;
@@ -294,7 +294,7 @@
 /* 长卡片样式 */
 .long-card,
 .setting-card {
-  background: var(--color-surface);
+  background: var(--color-background);
   border-radius: var(--radius-md);
   /* 调整为 10px */
   padding: 14px 18px;
@@ -455,7 +455,7 @@
 
   .long-card,
   .setting-card {
-    /* 移动端保持边框，或者根据 pre.html 移除？ pre.html 有 border: 1px solid #E9E9E7 */
+    /* 移动端保留边框，与 pre.html 设计一致 */
     border: 1px solid var(--color-border);
   }
 
