@@ -42,7 +42,7 @@
   /* 聚焦状态：与联想面板合体。这是形态变化，指针操作时同样保留。 */
   .mobile-search-container:focus-within .mobile-search-field-wrapper {
     background-color: var(--color-background) !important;
-    box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.08);
+    box-shadow: 0 8px 20px -5px var(--color-neutral-overlay-light);
     /* 恢复极其轻微的深灰阴影，不显脏 */
   }
 
@@ -114,7 +114,7 @@
     border-top: none;
     border-bottom-left-radius: var(--radius-md);
     border-bottom-right-radius: var(--radius-md);
-    box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
+    box-shadow: 0 20px 35px -5px var(--color-neutral-overlay-medium);
     animation: slideDownMobile 0.2s ease-out;
   }
 

@@ -57,7 +57,7 @@
     transition:
       transform 0.2s ease,
       background-color 0.2s ease;
-    box-shadow: 0 4px 12px rgba(209, 92, 92, 0.3);
+    box-shadow: 0 4px 12px var(--color-accent-overlay);
   }
 
   .play-pause-button:hover {
@@ -105,7 +105,7 @@
   /* 高度与 min-height 由 ProgressBar.jsx 依据播放状态给出（引用 --progress-height /
      --progress-height-hover），这里只保留桌面端特有的底纹。 */
   .progress-control-container .progress {
-    background-color: rgba(0, 0, 0, 0.05) !important;
+    background-color: var(--color-overlay-subtle) !important;
   }
 
   .progress-control-container .progress-bar {
@@ -174,7 +174,7 @@
     max-width: 100% !important;
     max-height: 100% !important;
     border-radius: var(--radius-md) !important;
-    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 25px 70px var(--color-overlay-heavy) !important;
   }
 
   .desktop-expanded-view .lyrics-section {

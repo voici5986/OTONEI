@@ -74,7 +74,7 @@ button.stats-item-notion {
 }
 
 .stats-card-notion .minimal-action-btn:hover {
-  background-color: #fef2f2 !important;
+  background-color: var(--color-danger-soft) !important;
   /* 针对清除按钮的浅红背景 */
-  color: #eb5757 !important;
+  color: var(--color-danger-strong) !important;
 }

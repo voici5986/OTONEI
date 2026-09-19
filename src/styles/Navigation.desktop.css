@@ -108,7 +108,7 @@
 
 .logo-pulse:hover {
   animation-play-state: paused;
-  filter: drop-shadow(0 0 3px rgba(31, 31, 31, 0.25));
+  filter: drop-shadow(0 0 3px var(--color-icon-shadow));
 }
 
 /* 导航栏整体动画 */

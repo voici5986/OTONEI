@@ -10,14 +10,14 @@
   /* 让开左侧固定侧边栏 */
   left: var(--sidebar-width);
   height: var(--navbar-height-desktop);
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: var(--color-surface-translucent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: var(--z-index-navbar);
   padding: 0 40px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(15, 15, 15, 0.05);
+  border-bottom: 1px solid var(--color-neutral-overlay-subtle);
   transition: left var(--transition-normal);
 }
 
@@ -43,7 +43,7 @@
 /* 聚焦状态：与联想面板合体。这是形态变化，指针操作时同样保留。 */
 .header-search-container:focus-within .header-search-field-wrapper {
   background-color: var(--color-background);
-  box-shadow: 0 8px 20px -5px rgba(15, 15, 15, 0.1);
+  box-shadow: 0 8px 20px -5px var(--color-neutral-overlay);
 }
 
 /* 蓝框只在键盘导航时出现，覆盖整个搜索框（图标 + 输入框 + 清除按钮）。
@@ -116,7 +116,7 @@ html[data-nav='keyboard']
   border-top: none;
   border-bottom-left-radius: var(--radius-md);
   border-bottom-right-radius: var(--radius-md);
-  box-shadow: 0 20px 35px -5px rgba(15, 15, 15, 0.15);
+  box-shadow: 0 20px 35px -5px var(--color-neutral-overlay-medium);
   z-index: var(--z-index-suggestions);
   animation: suggestionFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   max-height: 600px;
@@ -274,7 +274,7 @@ html[data-nav='keyboard']
   font-size: 14px;
   font-weight: 400;
   color: var(--color-text-secondary);
-  border-top: 1px solid rgba(15, 15, 15, 0.05);
+  border-top: 1px solid var(--color-neutral-overlay-subtle);
   flex-shrink: 0;
   /* 拒绝被滚动条挤压 */
   background-color: var(--color-background);
