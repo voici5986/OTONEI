@@ -970,9 +970,16 @@ export const requestSync = async (uid, reason = 'unknown') => {
         queuedRerunUid = null;
         queuedRerunWaiters = [];
         if (nextUid) {
-          void requestSync(nextUid, 'queued').then((result) => {
-            waiters.forEach((resolve) => resolve(result));
-          });
+          void requestSync(nextUid, 'queued')
+            .then((result) => {
+              waiters.forEach((resolve) => resolve(result));
+            })
+            .catch((error) => {
+              logger.error('排队中的同步请求失败:', error);
+              waiters.forEach((resolve) =>
+                resolve({ success: false, error: error?.message || String(error) })
+              );
+            });
         } else {
           waiters.forEach((resolve) =>
             resolve({ success: false, error: '排队中的同步请求已取消' })

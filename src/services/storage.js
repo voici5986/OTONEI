@@ -205,16 +205,36 @@ export const MAX_FAVORITE_TOMBSTONES = 500;
 
 const toPersistedTrack = (track) => {
   const normalized = normalizeTrackIdentity(track);
-  const album = typeof normalized.album === 'string' ? normalized.album : normalized.album?.name;
-  return {
+  const albumRecord =
+    normalized.album && typeof normalized.album === 'object' ? normalized.album : null;
+  const album = typeof normalized.album === 'string' ? normalized.album : albumRecord?.name;
+  const hasCoverText = (value) => typeof value === 'string' && value.trim() !== '';
+  const hasNonAlbumCover = [
+    normalized.picUrl,
+    normalized.pic_url,
+    normalized.cover,
+    normalized.coverUrl,
+    normalized.image,
+    normalized.img,
+    normalized.al?.picUrl,
+    normalized.al?.pic_url,
+  ].some(hasCoverText);
+  const persisted = {
     ...normalized,
-    // Firestore 的共享字段始终使用标量字符串；本地仍保留其它来源字段，
-    // 以便播放/封面等现有功能继续读取它们。
+    // 本地与 Firestore 共用标量 artist/album 字段；仅在其它封面候选为空时，
+    // 才把专辑对象里的封面地址提升到顶层，避免标量化后丢失 album.picUrl fallback。
     artist: getTrackArtist(normalized),
     album: String(album ?? '').slice(0, 300),
     pic_id: normalized.pic_id == null ? null : String(normalized.pic_id).slice(0, 500),
     lyric_id: normalized.lyric_id == null ? null : String(normalized.lyric_id).slice(0, 500),
   };
+  if (!hasNonAlbumCover && !hasCoverText(persisted.picUrl) && hasCoverText(albumRecord?.picUrl)) {
+    persisted.picUrl = albumRecord.picUrl;
+  }
+  if (!hasNonAlbumCover && !hasCoverText(persisted.pic_url) && hasCoverText(albumRecord?.pic_url)) {
+    persisted.pic_url = albumRecord.pic_url;
+  }
+  return persisted;
 };
 
 export async function getFavoritesStrict(userId) {

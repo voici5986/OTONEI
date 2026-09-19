@@ -199,6 +199,42 @@ describe('storage service', () => {
     ).toBe(true);
   });
 
+  it('preserves an album cover fallback when album metadata is scalarized', async () => {
+    await expect(
+      saveFavorites([
+        {
+          id: 'album-cover-track',
+          source: 'netease',
+          album: { name: 'Album', picUrl: 'https://example.test/album.jpg' },
+        },
+      ])
+    ).resolves.toBe(true);
+
+    await expect(getFavorites()).resolves.toMatchObject([
+      {
+        album: 'Album',
+        picUrl: 'https://example.test/album.jpg',
+      },
+    ]);
+  });
+
+  it('keeps a higher-priority direct cover when album metadata also has a cover', async () => {
+    await expect(
+      saveFavorites([
+        {
+          id: 'direct-cover-track',
+          source: 'netease',
+          pic_url: 'https://example.test/direct.jpg',
+          album: { name: 'Album', picUrl: 'https://example.test/album.jpg' },
+        },
+      ])
+    ).resolves.toBe(true);
+
+    const [saved] = await getFavorites();
+    expect(saved.pic_url).toBe('https://example.test/direct.jpg');
+    expect(saved.picUrl).toBeUndefined();
+  });
+
   it('bounds favorite tombstones to a recent window', async () => {
     const tombstones = Array.from({ length: MAX_FAVORITE_TOMBSTONES + 1 }, (_, index) => ({
       id: index,
