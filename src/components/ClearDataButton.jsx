@@ -220,7 +220,7 @@ const ClearDataButton = ({
                     style={{
                       transition: 'background 0.2s',
                       backgroundColor: 'var(--color-background-alt)',
-                      marginBottom: '4px',
+                      marginBottom: 'var(--spacing-xs)',
                       border: '1px solid var(--color-border)',
                     }}
                   >
@@ -270,7 +270,7 @@ const ClearDataButton = ({
               <button
                 className="minimal-action-btn"
                 onClick={handleClose}
-                style={{ padding: '8px 16px' }}
+                style={{ padding: 'var(--spacing-sm) var(--spacing-md)' }}
               >
                 取消
               </button>
@@ -279,7 +279,7 @@ const ClearDataButton = ({
                 onClick={handleClearData}
                 disabled={loading || !Object.values(selectedOptions).some((v) => v)}
                 style={{
-                  padding: '8px 20px',
+                  padding: 'var(--spacing-sm) 20px',
                   borderRadius: 'var(--radius-sm)',
                   backgroundColor: 'var(--color-danger-dark)',
                   cursor: 'pointer',
@@ -352,12 +352,12 @@ const ClearDataButton = ({
         className={`minimal-action-btn ${variant === 'danger' ? 'text-danger' : ''} d-flex align-items-center justify-content-center ${className}`}
         onClick={handleShow}
         style={{
-          padding: '8px 16px',
+          padding: 'var(--spacing-sm) var(--spacing-md)',
           borderRadius: 'var(--radius-sm)',
           backgroundColor: 'transparent',
           border: 'none',
           fontSize: '15px',
-          fontWeight: '500',
+          fontWeight: 'var(--font-weight-medium)',
           transition: 'background 0.15s ease, transform 0.12s ease',
           height: '40px',
           color: variant === 'danger' ? '#EB5757' : 'inherit',

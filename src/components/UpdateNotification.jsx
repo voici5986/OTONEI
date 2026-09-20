@@ -89,7 +89,7 @@ const UpdateNotification = () => {
             </button>
           </div>
           <div className="toast-body-custom" style={{ padding: '20px' }}>
-            <p className="mb-4" style={{ fontSize: '1rem', lineHeight: '1.5' }}>
+            <p className="mb-4" style={{ fontSize: 'var(--font-size-base)', lineHeight: '1.5' }}>
               OTONEI 有重要的更新可用。为了获得最佳体验，建议您立即更新。
             </p>
             <div className="d-grid">
@@ -97,10 +97,10 @@ const UpdateNotification = () => {
                 onClick={() => updateServiceWorker(true)}
                 className="d-flex align-items-center justify-content-center btn-primary-custom"
                 style={{
-                  padding: '12px',
-                  fontSize: '1rem',
+                  padding: 'var(--spacing-compact)',
+                  fontSize: 'var(--font-size-base)',
                   width: '100%',
-                  fontWeight: '600',
+                  fontWeight: 'var(--font-weight-semibold)',
                 }}
               >
                 <FaSync className="me-2" />
@@ -151,7 +151,7 @@ const UpdateNotification = () => {
             <button
               onClick={() => updateServiceWorker(true)}
               className="d-flex align-items-center btn-primary-custom"
-              style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+              style={{ padding: '6px var(--spacing-md)', fontSize: '0.85rem' }}
             >
               <FaSync className="me-1" />
               <span>立即更新</span>

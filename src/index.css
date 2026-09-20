@@ -24,10 +24,8 @@ html[data-nav='pointer'] :focus-visible {
   outline: none !important;
 }
 
-/* 用长写而非 outline 简写：简写会被 Bootstrap 的 .nav-link:focus-visible { outline: 0 }
- * 之类的规则拆散，出现"粗细来自这里、颜色来自那里"的混合结果。
- * !important 同样是冲着 Bootstrap 去的——焦点环是全局无障碍策略，不允许被组件样式库覆盖。
- * Bootstrap 移除后（见 UI_DESIGN_SPEC.md 15.3）这段可以去掉 !important。 */
+/* 用长写而非 outline 简写，避免组件焦点规则只覆盖其中一部分，
+ * 出现"粗细来自这里、颜色来自那里"的混合结果。全局焦点环必须压过组件样式。 */
 html[data-nav='keyboard'] :focus-visible {
   outline-style: solid !important;
   outline-width: var(--focus-ring-width) !important;
@@ -35,12 +33,9 @@ html[data-nav='keyboard'] :focus-visible {
   outline-offset: var(--focus-ring-offset) !important;
 }
 
-/* 焦点环必须即时出现。组件里有
-     .navigation-sidebar .navbar-nav .nav-link { transition: all 0.2s ease !important }
-   这类声明：transition: all 会把 outline-color / outline-offset 也纳入过渡，
+/* 焦点环必须即时出现。组件里的 transition: all 会把 outline-color / outline-offset 纳入过渡，
    于是焦点环从 currentColor 淡入（先灰后蓝），不同元素的出现速度不一致。
-   该声明的权重是 (0,3,0)，普通写法压不住，因此这里用等价的冗余条件
-   :focus-visible:focus 把权重提到 (0,3,1)。 */
+   因此这里用等价的冗余条件 :focus-visible:focus 提高选择器权重。 */
 html[data-nav='keyboard'] :focus-visible:focus {
   transition-property: none !important;
 }
@@ -52,8 +47,7 @@ html[data-nav='keyboard'] .mobile-search-input:focus-visible {
   outline: none !important;
 }
 
-/* Bootstrap 给导航链接和按钮加了 rgba(13, 110, 253, 0.25) 的蓝色光晕，
- * 那是 Bootstrap 自己的蓝，与我们的焦点环重复且撞色，需要中和。 */
+/* 导航链接和按钮不再叠加浏览器或组件库默认的蓝色光晕，避免与统一焦点环撞色。 */
 html[data-nav='keyboard'] .nav-link:focus-visible,
 html[data-nav='keyboard'] .btn:focus-visible {
   box-shadow: none;
@@ -75,7 +69,7 @@ html[data-nav='keyboard'] .btn:focus-visible {
   background: var(--color-text-primary);
   border: none;
   color: var(--color-on-solid);
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .btn:hover {
@@ -141,7 +135,7 @@ html[data-nav='keyboard'] .btn:focus-visible {
 
 /* 美化专辑封面 (移除投影与缩放) */
 img.rounded {
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--radius-md);
   transition: all 0.2s ease;
 }
 
@@ -160,7 +154,7 @@ img.rounded {
 .dropdown-toggle {
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  padding: 0.6rem 1rem;
+  padding: 0.6rem var(--spacing-md);
   transition: all 0.3s var(--ease-in-out);
 }
 
@@ -169,15 +163,15 @@ img.rounded {
  * 主要样式已迁移至 AudioPlayer.css，此处仅保留基础占位逻辑
  */
 .fixed-bottom {
-  border-top: none !important;
-  box-shadow: none !important;
+  border-top: none;
+  box-shadow: none;
   /* 移除冗余阴影，由 AudioPlayer.css 统一管理 */
-  z-index: var(--z-index-bootstrap-fixed);
+  z-index: var(--z-index-fixed-bottom);
 }
 
 @media (max-width: 768px) {
   .fixed-bottom {
-    height: auto !important;
+    height: auto;
     padding: 10px;
   }
 }
@@ -206,7 +200,7 @@ img.rounded {
 /* 加载动画增强 (移除投影) */
 .spinner-border {
   animation-duration: 0.8s;
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 /* 卡片加载骨架屏 */
@@ -273,7 +267,7 @@ img.rounded {
 .lyric-line.active {
   transform: scale(1.05);
   color: var(--color-text-primary) !important;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   border-radius: var(--radius-xs);
   padding-left: 5px !important;
   padding-right: 5px !important;
@@ -311,7 +305,7 @@ img.rounded {
 }
 
 .current-lyric {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 

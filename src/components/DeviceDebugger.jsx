@@ -20,13 +20,13 @@ const DeviceDebugger = ({ show = false }) => {
         color: 'white',
         padding: '10px',
         borderRadius: 'var(--radius-xs)',
-        fontSize: '12px',
+        fontSize: 'var(--font-size-2xs)',
         zIndex: 'var(--z-index-overlay)',
         maxWidth: '300px',
         overflowX: 'auto',
       }}
     >
-      <h5 style={{ fontSize: '14px', marginBottom: '5px' }}>设备信息</h5>
+      <h5 style={{ fontSize: 'var(--font-size-sm)', marginBottom: '5px' }}>设备信息</h5>
       <div>
         <strong>设备类型:</strong> {deviceInfo.deviceType}
       </div>

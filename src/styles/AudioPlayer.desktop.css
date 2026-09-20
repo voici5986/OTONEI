@@ -42,7 +42,7 @@
 
   /* 播放控制按钮特定样式 */
   .control-icon-btn.accent-control {
-    opacity: 1 !important;
+    opacity: 1;
   }
 
   .play-pause-button {
@@ -51,9 +51,9 @@
     color: var(--color-on-solid);
     width: 45px;
     height: 45px;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition:
       transform 0.2s ease,
       background-color 0.2s ease;
@@ -93,13 +93,13 @@
     top: 0;
     left: 0;
     right: 0;
-    width: 100% !important;
-    max-width: none !important;
+    width: 100%;
+    max-width: none;
     margin: 0;
     padding: 0;
-    height: var(--progress-height) !important;
+    height: var(--progress-height);
     z-index: var(--z-index-interaction);
-    line-height: 1 !important;
+    line-height: 1;
   }
 
   /* 高度与 min-height 由 ProgressBar.jsx 依据播放状态给出（引用 --progress-height /
@@ -115,56 +115,56 @@
 
   /* 桌面端全屏展开视图样式（仿移动端沉浸式，但适配大屏布局） */
   .desktop-expanded-view {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important; /* 桌面端全屏覆盖，包括播放器栏高度 */
-    height: 100vh !important;
-    padding: 40px 60px !important;
-    background-color: var(--card-background) !important;
-    z-index: var(--z-index-player-expanded) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0; /* 桌面端全屏覆盖，包括播放器栏高度 */
+    height: 100vh;
+    padding: 40px 60px;
+    background-color: var(--card-background);
+    z-index: var(--z-index-player-expanded);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .desktop-expanded-view .close-lyrics-btn {
-    position: absolute !important;
-    top: 30px !important;
-    right: 40px !important;
-    z-index: var(--z-index-interaction) !important;
-    color: var(--color-text-secondary) !important;
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    z-index: var(--z-index-interaction);
+    color: var(--color-text-secondary);
   }
 
   .desktop-expanded-view .expanded-main-wrapper {
-    display: flex !important;
-    flex-direction: row !important; /* 左右布局 */
-    gap: 100px !important;
-    max-width: 1400px !important; /* 增大最大宽度以配合黄金比例 */
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 auto !important;
-    padding: 0 40px !important;
-    align-items: center !important;
+    display: flex;
+    flex-direction: row; /* 左右布局 */
+    gap: 100px;
+    max-width: 1400px; /* 增大最大宽度以配合黄金比例 */
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 40px;
+    align-items: center;
   }
 
   .desktop-expanded-view .album-info-section {
-    width: 35% !important; /* 黄金比例：封面占 35% */
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
-    border-right: none !important;
-    padding-right: 0 !important;
+    width: 35%; /* 黄金比例：封面占 35% */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-right: none;
+    padding-right: 0;
   }
 
   .desktop-expanded-view .album-cover-container {
-    width: 100% !important;
-    max-width: 550px !important; /* 适当增大封面上限 */
-    aspect-ratio: 1/1 !important;
-    margin-bottom: 0 !important;
+    width: 100%;
+    max-width: 550px; /* 适当增大封面上限 */
+    aspect-ratio: 1/1;
+    margin-bottom: 0;
   }
 
   .desktop-expanded-view .album-cover-large,
@@ -173,50 +173,44 @@
     height: 100% !important;
     max-width: 100% !important;
     max-height: 100% !important;
-    border-radius: var(--radius-md) !important;
-    box-shadow: 0 25px 70px var(--color-overlay-heavy) !important;
+    border-radius: var(--radius-md);
+    box-shadow: 0 25px 70px var(--color-overlay-heavy);
   }
 
   .desktop-expanded-view .lyrics-section {
-    width: 65% !important; /* 黄金比例：歌词占 65% */
-    padding-left: 20px !important;
-    height: 85vh !important; /* 使用用户调整后的高度 */
-    display: flex !important;
-    flex-direction: column !important;
+    width: 65%; /* 黄金比例：歌词占 65% */
+    padding-left: 20px;
+    height: 85vh; /* 使用用户调整后的高度 */
+    display: flex;
+    flex-direction: column;
   }
 
   .desktop-expanded-view .lyrics-scroll-container {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 15%,
-      black 85%,
-      transparent 100%
-    ) !important;
+    flex: 1;
+    overflow-y: auto;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
       black 15%,
       black 85%,
       transparent 100%
-    ) !important;
+    );
   }
 
   .desktop-expanded-view .lyric-line {
     font-size: 1.2rem !important;
     padding: 15px 0 !important;
     text-align: left !important; /* 桌面端左对齐更有现代感 */
-    transition: all 0.3s ease !important;
-    opacity: 0.4 !important;
+    transition: all 0.3s ease;
+    opacity: 0.4;
     color: var(--color-text-secondary) !important;
   }
 
   .desktop-expanded-view .lyric-line.active {
-    opacity: 1 !important;
+    opacity: 1;
     font-size: 1.4rem !important;
-    font-weight: 700 !important;
+    font-weight: var(--font-weight-bold) !important;
     color: var(--color-accent) !important;
   }
 
@@ -230,6 +224,13 @@
 @media (min-width: 769px) {
   .mobile-mini-player,
   .mobile-progress-container {
-    display: none !important;
+    display: none;
+  }
+}
+
+/* 769–991px 显示底部 Tab 时，桌面播放器也要避开 Tab 的命中区。 */
+@media (min-width: 769px) and (max-width: 991.98px) {
+  .audio-player.collapsed {
+    bottom: max(var(--mobile-tab-bar-height), 60px);
   }
 }

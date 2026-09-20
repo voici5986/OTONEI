@@ -1,0 +1,573 @@
+/*
+ * Local Bootstrap-compatible utilities.
+ *
+ * This is intentionally limited to the classes currently used by the app. It
+ * keeps the existing JSX vocabulary while allowing the runtime to remove the
+ * Bootstrap stylesheet dependency. Values follow Bootstrap 5's defaults
+ * unless the application already owns a semantic token for that value.
+ */
+
+/* Bootstrap's Reboot supplied these invariants globally. Keep them local so
+ * grid gutters and controls have the same sizing model without the framework. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  margin: 0;
+  font: inherit;
+  line-height: inherit;
+}
+
+body {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-base);
+  text-align: left;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+}
+
+/* Reboot also supplied heading sizes. Keep the two non-gradient values here
+ * so removing Bootstrap does not make an unstyled h1/h3 fall back to the
+ * browser's 2em/1.17em defaults. The other levels use the app's typography
+ * tokens. */
+h1 {
+  font-size: 2.5rem;
+}
+h2 {
+  font-size: var(--font-size-2xl);
+}
+h3 {
+  font-size: 1.75rem;
+}
+h4 {
+  font-size: var(--font-size-xl);
+}
+h5 {
+  font-size: var(--font-size-lg);
+}
+h6 {
+  font-size: var(--font-size-base);
+}
+
+p,
+ul,
+ol,
+dl {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Layout and flex utilities */
+.d-none {
+  display: none !important;
+}
+.d-block {
+  display: block !important;
+}
+.d-flex {
+  display: flex !important;
+}
+.d-grid {
+  display: grid;
+}
+.flex-column {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.flex-grow-1 {
+  flex-grow: 1;
+}
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+.align-items-start {
+  align-items: flex-start;
+}
+.align-items-center {
+  align-items: center;
+}
+.align-items-stretch {
+  align-items: stretch;
+}
+.justify-content-center {
+  justify-content: center;
+}
+.justify-content-between {
+  justify-content: space-between;
+}
+.justify-content-end {
+  justify-content: flex-end;
+}
+.gap-2 {
+  gap: var(--spacing-sm);
+}
+.gap-3 {
+  gap: var(--spacing-md);
+}
+.gap-4 {
+  gap: var(--spacing-lg);
+}
+
+/* Spacing utilities (Bootstrap's 0-5 scale, plus the values in this app).
+ * The marked entries intentionally keep Bootstrap's important precedence:
+ * their JSX callers compose with component shorthands such as modal padding,
+ * navigation margins, and the expanded mobile progress container. */
+.m-0 {
+  margin: 0;
+}
+.mt-0 {
+  margin-top: 0;
+}
+.mt-1 {
+  margin-top: var(--spacing-xs);
+}
+.mt-2 {
+  margin-top: var(--spacing-sm);
+}
+.mt-3 {
+  margin-top: var(--spacing-md);
+}
+.mt-4 {
+  margin-top: var(--spacing-lg);
+}
+.mt-5 {
+  margin-top: var(--spacing-2xl);
+}
+.mb-0 {
+  margin-bottom: 0;
+}
+.mb-1 {
+  margin-bottom: var(--spacing-xs);
+}
+.mb-2 {
+  margin-bottom: var(--spacing-sm);
+}
+.mb-3 {
+  margin-bottom: var(--spacing-md);
+}
+.mb-4 {
+  margin-bottom: var(--spacing-lg);
+}
+.mb-5 {
+  margin-bottom: var(--spacing-2xl);
+}
+.ms-0 {
+  margin-left: 0;
+}
+.ms-1 {
+  margin-left: var(--spacing-xs);
+}
+.ms-2 {
+  margin-left: var(--spacing-sm);
+}
+.ms-3 {
+  margin-left: var(--spacing-md);
+}
+.ms-auto {
+  margin-left: auto;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.me-1 {
+  margin-right: var(--spacing-xs);
+}
+.me-2 {
+  margin-right: var(--spacing-sm);
+}
+.me-3 {
+  margin-right: var(--spacing-md);
+}
+.mx-auto {
+  margin-right: auto;
+  margin-left: auto;
+}
+.mx-2 {
+  margin-right: var(--spacing-sm) !important;
+  margin-left: var(--spacing-sm) !important;
+}
+.mx-3 {
+  margin-right: var(--spacing-md);
+  margin-left: var(--spacing-md);
+}
+.my-5 {
+  margin-top: var(--spacing-2xl);
+  margin-bottom: var(--spacing-2xl);
+}
+.p-0 {
+  padding: 0;
+}
+.p-2 {
+  padding: var(--spacing-sm);
+}
+.p-3 {
+  padding: var(--spacing-md);
+}
+.p-4 {
+  padding: var(--spacing-lg);
+}
+.px-0 {
+  padding-right: 0;
+  padding-left: 0;
+}
+.px-4 {
+  padding-right: var(--spacing-lg) !important;
+  padding-left: var(--spacing-lg) !important;
+}
+.py-2 {
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+}
+.py-4 {
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+}
+.py-5 {
+  padding-top: var(--spacing-2xl);
+  padding-bottom: var(--spacing-2xl);
+}
+.ps-1 {
+  padding-left: var(--spacing-xs);
+}
+.ps-3 {
+  padding-left: var(--spacing-md);
+}
+.pe-1 {
+  padding-right: var(--spacing-xs);
+}
+.pt-0 {
+  padding-top: 0 !important;
+}
+.pt-4 {
+  padding-top: var(--spacing-lg);
+}
+.pb-0 {
+  padding-bottom: 0 !important;
+}
+.pb-2 {
+  padding-bottom: var(--spacing-sm);
+}
+
+/* Dimensions, typography, borders and common visual helpers */
+.w-100 {
+  width: 100%;
+}
+.h-100 {
+  height: 100%;
+}
+.text-muted {
+  color: var(--color-text-muted);
+}
+.text-primary {
+  color: var(--color-text-primary);
+}
+.text-danger {
+  color: var(--color-danger);
+}
+.text-center {
+  text-align: center;
+}
+.text-end {
+  text-align: right;
+}
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.text-white {
+  color: var(--color-on-solid);
+}
+.small {
+  font-size: var(--font-size-sm);
+}
+.fw-bold {
+  font-weight: var(--font-weight-bold);
+}
+.opacity-75 {
+  opacity: 0.75;
+}
+.rounded {
+  border-radius: var(--radius-sm);
+}
+.rounded-circle {
+  border-radius: 50%;
+}
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+.border-0 {
+  border: 0 !important;
+}
+.border-top {
+  border-top: 1px solid var(--color-border);
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+
+/* Bootstrap grid */
+.container-fluid {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: var(--spacing-compact);
+  padding-left: var(--spacing-compact);
+}
+.row {
+  --grid-gutter-x: var(--spacing-lg);
+  --grid-gutter-y: 0;
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(-1 * var(--grid-gutter-y));
+  margin-right: calc(-0.5 * var(--grid-gutter-x));
+  margin-left: calc(-0.5 * var(--grid-gutter-x));
+}
+:where(.row > *) {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  padding-right: calc(0.5 * var(--grid-gutter-x));
+  padding-left: calc(0.5 * var(--grid-gutter-x));
+  margin-top: var(--grid-gutter-y);
+}
+.row.m-0 {
+  margin: 0;
+}
+.g-3 {
+  --grid-gutter-x: var(--spacing-md);
+  --grid-gutter-y: var(--spacing-md);
+}
+.col-4 {
+  flex: 0 0 auto;
+  width: 33.33333333%;
+}
+.col-8 {
+  flex: 0 0 auto;
+  width: 66.66666667%;
+}
+.col-12 {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/* Navigation and collapse primitives */
+.navbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+}
+.navbar-brand {
+  padding-top: 0.3125rem;
+  padding-bottom: 0.3125rem;
+  margin-right: var(--spacing-md);
+  font-size: var(--font-size-lg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.navbar-toggler {
+  padding: var(--spacing-xs) var(--spacing-compact);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+}
+.navbar-toggler-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  background-image:
+    linear-gradient(var(--color-text-primary), var(--color-text-primary)),
+    linear-gradient(var(--color-text-primary), var(--color-text-primary)),
+    linear-gradient(var(--color-text-primary), var(--color-text-primary));
+  background-position:
+    center 25%,
+    center 50%,
+    center 75%;
+  background-repeat: no-repeat;
+  background-size: 100% 10%;
+}
+.navbar-collapse {
+  flex-basis: 100%;
+  flex-grow: 1;
+  align-items: center;
+}
+.navbar-nav {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+}
+.nav-item {
+  display: block;
+}
+.nav-link {
+  display: block;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: 0;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+.collapse:not(.show) {
+  display: none;
+}
+.collapse.show {
+  display: block;
+}
+
+/* Buttons and form checks */
+.btn {
+  display: inline-block;
+  padding: 0.375rem var(--spacing-compact);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.btn-primary {
+  color: var(--color-on-solid);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.btn-outline-danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.btn-outline-success {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+.form-check {
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.5em;
+  margin-bottom: 0.125rem;
+}
+.form-check-input {
+  float: left;
+  width: 1em;
+  height: 1em;
+  margin-top: 0.25em;
+  margin-left: -1.5em;
+  vertical-align: top;
+  accent-color: var(--color-primary);
+}
+.form-check-label {
+  cursor: pointer;
+}
+
+/* Utility classes compose with the form-check primitive just as they did in
+ * Bootstrap, where spacing/display utilities were marked important. */
+.form-check.d-flex {
+  display: flex;
+}
+.form-check.p-2 {
+  padding: var(--spacing-sm);
+}
+.form-check-input.ms-0 {
+  margin-left: 0;
+}
+.form-check-input.mt-0 {
+  margin-top: 0;
+}
+.fixed-bottom {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--z-index-fixed-bottom);
+}
+
+@media (min-width: 768px) {
+  .d-md-none {
+    display: none !important;
+  }
+  .d-md-block {
+    display: block !important;
+  }
+  .d-md-flex {
+    display: flex !important;
+  }
+  .col-md-6 {
+    flex: 0 0 auto;
+    width: 50%;
+  }
+  .mx-md-4 {
+    margin-right: var(--spacing-lg) !important;
+    margin-left: var(--spacing-lg) !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .d-lg-none {
+    display: none !important;
+  }
+  .d-lg-block {
+    display: block !important;
+  }
+  .d-lg-flex {
+    display: flex !important;
+  }
+  .navbar-expand-lg .navbar-toggler {
+    display: none;
+  }
+  .navbar-expand-lg .navbar-collapse {
+    display: flex;
+    flex-basis: auto;
+  }
+  .navbar-expand-lg .navbar-nav {
+    flex-direction: row;
+  }
+  .order-lg-last {
+    order: 6;
+  }
+  .col-lg-4 {
+    flex: 0 0 auto;
+    width: 33.33333333%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .d-xl-none {
+    display: none !important;
+  }
+  .d-xl-block {
+    display: block !important;
+  }
+  .d-xl-flex {
+    display: flex !important;
+  }
+}

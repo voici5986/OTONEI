@@ -129,7 +129,11 @@ const User = ({ onTabChange }) => {
                   </div>
                   <p
                     className="text-muted"
-                    style={{ fontSize: '0.75rem', lineHeight: '1.4', marginBottom: '12px' }}
+                    style={{
+                      fontSize: 'var(--font-size-2xs)',
+                      lineHeight: '1.4',
+                      marginBottom: 'var(--spacing-compact)',
+                    }}
                   >
                     清除所有本地缓存、收藏和历史记录。此操作不可撤销。
                   </p>
@@ -140,7 +144,7 @@ const User = ({ onTabChange }) => {
                       backgroundColor: 'var(--color-background-alt)',
                       border: '1px solid var(--color-border)',
                       borderRadius: 'var(--radius-sm)',
-                      fontSize: '14px',
+                      fontSize: 'var(--font-size-sm)',
                     }}
                   />
                 </div>

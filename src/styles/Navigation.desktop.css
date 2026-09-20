@@ -1,12 +1,12 @@
 /* 桌面端顶部导航栏样式 */
 .navbar {
-  box-shadow: none !important;
-  border-bottom: 1px solid var(--color-border) !important;
-  background-color: var(--card-background) !important;
+  box-shadow: none;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--card-background);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: all 0.3s ease;
-  padding: 0.2rem 1rem !important;
+  padding: 0.2rem var(--spacing-md);
   position: sticky;
   top: 0;
   z-index: var(--z-index-navbar);
@@ -14,8 +14,8 @@
 }
 
 .navbar-collapse {
-  background-color: transparent !important;
-  box-shadow: none !important;
+  background-color: transparent;
+  box-shadow: none;
   transition: all 0.3s ease;
 }
 
@@ -26,10 +26,10 @@
   position: relative;
   overflow: hidden;
   min-height: var(--button-min-height);
-  padding: 0.5rem 0.8rem !important;
+  padding: var(--spacing-sm) 0.8rem;
   margin: 0 0.3rem;
   border-radius: var(--radius-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   background: transparent;
   color: inherit;
   text-align: left;
@@ -58,8 +58,8 @@
 }
 
 .navbar .nav-link.active {
-  color: var(--color-text-primary) !important;
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
   background-color: var(--color-background-alt);
 }
 
@@ -116,8 +116,8 @@
   animation: navFadeIn 0.5s ease-out;
 }
 
-/* 移动端隐藏桌面导航 */
-@media (max-width: 768px) {
+/* lg 断点以下使用移动导航，桌面导航必须彻底退出布局。 */
+@media (max-width: 991.98px) {
   .navbar {
     display: none !important;
   }
@@ -125,105 +125,105 @@
 
 /* 桌面端侧边栏模式下的适配 */
 .navigation-sidebar .navbar {
-  flex-direction: column !important;
-  height: 100% !important;
-  align-items: flex-start !important;
-  padding: 32px 16px !important;
-  border-bottom: none !important;
-  background-color: transparent !important;
-  position: relative !important;
-  top: 0 !important;
-  width: 100% !important;
+  flex-direction: column;
+  height: 100%;
+  align-items: flex-start;
+  padding: var(--spacing-xl) var(--spacing-md);
+  border-bottom: none;
+  background-color: transparent;
+  position: relative;
+  top: 0;
+  width: 100%;
 }
 
 .navigation-sidebar .container-fluid {
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  height: 100% !important;
-  padding: 0 !important;
-  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+  padding: 0;
+  display: flex;
 }
 
 .navigation-sidebar .navbar-brand {
-  margin-bottom: 48px !important;
-  margin-right: 0 !important;
-  padding-left: 8px !important;
+  margin-bottom: var(--spacing-2xl);
+  margin-right: 0;
+  padding-left: var(--spacing-sm);
 }
 
 .navigation-sidebar .navbar-toggler {
-  display: none !important;
+  display: none;
 }
 
 .navigation-sidebar .navbar-collapse {
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  align-items: flex-start !important;
-  visibility: visible !important; /* 确保可见 */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: flex-start;
+  visibility: visible; /* 确保可见 */
 }
 
 .navigation-sidebar .navbar-nav {
-  flex-direction: column !important;
-  width: 100% !important;
-  display: flex !important;
+  flex-direction: column;
+  width: 100%;
+  display: flex;
 }
 
 .navigation-sidebar .navbar-nav .nav-link {
-  margin: 4px 0 !important;
-  padding: 12px 16px !important;
-  width: 100% !important;
-  border-bottom: none !important;
-  border-radius: var(--radius-sm) !important;
-  display: flex !important;
-  align-items: center !important;
-  color: var(--color-text-secondary) !important;
-  font-size: 15px !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease !important;
+  margin: var(--spacing-xs) 0;
+  padding: var(--spacing-compact) var(--spacing-md);
+  width: 100%;
+  border-bottom: none;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  transition: all 0.2s ease;
 }
 
 .navigation-sidebar .nav-link:hover {
-  background-color: var(--color-hover-notion) !important;
-  color: var(--color-text-primary) !important;
-  transform: none !important;
+  background-color: var(--color-hover-notion);
+  color: var(--color-text-primary);
+  transform: none;
 }
 
 .navigation-sidebar .nav-link.active {
-  background-color: var(--color-hover-notion) !important;
-  color: var(--color-text-primary) !important;
-  font-weight: 600 !important;
+  background-color: var(--color-hover-notion);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .navigation-sidebar .nav-link::after {
-  display: none !important;
+  display: none;
 }
 
 .navigation-sidebar .nav-icon {
-  margin-right: 12px !important;
-  font-size: 1.1rem !important;
-  display: flex !important;
-  align-items: center !important;
+  margin-right: var(--spacing-compact);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
 }
 
 /* 桌面端侧边栏中的用户区域移至底部 */
 .navigation-sidebar .order-lg-last {
-  margin-top: auto !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  padding: 16px 8px !important;
+  margin-top: auto;
+  margin-left: 0;
+  margin-right: 0;
+  padding: var(--spacing-md) var(--spacing-sm);
   border-top: 1px solid var(--color-border);
   width: 100%;
-  display: flex !important;
-  align-items: center !important;
+  display: flex;
+  align-items: center;
 }
 
 .navigation-sidebar .order-lg-last .nav-link {
   min-width: var(--control-hit-size);
   min-height: var(--control-hit-size);
-  padding: 0 !important;
-  width: auto !important;
-  border-radius: 50% !important;
+  padding: 0;
+  width: auto;
+  border-radius: 50%;
 }
 
 .navbar .order-lg-last .nav-link {
@@ -232,18 +232,18 @@
 }
 
 .navigation-sidebar .user-info-sidebar {
-  margin-left: 12px;
+  margin-left: var(--spacing-compact);
   display: flex;
   flex-direction: column;
 }
 
 .navigation-sidebar .user-name-sidebar {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 .navigation-sidebar .user-status-sidebar {
-  font-size: 12px;
+  font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
 }

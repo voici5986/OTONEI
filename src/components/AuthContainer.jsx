@@ -200,7 +200,10 @@ const AuthContainer = ({ initialMode = 'login', onAuthSuccess }) => {
               />
             </div>
             {mode === 'register' && (
-              <div className="text-muted small mt-1 ps-1" style={{ fontSize: '12px' }}>
+              <div
+                className="text-muted small mt-1 ps-1"
+                style={{ fontSize: 'var(--font-size-2xs)' }}
+              >
                 密码长度至少为6个字符
               </div>
             )}

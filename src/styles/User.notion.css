@@ -11,7 +11,7 @@
 .stats-item-notion {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: 10px var(--spacing-compact);
   border-radius: var(--radius-sm);
   transition: background 0.15s ease;
   user-select: none;
@@ -42,39 +42,39 @@ button.stats-item-notion {
   justify-content: center;
   background-color: var(--color-background-alt);
   border-radius: var(--radius-xs);
-  margin-right: 12px;
+  margin-right: var(--spacing-compact);
   flex-shrink: 0;
 }
 
 .stats-label-notion {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
 .stats-value-notion {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   background-color: var(--color-background-alt);
-  padding: 2px 8px;
+  padding: 2px var(--spacing-sm);
   border-radius: var(--radius-xs);
 }
 
 /* 装饰性边框 */
 .border-top {
-  border-top: 1px solid var(--color-border) !important;
+  border-top: 1px solid var(--color-border);
 }
 
 /* 按钮微调 */
 .stats-card-notion .minimal-action-btn {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   min-height: var(--button-min-height);
   transition: var(--control-transition);
 }
 
 .stats-card-notion .minimal-action-btn:hover {
-  background-color: var(--color-danger-soft) !important;
+  background-color: var(--color-danger-soft);
   /* 针对清除按钮的浅红背景 */
-  color: var(--color-danger-strong) !important;
+  color: var(--color-danger-strong);
 }

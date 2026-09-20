@@ -55,12 +55,12 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
         backgroundColor: 'transparent',
         borderLeft: 'none',
         transition: 'all 0.3s ease',
-        fontWeight: isActive ? '600' : 'normal',
-        fontSize: isActive ? '1.25rem' : '1rem',
+        fontWeight: isActive ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+        fontSize: isActive ? 'var(--font-size-lg)' : 'var(--font-size-base)',
         color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
         borderRadius: 0,
         boxShadow: 'none',
-        marginBottom: '12px',
+        marginBottom: 'var(--spacing-compact)',
         position: 'relative',
       }}
     >
@@ -83,8 +83,8 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
             paddingLeft: 0,
             marginTop: '6px',
             color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-muted)',
-            fontSize: isActive ? '1rem' : '0.9rem',
-            fontWeight: isActive ? '500' : 'normal',
+            fontSize: isActive ? 'var(--font-size-base)' : '0.9rem',
+            fontWeight: isActive ? 'var(--font-weight-medium)' : 'var(--font-weight-normal)',
           }}
           className="translated-lyric"
         >

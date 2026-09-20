@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-tertiary);
-  text-decoration: none !important;
+  text-decoration: none;
   transition: var(--transition-fast);
   position: relative;
   border: 0;
@@ -65,9 +65,9 @@ html[data-nav='keyboard'] .mobile-tab-item:focus-visible {
 }
 
 /* 桌面端隐藏移动端导航 */
-@media (min-width: 769px) {
+@media (min-width: 992px) {
   .mobile-tab-bar {
-    display: none !important;
+    display: none;
   }
 }
 

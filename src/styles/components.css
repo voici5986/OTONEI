@@ -1,5 +1,5 @@
 /*
- * 组件样式（Bootstrap 的替代实现）
+ * 组件样式（本地实现）
  *
  * 这些类原先混居在 theme.css 中，其中一部分还写在 `:root {}` 内部（等价于 `:root .foo`，
  * 权重 0-2-0）。迁出后 theme.css 只保留 CSS 变量定义，§1.1 的"令牌例外"因此能收紧为
@@ -7,20 +7,18 @@
  *
  * 迁移前提（2026-09-19 核查）：全仓没有任何其他 CSS 文件定义过这些类名，使用它们的元素上
  * 也不存在与它们争同一声明的普通选择器，因此权重从 0-2-0 降到 0-1-0 不改变任何属性的
- * 最终胜者。两条前提需要保持，否则结论失效：
- *   1. 本文件在 index.jsx 中的导入位置与原 theme.css 相同（早于 App.css 与 bootstrap.min.css）；
- *   2. 不要给这些元素补 Bootstrap 原生类（如 class="modal-body modal-body-custom"）——
- *      那会让 Bootstrap 的同类规则参与竞争，权重下降才会真的改变渲染。
+ * 最终胜者。本文件在 index.jsx 中早于页面组件样式导入；新增组件应继续使用这些本地契约，
+ * 不要把同一元素再混入一套同名的第三方组件规则。
  *
- * 迁移方式为原样搬运，仅三处偏离：`fadeIn` 改名（见下方注释）、5 处可无损替换的颜色字面量
- * 换成令牌，以及删除已确认无运行时引用的旧选择器。其余保持原文档顺序不变。
+ * 迁移以现有组件契约为基线：颜色、字号、字重、间距和阴影统一改为 theme.css 令牌，
+ * `fadeIn` 改名（见下方注释），并删除已确认无运行时引用的旧选择器；其余保持原文档顺序。
  */
 
 /* ===== 表单 ===== */
 .form-select-custom {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: var(--spacing-sm) var(--spacing-compact);
+  font-size: var(--font-size-sm);
   line-height: normal;
   color: var(--color-text-primary);
   background-color: var(--color-background);
@@ -30,7 +28,7 @@
   /* 8px 圆角 */
   transition: border-color 0.1s ease;
   outline: none;
-  box-shadow: none !important;
+  box-shadow: none;
   height: 40px;
   /* 统一高度为 40px */
 }
@@ -53,8 +51,8 @@
 /* ===== 告警 ===== */
 .alert-custom {
   position: relative;
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
+  padding: var(--spacing-compact) 1.25rem;
+  margin-bottom: var(--spacing-md);
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -82,7 +80,7 @@
 .toast-custom {
   background-color: var(--color-background-alt);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px var(--color-overlay-medium);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
   min-width: 250px;
   max-width: 350px;
@@ -95,7 +93,7 @@
   justify-content: space-between;
   padding: 10px 15px;
   border-bottom: 1px solid var(--color-overlay-subtle);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .toast-body-custom {
@@ -120,10 +118,10 @@
   height: 1rem;
   overflow: hidden;
   line-height: 0;
-  font-size: 0.75rem;
+  font-size: var(--font-size-2xs);
   background-color: var(--color-background-alt);
   border-radius: var(--radius-md);
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 }
 
 .progress-bar-custom {
@@ -157,7 +155,7 @@
 .modal-container-custom {
   background-color: var(--color-background);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 30px var(--color-overlay-strong);
+  box-shadow: var(--shadow-lg);
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
@@ -171,21 +169,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
 }
 
 .modal-title-custom {
   margin-bottom: 0;
   line-height: 1.5;
-  font-weight: 700;
-  font-size: 1.25rem;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
 }
 
 .modal-close-custom {
   background: transparent;
   border: none;
-  font-size: 1.5rem;
+  font-size: var(--font-size-xl);
   width: var(--control-hit-size);
   height: var(--control-hit-size);
   min-width: var(--control-hit-size);
@@ -207,7 +205,7 @@
 .modal-body-custom {
   position: relative;
   flex: 1 1 auto;
-  padding: 1.5rem;
+  padding: var(--spacing-lg);
   overflow-y: auto;
 }
 
@@ -216,9 +214,9 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  padding: 1rem 1.5rem;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--color-border);
-  gap: 0.75rem;
+  gap: var(--spacing-compact);
 }
 
 /* 原名 fadeIn，与 App.css 的同名 keyframes 内容不同；同名的以文档中靠后者为准，
@@ -254,8 +252,8 @@
   color: var(--color-on-solid);
   border: none;
   border-radius: var(--radius-sm);
-  padding: 8px 16px;
-  font-weight: 500;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: var(--transition-fast);
   display: flex;
@@ -280,15 +278,15 @@
 
 /* ===== 身份验证通用样式 ===== */
 .text-accent {
-  color: var(--color-accent) !important;
-  font-weight: 500;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   background: none;
   border: none;
-  padding: 4px 8px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-xs);
   transition: background 0.15s ease;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .text-accent:hover {
@@ -297,14 +295,14 @@
 
 .text-link {
   color: var(--color-text-secondary);
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   cursor: pointer;
   background: none;
   border: none;
-  padding: 4px 8px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-xs);
   transition: background 0.15s ease;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .text-link:hover {
@@ -316,8 +314,8 @@
   background-color: var(--color-background-alt);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 10px 16px;
-  margin-bottom: 12px;
+  padding: 10px var(--spacing-md);
+  margin-bottom: var(--spacing-compact);
   transition: background 0.15s ease;
   cursor: pointer;
   display: flex;
@@ -337,11 +335,11 @@
   color: var(--color-text-secondary);
   font-size: 0.85rem;
   margin-bottom: 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 @media (max-width: 768px) {
   .login-prompt-container {
-    padding: 12px;
+    padding: var(--spacing-compact);
   }
 }

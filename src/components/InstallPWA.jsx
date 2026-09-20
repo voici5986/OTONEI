@@ -134,7 +134,7 @@ const InstallPWA = () => {
             <button
               onClick={handleInstallClick}
               className="d-flex align-items-center btn-primary-custom"
-              style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+              style={{ padding: '6px var(--spacing-md)', fontSize: '0.85rem' }}
             >
               <FaDownload className="me-1" />
               <span>立即安装</span>

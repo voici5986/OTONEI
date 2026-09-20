@@ -6,12 +6,12 @@
 @media screen and (max-width: 767px) and (orientation: landscape) {
   /* 导航栏在横屏时的特殊处理 */
   .navbar {
-    padding: 0.3rem 1rem !important;
+    padding: 0.3rem var(--spacing-md);
   }
 
   /* 搜索框在横屏时的特殊处理 */
   .search-form {
-    max-width: 50% !important;
+    max-width: 50%;
   }
 }
 

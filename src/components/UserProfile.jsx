@@ -528,7 +528,11 @@ const UserProfile = ({ onTabChange }) => {
           <div className="card-label">多端数据同步</div>
           <div
             className="card-number"
-            style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--color-text-muted)' }}
+            style={{
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 'var(--font-weight-normal)',
+              color: 'var(--color-text-muted)',
+            }}
           >
             {syncStatus.loading ? (
               <span className="spinner-custom" style={{ width: '1rem', height: '1rem' }}></span>
@@ -634,7 +638,7 @@ const UserProfile = ({ onTabChange }) => {
                   <div
                     className="alert-custom alert-info-custom mb-3"
                     style={{
-                      padding: '12px',
+                      padding: 'var(--spacing-compact)',
                       borderRadius: 'var(--radius-md)',
                       backgroundColor: 'rgba(52, 152, 219, 0.1)',
                       border: '1px solid rgba(52, 152, 219, 0.2)',
@@ -712,7 +716,7 @@ const UserProfile = ({ onTabChange }) => {
                 className="minimal-action-btn"
                 onClick={handleCloseImport}
                 disabled={isImporting}
-                style={{ borderRadius: 'var(--radius-sm)', padding: '6px 16px' }}
+                style={{ borderRadius: 'var(--radius-sm)', padding: '6px var(--spacing-md)' }}
               >
                 取消
               </button>

@@ -11,7 +11,7 @@
   }
 
   .player-mini-actions {
-    padding-right: 12px !important;
+    padding-right: var(--spacing-compact);
   }
 
   .mobile-expanded-play-button {
@@ -28,7 +28,7 @@
 
   /* 通过提高权重 (body .audio-player) 来减少对 !important 的依赖 */
   body .audio-player .player-inner {
-    padding: 8px 12px;
+    padding: var(--spacing-sm) var(--spacing-compact);
     overflow: visible;
   }
 
@@ -89,7 +89,7 @@
 
   /* 手势拖动状态：禁用过渡动画，实现跟手感 */
   .player-expanded-view.is-dragging {
-    transition: none !important;
+    transition: none;
   }
 
   .expanded-main-wrapper {
@@ -109,19 +109,19 @@
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 0 24px; /* 左右对齐播放按钮的间距 */
+    padding: 0 var(--spacing-lg); /* 左右对齐播放按钮的间距 */
     text-align: left;
     background: transparent;
-    gap: 4px;
+    gap: var(--spacing-xs);
     margin: 0;
     z-index: var(--z-index-mobile-expanded-info);
   }
 
   .mobile-track-info-expanded .track-name {
     color: var(--color-text-primary);
-    font-weight: 700;
-    font-size: 1.5rem; /* 增大字体 */
-    margin-bottom: 4px;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-xl); /* 增大字体 */
+    margin-bottom: var(--spacing-xs);
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -134,7 +134,7 @@
 
   .mobile-track-info-expanded .track-artist {
     color: var(--color-text-secondary);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     opacity: 0.8;
     overflow: hidden;
     text-overflow: ellipsis;

@@ -398,7 +398,7 @@ const AppContent = () => {
                   type="submit"
                   className="search-submit-btn"
                   disabled={loading}
-                  style={{ height: '38px', padding: '0 24px', fontSize: '0.85rem' }}
+                  style={{ height: '38px', padding: '0 var(--spacing-lg)', fontSize: '0.85rem' }}
                 >
                   {loading ? (
                     <span
@@ -433,7 +433,7 @@ const AppContent = () => {
                   style={{
                     height: '38px',
                     minWidth: '128px',
-                    padding: '0 24px',
+                    padding: '0 var(--spacing-lg)',
                     fontSize: '0.85rem',
                   }}
                 >

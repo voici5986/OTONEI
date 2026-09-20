@@ -48,7 +48,7 @@ const MobileMiniPlayer = ({
           </div>
         </button>
         <div className="col-4 d-flex justify-content-end align-items-center p-0 player-mini-actions">
-          <div className="d-flex align-items-center pe-1.8">
+          <div className="d-flex align-items-center">
             <HeartButton
               track={currentTrack}
               size={24}

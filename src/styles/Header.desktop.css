@@ -29,7 +29,7 @@
 
 /* 核心输入框组：极致一体化设计 */
 .header-search-field-wrapper {
-  display: flex !important;
+  display: flex;
   align-items: center;
   background-color: var(--color-background);
   border: 1px solid var(--color-border-subtle);
@@ -56,9 +56,9 @@ html[data-nav='keyboard'] .header-search-container:focus-within .header-search-f
 
 /* 联想面板展开时：搜索条底部让位给面板，蓝框由面板接续，两者仍是一体 */
 .header-search-container.is-suggestions-open:focus-within .header-search-field-wrapper {
-  border-bottom-color: transparent !important;
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
+  border-bottom-color: transparent;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 html[data-nav='keyboard']
@@ -71,26 +71,26 @@ html[data-nav='keyboard']
 /* 搜索图标：零背景完全融合 */
 .header-search-icon {
   color: var(--color-text-tertiary);
-  font-size: 14px;
-  margin-right: 8px;
+  font-size: var(--font-size-sm);
+  margin-right: var(--spacing-sm);
   flex-shrink: 0;
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
 }
 
 /* 输入框：彻底融入背景 */
 .header-search-input {
   flex: 1;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-  color: var(--color-text-primary) !important;
-  padding: 0 !important;
-  height: 100% !important;
-  outline: none !important;
-  margin: 0 !important;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-primary);
+  padding: 0;
+  height: 100%;
+  outline: none;
+  margin: 0;
 }
 
 .header-search-input::-webkit-search-cancel-button,
@@ -148,10 +148,10 @@ html[data-nav='keyboard']
 
 /* 2. 建议项通用样式 (桌面与移动共用) */
 .suggestion-section-title {
-  font-size: 12px;
+  font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
   margin: 6px 6px 6px 6px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   display: flex;
@@ -164,7 +164,7 @@ html[data-nav='keyboard']
   background: transparent;
   color: var(--color-text-secondary);
   font: inherit;
-  font-weight: normal;
+  font-weight: var(--font-weight-normal);
   cursor: pointer;
   text-transform: none;
   letter-spacing: 0;
@@ -176,12 +176,12 @@ html[data-nav='keyboard']
 
 .suggestion-item {
   width: calc(100% - 16px);
-  margin: 0 8px;
+  margin: 0 var(--spacing-sm);
   min-height: var(--control-hit-size);
   text-align: left;
-  border: none !important;
-  background: transparent !important;
-  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  padding: 6px var(--spacing-compact);
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
@@ -196,7 +196,7 @@ html[data-nav='keyboard']
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  padding: 10px 12px;
+  padding: 10px var(--spacing-compact);
 }
 
 .desktop-search-suggestions .suggestion-title {
@@ -211,21 +211,21 @@ html[data-nav='keyboard']
 
 .suggestion-item:hover,
 .suggestion-item.selected {
-  background-color: var(--color-hover-strong) !important;
+  background-color: var(--color-hover-strong);
 }
 
 .suggestion-title {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .suggestion-subtitle {
-  font-size: 12px;
-  font-weight: 400;
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-normal);
   color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -235,44 +235,44 @@ html[data-nav='keyboard']
 .suggestion-empty {
   font-size: 13px;
   color: var(--color-text-secondary);
-  padding: 30px 12px;
+  padding: 30px var(--spacing-compact);
   text-align: center;
 }
 
 .suggestion-more {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   min-height: var(--control-hit-size);
   color: var(--color-text-secondary);
   border: 0;
   background: transparent;
   width: calc(100% - 14px);
   text-align: left;
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-compact);
   cursor: pointer;
   border-radius: var(--radius-sm);
-  margin: 4px 6px 0 8px;
+  margin: var(--spacing-xs) 6px 0 var(--spacing-sm);
   transition: background 0.1s ease;
 }
 
 .suggestion-more:hover,
 .suggestion-more.selected {
-  background-color: var(--color-hover-strong) !important;
-  color: var(--color-text-primary) !important;
+  background-color: var(--color-hover-strong);
+  color: var(--color-text-primary);
 }
 
 .suggestion-divider {
   height: 1px;
   background-color: var(--color-border-subtle);
-  margin: 6px 12px;
+  margin: 6px var(--spacing-compact);
 }
 
 .suggestion-footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 400;
+  padding: 10px var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
   color: var(--color-text-secondary);
   border-top: 1px solid var(--color-neutral-overlay-subtle);
   flex-shrink: 0;
@@ -324,6 +324,6 @@ html[data-nav='keyboard']
 
 @media (max-width: 991.98px) {
   .app-header-desktop {
-    display: none !important;
+    display: none;
   }
 }

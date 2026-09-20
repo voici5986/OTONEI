@@ -38,15 +38,15 @@
 
 .brand-name {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   /* 标题采用 600 */
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
   letter-spacing: -1px;
   color: var(--color-text-primary);
 }
 
 .brand-tagline {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
 
@@ -63,7 +63,7 @@
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
   width: 100%;
 }
 
@@ -78,7 +78,7 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   z-index: var(--z-index-base);
 }
 
@@ -90,11 +90,11 @@
   /* 1px 浅灰描边 */
   border-radius: var(--radius-sm);
   /* 8px 圆角 */
-  padding: 8px 12px 8px 36px;
+  padding: var(--spacing-sm) var(--spacing-compact) var(--spacing-sm) 36px;
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   transition: border-color 0.1s ease;
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .input-field:focus {
@@ -102,7 +102,7 @@
 }
 
 .input-field::placeholder {
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   /* Placeholder: 400 */
 }
 
@@ -114,8 +114,8 @@
   border-radius: var(--radius-sm);
   /* 统一 8px 圆角 */
   border: none;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: background 0.12s ease;
   display: flex;
@@ -129,7 +129,7 @@
 .btn-primary-auth {
   background-color: var(--color-primary);
   color: var(--color-on-solid);
-  margin-top: 12px;
+  margin-top: var(--spacing-compact);
 }
 
 .btn-primary-auth:hover {
@@ -141,7 +141,7 @@
   background-color: var(--color-background);
   border: 1px solid var(--color-border-subtle);
   color: var(--color-text-primary);
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
 }
 
 .btn-google-auth:hover {
@@ -149,12 +149,12 @@
 }
 
 .divider-auth {
-  margin: 32px 0;
+  margin: var(--spacing-xl) 0;
   display: flex;
   align-items: center;
   width: 100%;
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-2xs);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -165,7 +165,7 @@
   flex: 1;
   height: 1px;
   background: var(--color-border);
-  margin: 0 16px;
+  margin: 0 var(--spacing-md);
 }
 
 /* 个人中心新版样式 (严格复刻 pre.html) */
@@ -181,7 +181,7 @@
   height: 72px;
   border-radius: var(--radius-md);
   /* Notion 风格小圆角 */
-  margin: 0 auto 16px;
+  margin: 0 auto var(--spacing-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -200,14 +200,14 @@
 .user-name-large {
   font-size: 22px;
   /* 调整为 22px */
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   /* 调整字重 */
-  margin-bottom: 4px;
+  margin-bottom: var(--spacing-xs);
   color: var(--color-text-primary);
 }
 
 .user-email-text {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
 
@@ -216,9 +216,9 @@
 .settings-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
   /* 调整为 8px */
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
   /* 调整为 24px */
   padding: 0 20px;
 }
@@ -226,14 +226,14 @@
 .data-mgmt-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .data-mgmt-dropdown {
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  margin-top: 4px;
+  margin-top: var(--spacing-xs);
   overflow: hidden;
   animation: slideDown 0.2s ease-out;
 }
@@ -279,12 +279,12 @@
 }
 
 .section-title {
-  font-size: 12px;
+  font-size: var(--font-size-2xs);
   /* 调整为 12px */
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   margin-bottom: 10px;
-  padding-left: 4px;
+  padding-left: var(--spacing-xs);
   /* 调整为 4px */
   /* text-transform: uppercase; */
   /* pre.html 没有强制大写 */
@@ -334,7 +334,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   /* 调整图标字体大小 */
   flex-shrink: 0;
   color: var(--color-text-muted);
@@ -347,36 +347,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   flex-shrink: 0;
   color: var(--color-text-muted);
 }
 
 .card-label {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   /* 统一为 16px */
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   flex: 1;
   color: var(--color-text-primary);
 }
 
 .setting-text {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   /* 统一为 16px */
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   flex: 1;
   color: var(--color-text-primary);
 }
 
 .card-number {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-muted);
   margin-right: 6px;
 }
 
 .setting-value {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   margin-right: 6px;
 }
@@ -385,7 +385,7 @@
 .setting-arrow {
   color: var(--color-text-muted);
   /* #C4C4C2 */
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   opacity: 0.6;
 }
 
@@ -399,17 +399,17 @@
   background: transparent;
   border: none;
   color: var(--color-danger-strong);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   padding: 14px;
   cursor: pointer;
   width: 100%;
   border-radius: var(--radius-sm);
   transition: background 0.15s ease;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .logout-button:hover {
@@ -422,7 +422,7 @@
 
 .version {
   text-align: center;
-  font-size: 12px;
+  font-size: var(--font-size-2xs);
   color: var(--color-text-muted);
   margin-top: 20px;
   margin-bottom: 0px;
@@ -443,14 +443,14 @@
   }
 
   .brand-section {
-    padding: 24px 0;
+    padding: var(--spacing-lg) 0;
   }
 
   .brand-logo {
     width: 64px;
     height: 64px;
-    font-size: 32px;
-    margin-bottom: 16px;
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-md);
   }
 
   .long-card,

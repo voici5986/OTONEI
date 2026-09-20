@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="text-center my-5">
-          <h2 style={{ marginBottom: '8px' }}>页面出错了</h2>
+          <h2 style={{ marginBottom: 'var(--spacing-sm)' }}>页面出错了</h2>
           <p style={{ color: 'var(--color-text-secondary)' }}>请刷新页面或稍后再试</p>
           <button type="button" className="btn btn-primary" onClick={this.handleReload}>
             刷新页面

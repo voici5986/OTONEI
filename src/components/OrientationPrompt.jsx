@@ -66,7 +66,7 @@ const OrientationPrompt = () => {
         }}
       />
       <h3 style={{ marginBottom: '15px' }}>请旋转设备</h3>
-      <p style={{ fontSize: '16px', maxWidth: '300px' }}>
+      <p style={{ fontSize: 'var(--font-size-base)', maxWidth: '300px' }}>
         为了获得最佳体验，请将设备旋转至竖屏模式
       </p>
 

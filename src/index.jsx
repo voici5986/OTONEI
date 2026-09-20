@@ -2,9 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 // 首先导入主题文件
 import './styles/theme.css';
-// 组件样式（Bootstrap 替代实现）。导入位置与原先在 theme.css 中时一致，
-// 早于 App.css 与 bootstrap.min.css，改动前请先读该文件顶部的迁移前提。
+// 本地组件样式。
 import './styles/components.css';
+// 保留历史 JSX 工具类的本地实现，避免引入完整 CSS 框架。
+import './styles/utilities.css';
+import './styles/primitives.css';
 import './index.css';
 // 其他样式文件
 import './styles/App.css';
@@ -15,8 +17,6 @@ import './styles/Orientation.css';
 import App from './App';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './styles/primitives.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { DeviceProvider } from './contexts/DeviceContext';
 import { SyncProvider } from './contexts/SyncContext';

@@ -138,7 +138,7 @@ export default defineConfig({
             },
             {
               name: 'ui-vendor',
-              test: /node_modules[\\/](bootstrap|react-icons|react-toastify|@popperjs)[\\/]/,
+              test: /node_modules[\\/](react-icons|react-toastify)[\\/]/,
               priority: 10,
             },
             {

@@ -75,7 +75,7 @@ const DesktopNavbar = ({
                         style={{
                           width: '32px',
                           height: '32px',
-                          fontSize: '1rem',
+                          fontSize: 'var(--font-size-base)',
                           backgroundColor: 'var(--color-text-primary)',
                           color: 'var(--card-background)',
                         }}

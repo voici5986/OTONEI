@@ -75,11 +75,16 @@
   /* ===== 排版 ===== */
   --font-family-base:
     'MiSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'Roboto', sans-serif;
-  --font-size-base: 1rem;
+  --font-size-2xs: 0.75rem;
   --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1.125rem;
   --font-size-lg: 1.25rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --line-height-base: 1.5;
 
@@ -91,7 +96,7 @@
   --control-radius: 8px;
   --control-hover-background: var(--color-hover-notion);
   --button-min-height: 40px;
-  /* 焦点环：拆成长写令牌，因为 index.css 的全局规则必须用长写才能压过 Bootstrap */
+  /* 焦点环：拆成长写令牌，供 index.css 的全局无障碍策略统一引用 */
   --focus-ring-width: 3px;
   --focus-ring-color: var(--color-primary);
   --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
@@ -105,12 +110,16 @@
   /* 4px */
   --spacing-sm: 0.5rem;
   /* 8px */
+  --spacing-compact: 0.75rem;
+  /* 12px */
   --spacing-md: 1rem;
   /* 16px */
   --spacing-lg: 1.5rem;
   /* 24px */
   --spacing-xl: 2rem;
   /* 32px */
+  --spacing-2xl: 3rem;
+  /* 48px */
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
   /* PWA 顶部 / 底部安全区域高度 */
@@ -174,7 +183,7 @@
   --z-index-player-base: 1000;
   --z-index-navbar: 1020;
   --z-index-suggestions: 1100;
-  --z-index-bootstrap-fixed: 1030;
+  --z-index-fixed-bottom: 1030;
   --z-index-mobile-nav: 1050;
   --z-index-player-backdrop: 9000;
   --z-index-player-expanded: 9500;
@@ -194,13 +203,6 @@
 
 /* 移动端导航栏样式已移至 Navigation.mobile.css */
 /* 音乐卡片样式已移至 App.css */
-
-@media (max-width: 768px) {
-  :root {
-    --spacing-lg: 1.25rem;
-    --spacing-xl: 1.75rem;
-  }
-}
 
 /* 触摸设备优先使用 44px 命中区；图标仍由组件自身的 size/font-size 控制。 */
 @media (pointer: coarse), (max-width: 768px) {
