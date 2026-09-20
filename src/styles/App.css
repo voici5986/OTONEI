@@ -289,11 +289,9 @@
 
 /* 移动端全局布局调整 */
 @media (max-width: 991.98px) {
-  /* 调整页面底部内边距：Tab栏(8vh) + 播放器收起高度(10vh) */
+  /* 底部控件留白属于内容滚动区，不能把整个文档撑高。 */
   body {
-    padding-bottom: calc(
-      var(--mobile-tab-bar-height) + var(--player-height-collapsed) + var(--safe-area-bottom)
-    );
+    padding-bottom: 0;
     padding-top: 0;
     /* 顶栏没了，不需要顶部内边距 */
   }
@@ -307,17 +305,19 @@
 }
 
 /* 桌面端两栏布局 */
-.desktop-layout {
+.app-container {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--color-background);
 }
 
-.desktop-layout .main-content {
+.app-container .main-content {
   flex: 1;
-  margin-left: var(--sidebar-width);
-  min-height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -325,11 +325,12 @@
   background-color: var(--color-background);
 }
 
-/* 移动端主内容区最小高度 */
-@media (max-width: 991.98px) {
-  .main-content {
-    min-height: calc(100vh - var(--mobile-tab-bar-height));
-  }
+.desktop-layout .main-content {
+  margin-left: var(--sidebar-width);
+}
+
+.app-container .content-area {
+  flex-shrink: 0;
 }
 
 /* 统一的页面内容包装器，消除不同页面的容器差异 */
@@ -432,8 +433,13 @@
 
 /* 移动端内容区内边距 */
 @media (max-width: 991.98px) {
-  .content-area {
-    padding: var(--spacing-compact) var(--spacing-md) 0px var(--spacing-md);
+  .app-container .content-area {
+    padding: var(--spacing-compact) var(--spacing-md)
+      calc(
+        max(var(--mobile-tab-bar-height), 60px) + var(--player-height-collapsed) +
+          var(--safe-area-bottom)
+      )
+      var(--spacing-md);
   }
 }
 
@@ -530,12 +536,5 @@
      让窄屏使用移动 Header 的真实高度（含安全区）。 */
   .app-container.desktop-layout .main-content {
     padding-top: calc(var(--navbar-height-mobile) + var(--safe-area-top));
-  }
-}
-
-/* 768px 以下的旧桌面 UA 兼容路径仍改为单列；平板宽度保留 flex 滚动容器。 */
-@media (max-width: 768px) {
-  .desktop-layout {
-    display: block;
   }
 }
