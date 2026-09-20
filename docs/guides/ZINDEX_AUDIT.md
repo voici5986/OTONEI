@@ -6,25 +6,25 @@
 
 ## 1. 令牌表
 
-| 变量名                      |    数值 | 主要引用                       | 用途                     |
-| :-------------------------- | ------: | :----------------------------- | :----------------------- |
-| `--z-index-negative`        |    `-1` | `Navigation.mobile.css`        | 底部导航装饰伪元素       |
-| `--z-index-base`            |     `1` | 移动导航、播放器、账号输入图标 | 基础叠层                 |
-| `--z-index-above`           |    `10` | 播放器控件、进度条、迷你播放器 | 基础交互元素             |
-| `--z-index-interaction`     |   `100` | 播放器关闭歌词按钮             | 组件内交互反馈           |
-| `--z-index-sidebar`         |   `100` | `App.css` 侧边栏               | 桌面侧边栏               |
-| `--z-index-player-base`     |  `1000` | 播放器基础容器                 | 播放器收起态             |
-| `--z-index-navbar`          |  `1020` | 桌面导航、两套 Header          | 顶部导航                 |
-| `--z-index-bootstrap-fixed` |  `1030` | `index.css` `.fixed-bottom`    | Bootstrap 固定元素兼容层 |
-| `--z-index-suggestions`     |  `1100` | 桌面 / 移动搜索联想框          | 搜索浮层                 |
-| `--z-index-mobile-nav`      |  `1050` | 移动底部导航                   | 移动导航                 |
-| `--z-index-player-backdrop` |  `9000` | 播放器背景                     | 全屏播放遮罩             |
-| `--z-index-player-expanded` |  `9500` | 播放器展开视图                 | 展开态容器               |
-| `--z-index-overlay`         |  `9999` | 旋转提示、开发调试层           | 通用覆盖层               |
-| `--z-index-player-force`    | `10000` | 展开播放器强制层               | 播放器最高层             |
-| `--z-index-modal`           | `10010` | 模态遮罩                       | 高于播放器的模态层       |
-| `--z-index-modal-content`   | `10011` | 模态内容                       | 遮罩上方一层             |
-| `--z-index-notification`    | `11000` | 更新通知、安装提示             | 全局通知                 |
+| 变量名                      |    数值 | 主要引用                       | 用途               |
+| :-------------------------- | ------: | :----------------------------- | :----------------- |
+| `--z-index-negative`        |    `-1` | `Navigation.mobile.css`        | 底部导航装饰伪元素 |
+| `--z-index-base`            |     `1` | 移动导航、播放器、账号输入图标 | 基础叠层           |
+| `--z-index-above`           |    `10` | 播放器控件、进度条、迷你播放器 | 基础交互元素       |
+| `--z-index-interaction`     |   `100` | 播放器关闭歌词按钮             | 组件内交互反馈     |
+| `--z-index-sidebar`         |   `100` | `App.css` 侧边栏               | 桌面侧边栏         |
+| `--z-index-player-base`     |  `1000` | 播放器基础容器                 | 播放器收起态       |
+| `--z-index-navbar`          |  `1020` | 桌面导航、两套 Header          | 顶部导航           |
+| `--z-index-fixed-bottom`    |  `1030` | `index.css` `.fixed-bottom`    | 固定底部元素兼容层 |
+| `--z-index-suggestions`     |  `1100` | 桌面 / 移动搜索联想框          | 搜索浮层           |
+| `--z-index-mobile-nav`      |  `1050` | 移动底部导航                   | 移动导航           |
+| `--z-index-player-backdrop` |  `9000` | 播放器背景                     | 全屏播放遮罩       |
+| `--z-index-player-expanded` |  `9500` | 播放器展开视图                 | 展开态容器         |
+| `--z-index-overlay`         |  `9999` | 旋转提示、开发调试层           | 通用覆盖层         |
+| `--z-index-player-force`    | `10000` | 展开播放器强制层               | 播放器最高层       |
+| `--z-index-modal`           | `10010` | 模态遮罩                       | 高于播放器的模态层 |
+| `--z-index-modal-content`   | `10011` | 模态内容                       | 遮罩上方一层       |
+| `--z-index-notification`    | `11000` | 更新通知、安装提示             | 全局通知           |
 
 移动端全屏播放器使用 `20000` 系列令牌：`--z-index-mobile-expanded-base`、`--z-index-mobile-expanded-content`、`--z-index-mobile-expanded-info`、`--z-index-mobile-expanded-top`。它们只负责展开播放器内部的固定层级。
 

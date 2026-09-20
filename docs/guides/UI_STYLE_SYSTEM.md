@@ -1,10 +1,10 @@
 # OTONEI UI 样式系统
 
-最近复核：2026-09-19
+最近复核：2026-09-20
 
 > 本文只描述原语与交互尺寸的**实现细节**。视觉规则、令牌语义、组件形态和禁止事项以 [`UI_DESIGN_SPEC.md`](./UI_DESIGN_SPEC.md) 为准。
 
-本项目保留 Bootstrap 的 grid、flex 和 spacing 工具类；组件的视觉规则、交互状态、圆角和控件命中区使用 `src/styles/theme.css` 的设计令牌与 `src/styles/primitives.css` 的基础原语。圆角统一使用 `--radius-xs`、`--radius-sm`、`--radius-md`、`--radius-full` 四档；旧 `--border-radius-*` 只作为兼容别名保留。
+本项目保留一组本地实现的 Bootstrap 兼容 grid、flex、spacing 和少量组件工具类（类名暂不变，定义在 `src/styles/utilities.css`）；运行时不再加载 Bootstrap CSS。组件的视觉规则、交互状态、圆角和控件命中区使用 `src/styles/theme.css` 的设计令牌与 `src/styles/primitives.css` 的基础原语。圆角统一使用 `--radius-xs`、`--radius-sm`、`--radius-md`、`--radius-full` 四档；旧 `--border-radius-*` 只作为兼容别名保留。
 
 ## 交互尺寸
 
@@ -31,7 +31,7 @@
 
 ## 维护边界
 
-1. Bootstrap 工具类只负责布局和间距，不应承担组件的颜色、焦点和命中区契约。
+1. 兼容层只承接 Reboot、布局/间距和现有 JSX 所需的少量基础类；新组件的视觉、焦点和命中区契约归组件样式与原语所有。
 2. 新增颜色、间距、圆角或交互尺寸时先补充 `theme.css` 令牌，再在原语或组件样式中引用。
 3. 触控尺寸变化需要检查播放器底部布局、操作组换行和窄屏安全区；不能只看桌面截图。
-4. 这次整理没有迁移所有历史内联样式，也没有改变既有响应式断点；它是可逐步推进的基础层。
+4. 这次整理没有迁移所有历史内联样式；本轮将导航壳、Header 和 `lg` 工具类统一到 992px，播放器与页面专用媒体查询仍按各自契约保留，后续继续收敛时必须同步检查真实窄屏布局。
