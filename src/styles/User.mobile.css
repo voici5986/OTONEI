@@ -47,7 +47,7 @@
 
 .brand-tagline {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 /* 表单通用样式 */
@@ -84,7 +84,7 @@
 
 .input-field {
   width: 100%;
-  height: 40px;
+  min-height: var(--control-hit-size);
   background: var(--color-background);
   border: 1px solid var(--color-border);
   /* 1px 浅灰描边 */
@@ -109,8 +109,7 @@
 /* 按钮样式 */
 .btn-auth {
   width: 100%;
-  height: 40px;
-  /* 统一对齐 40px */
+  min-height: var(--button-min-height);
   border-radius: var(--radius-sm);
   /* 统一 8px 圆角 */
   border: none;
@@ -153,7 +152,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-2xs);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -208,7 +207,7 @@
 
 .user-email-text {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 /* 列表容器 */
@@ -282,7 +281,7 @@
   font-size: var(--font-size-2xs);
   /* 调整为 12px */
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   margin-bottom: 10px;
   padding-left: var(--spacing-xs);
   /* 调整为 4px */
@@ -371,13 +370,13 @@
 .card-number {
   font-size: 15px;
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   margin-right: 6px;
 }
 
 .setting-value {
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   margin-right: 6px;
 }
 
@@ -423,14 +422,14 @@
 .version {
   text-align: center;
   font-size: var(--font-size-2xs);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   margin-top: 20px;
   margin-bottom: 0px;
   opacity: 1;
 }
 
 /* 移动端适配覆盖 */
-@media (max-width: 768px) {
+@media (--viewport-md-down) {
   .user-page-container {
     padding: 0;
     background-color: transparent;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import {
   getFavorites,
+  getFavoritesStrict,
   getHistory,
   incrementPendingChanges,
   MAX_FAVORITES_ITEMS,
@@ -46,6 +47,7 @@ const UserProfile = ({ onTabChange }) => {
   const [importStatus, setImportStatus] = useState([]);
   const [importProgress, setImportProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
+  const importInFlightRef = React.useRef(false);
   const fileInputRef = React.useRef(null);
   const importDialogRef = React.useRef(null);
   const importTriggerRef = React.useRef(null);
@@ -269,11 +271,13 @@ const UserProfile = ({ onTabChange }) => {
   };
 
   const handleFileSelect = (e) => {
+    if (importInFlightRef.current) return;
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
+      if (importInFlightRef.current) return;
       try {
         const data = JSON.parse(event.target.result);
         if (!data.favorites || !Array.isArray(data.favorites)) {
@@ -292,112 +296,119 @@ const UserProfile = ({ onTabChange }) => {
   };
 
   const startImport = async () => {
-    if (!importData || !importData.favorites || isImporting) return;
+    if (!importData || !importData.favorites || importInFlightRef.current) return;
+    importInFlightRef.current = true;
     setIsImporting(true);
     const importUser = currentUser;
     const importUserId = importUser?.uid;
 
-    const currentFavorites = await getFavorites(importUserId);
-    const newFavorites = [...currentFavorites];
-    const newStatus = [...importStatus];
-    let importedCount = 0;
+    try {
+      const currentFavorites = await getFavoritesStrict(importUserId);
+      const newFavorites = [...currentFavorites];
+      const newStatus = [...importStatus];
+      let importedCount = 0;
 
-    for (let i = 0; i < importData.favorites.length; i++) {
-      const track = importData.favorites[i];
-      setImportProgress(Math.floor((i / importData.favorites.length) * 100));
+      for (let i = 0; i < importData.favorites.length; i++) {
+        const track = importData.favorites[i];
+        setImportProgress(Math.floor((i / importData.favorites.length) * 100));
 
-      try {
-        if (newFavorites.length >= MAX_FAVORITES_ITEMS) {
-          newStatus[i] = { status: 'limit', message: `已达到${MAX_FAVORITES_ITEMS}首上限` };
+        try {
+          if (newFavorites.length >= MAX_FAVORITES_ITEMS) {
+            newStatus[i] = { status: 'limit', message: `已达到${MAX_FAVORITES_ITEMS}首上限` };
+            setImportStatus([...newStatus]);
+            continue;
+          }
+
+          const existingByIdIndex = currentFavorites.findIndex(
+            (item) => getTrackKey(item) === getTrackKey(track)
+          );
+          if (existingByIdIndex >= 0) {
+            newStatus[i] = { status: 'exists', message: '已存在' };
+            setImportStatus([...newStatus]);
+            continue;
+          }
+
+          const trackArtist = getTrackArtist(track);
+          const existingByNameIndex = currentFavorites.findIndex(
+            (item) => item.name === track.name && getTrackArtist(item) === trackArtist
+          );
+          if (existingByNameIndex >= 0) {
+            newStatus[i] = { status: 'exists', message: '已存在' };
+            setImportStatus([...newStatus]);
+            continue;
+          }
+
+          newStatus[i] = { status: 'pending', message: '匹配中...' };
           setImportStatus([...newStatus]);
-          continue;
-        }
 
-        const existingByIdIndex = currentFavorites.findIndex(
-          (item) => getTrackKey(item) === getTrackKey(track)
-        );
-        if (existingByIdIndex >= 0) {
-          newStatus[i] = { status: 'exists', message: '已存在' };
-          setImportStatus([...newStatus]);
-          continue;
-        }
-
-        const trackArtist = getTrackArtist(track);
-        const existingByNameIndex = currentFavorites.findIndex(
-          (item) => item.name === track.name && getTrackArtist(item) === trackArtist
-        );
-        if (existingByNameIndex >= 0) {
-          newStatus[i] = { status: 'exists', message: '已存在' };
-          setImportStatus([...newStatus]);
-          continue;
-        }
-
-        newStatus[i] = { status: 'pending', message: '匹配中...' };
-        setImportStatus([...newStatus]);
-
-        let matchedTrack = await searchTrack(track, track.source);
-        if (!matchedTrack) {
-          const sources = ['netease', 'ytmusic'];
-          for (const source of sources) {
-            if (source !== track.source) {
-              matchedTrack = await searchTrack(track, source);
-              if (matchedTrack) break;
+          let matchedTrack = await searchTrack(track, track.source);
+          if (!matchedTrack) {
+            const sources = ['netease', 'ytmusic'];
+            for (const source of sources) {
+              if (source !== track.source) {
+                matchedTrack = await searchTrack(track, source);
+                if (matchedTrack) break;
+              }
             }
           }
-        }
 
-        if (matchedTrack) {
-          const isDuplicate = newFavorites.some(
-            (item) => getTrackKey(item) === getTrackKey(matchedTrack)
-          );
-          if (!isDuplicate) {
-            newFavorites.unshift({ ...matchedTrack, modifiedAt: Date.now() });
-            importedCount++;
-            newStatus[i] = { status: 'success', message: `匹配: ${matchedTrack.source}` };
+          if (matchedTrack) {
+            const isDuplicate = newFavorites.some(
+              (item) => getTrackKey(item) === getTrackKey(matchedTrack)
+            );
+            if (!isDuplicate) {
+              newFavorites.unshift({ ...matchedTrack, modifiedAt: Date.now() });
+              importedCount++;
+              newStatus[i] = { status: 'success', message: `匹配: ${matchedTrack.source}` };
+            } else {
+              newStatus[i] = { status: 'duplicate', message: '重复' };
+            }
           } else {
-            newStatus[i] = { status: 'duplicate', message: '重复' };
+            newStatus[i] = { status: 'fail', message: '未找到' };
           }
-        } else {
-          newStatus[i] = { status: 'fail', message: '未找到' };
+        } catch {
+          newStatus[i] = { status: 'error', message: '出错' };
         }
-      } catch {
-        newStatus[i] = { status: 'error', message: '出错' };
+        setImportStatus([...newStatus]);
+        // 循环内不落盘，统一在循环结束后 saveFavorites 一次（见下方）
       }
-      setImportStatus([...newStatus]);
-      // 循环内不落盘，统一在循环结束后 saveFavorites 一次（见下方）
-    }
 
-    if (importedCount > 0) {
-      if (activeUserIdRef.current !== importUserId) {
-        toast.warning('账号已切换，本次导入未保存');
-        setIsImporting(false);
-        return;
-      }
-      const saved = await saveFavorites(newFavorites, importUserId);
-      if (!saved) {
-        toast.error('保存导入收藏失败，请重试');
-        setIsImporting(false);
-        return;
-      }
-      if (importUserId && !importUser.isLocal) {
-        const pending = await incrementPendingChanges('favorites', importUserId);
-        if (!pending) {
-          logger.warn('收藏已导入本地，但同步计数保存失败，仅影响界面展示');
+      if (importedCount > 0) {
+        if (activeUserIdRef.current !== importUserId) {
+          toast.warning('账号已切换，本次导入未保存');
+          return;
         }
-        // 同步 timer 永远安排：计数失败不能阻断 5 秒同步
-        await triggerDelayedSync(importUserId, 'favorites');
+        const saved = await saveFavorites(newFavorites, importUserId);
+        if (!saved) {
+          toast.error('保存导入收藏失败，请重试');
+          return;
+        }
+        if (importUserId && !importUser.isLocal) {
+          const pending = await incrementPendingChanges('favorites', importUserId);
+          if (!pending) {
+            logger.warn('收藏已导入本地，但同步计数保存失败，仅影响界面展示');
+          }
+          // 同步 timer 永远安排：计数失败不能阻断 5 秒同步
+          await triggerDelayedSync(importUserId, 'favorites');
+        }
+        loadCounts();
+        window.dispatchEvent(new Event('favorites_changed'));
+        toast.success(`成功导入 ${importedCount} 首歌曲`);
+      } else {
+        toast.info('没有新增歌曲');
       }
-      loadCounts();
-      window.dispatchEvent(new Event('favorites_changed'));
-      toast.success(`成功导入 ${importedCount} 首歌曲`);
-    } else {
-      toast.info('没有新增歌曲');
+      setImportProgress(100);
+    } catch (error) {
+      logger.error('导入收藏失败:', error);
+      toast.error('导入收藏失败，请重试');
+    } finally {
+      importInFlightRef.current = false;
+      setIsImporting(false);
     }
-    setImportProgress(100);
-    setIsImporting(false);
   };
 
   const handleCloseImport = () => {
+    if (importInFlightRef.current) return;
     setShowImportModal(false);
     setImportData(null);
     setImportStatus([]);
@@ -531,7 +542,7 @@ const UserProfile = ({ onTabChange }) => {
             style={{
               fontSize: 'var(--font-size-sm)',
               fontWeight: 'var(--font-weight-normal)',
-              color: 'var(--color-text-muted)',
+              color: 'var(--color-text-secondary)',
             }}
           >
             {syncStatus.loading ? (
@@ -576,6 +587,7 @@ const UserProfile = ({ onTabChange }) => {
                 role="menuitem"
                 className="dropdown-item"
                 onClick={(event) => {
+                  if (importInFlightRef.current) return;
                   importTriggerRef.current = event.currentTarget;
                   fileInputRef.current.click();
                 }}
@@ -614,6 +626,7 @@ const UserProfile = ({ onTabChange }) => {
             ref={importDialogRef}
             role="dialog"
             aria-modal="true"
+            aria-busy={isImporting}
             aria-labelledby="import-favorites-modal-title"
             tabIndex={-1}
             style={{ maxWidth: '800px', width: '90%' }}
@@ -627,6 +640,7 @@ const UserProfile = ({ onTabChange }) => {
                 type="button"
                 aria-label="关闭导入收藏对话框"
                 className="modal-close-custom"
+                disabled={isImporting}
                 onClick={handleCloseImport}
               >
                 <FaTimes size={18} />
@@ -671,6 +685,9 @@ const UserProfile = ({ onTabChange }) => {
                     ></div>
                   </div>
                   <div className="text-end small text-muted mb-3">{importProgress}%</div>
+                  {isImporting && (
+                    <p className="small text-muted mb-3">导入进行中，请等待完成后关闭。</p>
+                  )}
 
                   <div
                     style={{

@@ -78,7 +78,7 @@
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  padding: 10px var(--spacing-md);
+  padding: var(--spacing-compact) var(--spacing-md);
   width: 100%;
   min-height: 60px;
 }
@@ -97,7 +97,17 @@
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  margin: 0 0 2px 0;
+  margin: 0 0 var(--spacing-xs);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.5;
+}
+
+.home-results-row .music-card-info h6 {
+  min-height: 3em;
 }
 
 .music-card-info small {
@@ -116,6 +126,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-sm);
+  flex-shrink: 0;
 }
 
 /* 统一的操作按钮样式：无背景、无边框、大图标 */
@@ -194,11 +205,11 @@
 
 .btn-primary-custom:hover:not(:disabled) {
   background-color: var(--color-primary-light);
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .btn-primary-custom:active:not(:disabled) {
-  transform: translateY(0);
+  transform: none;
 }
 
 /* 原生 Spinner */
@@ -284,7 +295,8 @@
 }
 
 .text-muted {
-  color: var(--color-text-muted);
+  /* 兼容类用于说明文字；弱色令牌只保留给装饰和禁用态。 */
+  color: var(--color-text-secondary);
 }
 
 /* 移动端全局布局调整 */
@@ -355,7 +367,7 @@
 /* 历史页面特有的时间标签 */
 .badge-time {
   font-size: 0.7rem;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   background-color: var(--color-background-alt);
   padding: 2px 6px;
   border-radius: var(--radius-xs);
@@ -479,47 +491,57 @@
   gap: var(--spacing-compact);
 }
 
-.desktop-layout .home-empty {
-  display: flex;
-  justify-content: center;
-}
-
-.desktop-layout .home-empty-card {
+.page-status {
   width: 100%;
   max-width: 720px;
+  margin: var(--spacing-lg) auto;
   background-color: var(--card-background);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--spacing-lg) 28px;
-  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
 }
 
-.desktop-layout .home-empty-title {
-  font-size: var(--font-size-md);
+.page-status-title {
+  margin: var(--spacing-sm) 0;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  line-height: 1.25;
 }
 
-.desktop-layout .home-empty-desc {
-  margin-top: var(--spacing-sm);
-  color: var(--color-text-tertiary);
+.page-status-description {
+  margin: 0;
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  overflow-wrap: anywhere;
 }
 
-.desktop-layout .home-empty-tags {
+.page-status-actions {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+  justify-content: center;
   margin-top: var(--spacing-md);
 }
 
-.desktop-layout .home-empty-tags span {
-  border: 1px solid var(--color-border);
-  color: var(--color-text-tertiary);
-  padding: var(--spacing-xs) 10px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-2xs);
-  background-color: var(--color-background-alt);
+.home-filter-select {
+  width: auto;
+  min-width: 120px;
+}
+
+.load-more-btn {
+  min-width: 128px;
+}
+
+.header-search-status {
+  /* 页面内提供可见加载反馈；顶栏保留读屏提示，避免挤占固定高度。 */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 @media (max-width: 991.98px) {

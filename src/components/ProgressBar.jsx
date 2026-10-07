@@ -1,21 +1,79 @@
 import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
 import audioStateManager from '../services/audioStateManager';
+import { getTrackKey } from '../utils/trackIdentity';
 
 const ProgressBar = () => {
   const { currentTrack, playProgress, totalSeconds, seekTo, formatTime, isPlaying } = usePlayer();
+  const trackKey = currentTrack ? getTrackKey(currentTrack) : null;
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
   const dragProgressRef = useRef(0);
   const [isHovering, setIsHovering] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const [lastReleasedProgress, setLastReleasedProgress] = useState(null);
 
   const justReleasedRef = useRef(false);
+  const keyboardProgressBaselineRef = useRef(null);
   const releaseTimeoutRef = useRef(null);
   const wasPlayingRef = useRef(false);
+  const dragTrackKeyRef = useRef(null);
+  const latestTrackKeyRef = useRef(trackKey);
+  const transientTrackKeyRef = useRef(trackKey);
   const progressBarRef = useRef(null);
+  latestTrackKeyRef.current = trackKey;
+
+  const releaseDragPause = useCallback(() => {
+    const shouldResume = wasPlayingRef.current;
+    wasPlayingRef.current = false;
+    const transportTrack = audioStateManager.getCurrentTrack();
+    if (
+      shouldResume &&
+      dragTrackKeyRef.current === latestTrackKeyRef.current &&
+      transportTrack &&
+      getTrackKey(transportTrack) === dragTrackKeyRef.current &&
+      audioStateManager.getState() === 'paused'
+    ) {
+      audioStateManager.play();
+    }
+    dragTrackKeyRef.current = null;
+  }, []);
+
+  useEffect(
+    () => () => {
+      clearTimeout(releaseTimeoutRef.current);
+      releaseDragPause();
+    },
+    [releaseDragPause]
+  );
+
+  useEffect(() => {
+    clearTimeout(releaseTimeoutRef.current);
+    justReleasedRef.current = false;
+    keyboardProgressBaselineRef.current = null;
+    wasPlayingRef.current = false;
+    dragTrackKeyRef.current = null;
+    transientTrackKeyRef.current = trackKey;
+    dragProgressRef.current = 0;
+    setIsDragging(false);
+    setIsTouched(false);
+    setDragProgress(0);
+    setLastReleasedProgress(null);
+  }, [trackKey]);
+
+  useEffect(() => {
+    if (
+      keyboardProgressBaselineRef.current !== null &&
+      keyboardProgressBaselineRef.current !== playProgress
+    ) {
+      clearTimeout(releaseTimeoutRef.current);
+      keyboardProgressBaselineRef.current = null;
+      justReleasedRef.current = false;
+      setLastReleasedProgress(null);
+    }
+  }, [playProgress]);
 
   // 全局事件处理：处理拖拽过程和结束
   useEffect(() => {
@@ -51,9 +109,7 @@ const ProgressBar = () => {
       setIsTouched(false);
 
       // 如果之前在播放，真正恢复播放（而非仅改 React 状态）
-      if (wasPlayingRef.current) {
-        audioStateManager.play();
-      }
+      releaseDragPause();
     };
 
     document.addEventListener('mousemove', handleDragMove);
@@ -67,7 +123,7 @@ const ProgressBar = () => {
       document.removeEventListener('mouseup', handleDragEnd);
       document.removeEventListener('touchend', handleDragEnd);
     };
-  }, [isDragging, currentTrack, seekTo, totalSeconds]);
+  }, [isDragging, currentTrack, seekTo, totalSeconds, releaseDragPause]);
 
   // 只保留 MouseDown/TouchStart 在元素上
   const handleMouseDown = useCallback(
@@ -78,6 +134,8 @@ const ProgressBar = () => {
       // e.preventDefault();
 
       wasPlayingRef.current = isPlaying;
+      keyboardProgressBaselineRef.current = null;
+      dragTrackKeyRef.current = trackKey;
       if (isPlaying) audioStateManager.pause();
       setIsDragging(true);
       if (e.touches) setIsTouched(true);
@@ -91,24 +149,78 @@ const ProgressBar = () => {
       setDragProgress(p);
       seekTo(position * totalSeconds);
     },
-    [currentTrack, isPlaying, seekTo, totalSeconds]
+    [currentTrack, trackKey, isPlaying, seekTo, totalSeconds]
   );
 
-  const displayProgress = isDragging
-    ? dragProgress
-    : justReleasedRef.current && lastReleasedProgress !== null
-      ? lastReleasedProgress
-      : playProgress;
+  const hasCurrentTransientProgress = transientTrackKeyRef.current === trackKey;
+  const hasPendingKeyboardProgress =
+    keyboardProgressBaselineRef.current === null ||
+    keyboardProgressBaselineRef.current === playProgress;
+  const displayProgress =
+    hasCurrentTransientProgress && isDragging
+      ? dragProgress
+      : hasCurrentTransientProgress &&
+          hasPendingKeyboardProgress &&
+          justReleasedRef.current &&
+          lastReleasedProgress !== null
+        ? lastReleasedProgress
+        : playProgress;
 
   const currentTimeInSeconds = (totalSeconds * displayProgress) / 100;
+  const canSeek = Boolean(currentTrack) && Number.isFinite(totalSeconds) && totalSeconds > 0;
+
+  const handleKeyDown = (event) => {
+    if (!canSeek || isDragging) return;
+
+    let nextTime;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':
+        nextTime = currentTimeInSeconds + 5;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        nextTime = currentTimeInSeconds - 5;
+        break;
+      case 'Home':
+        nextTime = 0;
+        break;
+      case 'End':
+        nextTime = totalSeconds;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const clampedTime = Math.max(0, Math.min(totalSeconds, nextTime));
+    keyboardProgressBaselineRef.current = playProgress;
+    seekTo(clampedTime);
+    setLastReleasedProgress((clampedTime / totalSeconds) * 100);
+    justReleasedRef.current = true;
+    clearTimeout(releaseTimeoutRef.current);
+    releaseTimeoutRef.current = setTimeout(() => {
+      keyboardProgressBaselineRef.current = null;
+      justReleasedRef.current = false;
+      setLastReleasedProgress(null);
+    }, 1000);
+  };
 
   // 静置时是细线，悬停 / 拖动 / 触摸时变粗。高度只在这里决定，并引用令牌，
   // 不要在 CSS 里再写一遍——两边都写就得靠 !important 互相压制。
-  const isProgressActive = isHovering || isDragging || isTouched;
+  const isProgressActive = isHovering || isDragging || isTouched || isFocused;
 
   return (
     <div
       className="progress-wrapper"
+      role="slider"
+      aria-label="播放进度"
+      aria-valuemin={0}
+      aria-valuemax={canSeek ? totalSeconds : 0}
+      aria-valuenow={canSeek ? Math.max(0, Math.min(totalSeconds, currentTimeInSeconds)) : 0}
+      aria-valuetext={`${formatTime(canSeek ? currentTimeInSeconds : 0)} / ${formatTime(totalSeconds)}`}
+      aria-disabled={!canSeek}
+      tabIndex={canSeek ? 0 : -1}
       ref={progressBarRef}
       style={{
         padding: '10px 0', // 增加上下内边距，扩大移动端点击区域
@@ -123,8 +235,11 @@ const ProgressBar = () => {
       onMouseLeave={() => setIsHovering(false)}
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      onFocus={() => setIsFocused(true)}
+      onBlur={() => setIsFocused(false)}
     >
-      {(isHovering || isDragging || isTouched) && (
+      {isProgressActive && (
         <div
           className="time-display-dynamic"
           style={{
@@ -192,7 +307,7 @@ const ProgressBar = () => {
             boxShadow: 'none',
           }}
         />
-        {(isDragging || isHovering || isTouched) && (
+        {isProgressActive && (
           <div
             className="progress-handle"
             style={{

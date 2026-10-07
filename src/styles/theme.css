@@ -11,10 +11,10 @@
 :root {
   /* ===== 颜色系统 ===== */
   /* 基础颜色 */
-  --color-primary: #2383e2;
-  /* 更改为主色为 Notion 蓝 */
-  --color-primary-light: #3391ee;
-  --color-primary-dark: #1f71c2;
+  /* 主色及交互态均满足普通字号白字的 4.5:1 对比度。 */
+  --color-primary: #1a6dc0;
+  --color-primary-light: #1d75ce;
+  --color-primary-dark: #165da5;
   /* 实色表面（主色 / accent / danger / info / 深色底）上的前景色。
      不要用 --color-background 代替——那是底色语义，主题一变就会失效。 */
   --color-on-solid: #ffffff;
@@ -27,6 +27,7 @@
   --color-warning: #ffc107;
   --color-info: #17a2b8;
   --color-accent: #d15c5c;
+  --color-accent-text: #b34444;
 
   /* 中性颜色 (Notion 风格) */
   --color-text-primary: #2f3437;
@@ -41,7 +42,7 @@
   --color-accent-light: #e06d6d;
   --color-border: #e5e5e5;
   /* 归一化为浅灰描边 */
-  --color-border-active: #2383e2;
+  --color-border-active: var(--color-primary);
 
   /* 组件语义色与透明叠层。组件层只引用这些令牌，保持主题可替换。 */
   --color-danger-text: #721c24;
@@ -95,7 +96,7 @@
   --control-visual-size: 20px;
   --control-radius: 8px;
   --control-hover-background: var(--color-hover-notion);
-  --button-min-height: 40px;
+  --button-min-height: var(--control-hit-size);
   /* 焦点环：拆成长写令牌，供 index.css 的全局无障碍策略统一引用 */
   --focus-ring-width: 3px;
   --focus-ring-color: var(--color-primary);
@@ -205,7 +206,7 @@
 /* 音乐卡片样式已移至 App.css */
 
 /* 触摸设备优先使用 44px 命中区；图标仍由组件自身的 size/font-size 控制。 */
-@media (pointer: coarse), (max-width: 768px) {
+@media (pointer: coarse), (max-width: 991.98px) {
   :root {
     --control-hit-size: var(--control-hit-size-coarse);
   }

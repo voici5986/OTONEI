@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import envCompatible from 'vite-plugin-env-compatible';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import responsiveMedia from './scripts/responsiveMedia.mjs';
 
 // Vitest matches per-file coverage thresholds against POSIX-style relative paths
 // on every platform. Keep these keys stable on Windows and Linux alike.
@@ -10,6 +11,11 @@ const coveragePath = (filePath) => filePath.replace(/\\/g, '/');
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [responsiveMedia()],
+    },
+  },
   plugins: [
     react(),
     envCompatible({

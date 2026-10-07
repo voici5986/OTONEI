@@ -1,6 +1,6 @@
 /* 移动端展开模式 UI 重构及动画样式 */
 
-@media (max-width: 768px) {
+@media (--viewport-md-down) {
   /* 基础容器动画 */
   .audio-player.collapsed {
     bottom: var(--mobile-tab-bar-height);
@@ -14,7 +14,7 @@
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .audio-player.expanded {
+  .audio-player.mobile-player.expanded {
     bottom: 0;
     height: 100vh;
     z-index: var(--z-index-player-force);
@@ -134,7 +134,8 @@
   .mobile-lyrics-toggle {
     position: absolute;
     top: 12px;
-    right: 20px;
+    left: 20px;
+    right: auto;
     z-index: var(--z-index-mobile-expanded-top);
     color: var(--color-text-secondary);
   }

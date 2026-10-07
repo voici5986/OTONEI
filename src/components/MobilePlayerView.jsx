@@ -40,7 +40,7 @@ const MobilePlayerView = ({
         onClick={toggleLyric}
         aria-label="关闭歌词视图"
       ></button>
-      <div className={`audio-player ${lyricExpanded ? 'expanded' : 'collapsed'}`}>
+      <div className={`audio-player mobile-player ${lyricExpanded ? 'expanded' : 'collapsed'}`}>
         <div className="player-inner">
           <div className="progress-control-container">
             <ProgressBar />

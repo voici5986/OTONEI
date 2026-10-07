@@ -1,5 +1,6 @@
+import PageStatus from '../components/PageStatus';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { getHistory } from '../services/storage';
+import { getHistoryStrict } from '../services/storage';
 import { toast } from 'react-toastify';
 import MusicCardActions from '../components/MusicCardActions';
 import './History.css';
@@ -13,10 +14,11 @@ import { getTrackArtist } from '../utils/trackFormatter';
 const getHistoryTrack = (item) => item?.song || item;
 const getHistoryTimestamp = (item) => item?.timestamp || Date.now();
 
-const History = ({ globalSearchQuery, onTabChange }) => {
+const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   const [history, setHistory] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [currentDownloadingTrack, setCurrentDownloadingTrack] = useState(null);
 
@@ -80,12 +82,15 @@ const History = ({ globalSearchQuery, onTabChange }) => {
   const loadHistory = useCallback(async () => {
     const requestedUserId = currentUser?.uid;
     setLoading(true);
+    setLoadError(false);
     try {
-      const historyItems = await getHistory(requestedUserId);
+      const historyItems = await getHistoryStrict(requestedUserId);
       if (activeUserIdRef.current !== requestedUserId) return;
       setHistory(historyItems);
       setFilteredHistory(historyItems);
     } catch (error) {
+      if (activeUserIdRef.current !== requestedUserId) return;
+      setLoadError(true);
       logger.error('加载历史记录失败:', error);
       toast.error('加载历史记录失败，请重试', { icon: '⚠️' });
     } finally {
@@ -189,19 +194,29 @@ const History = ({ globalSearchQuery, onTabChange }) => {
       {renderLoginReminder()}
 
       {loading ? (
-        <div className="text-center my-5">
-          <span className="spinner-custom"></span>
-        </div>
-      ) : history.length === 0 ? null : filteredHistory.length === 0 ? (
-        <div
-          className="alert-light text-center py-4 rounded"
-          style={{
-            backgroundColor: 'var(--color-background-alt)',
-            border: '1px solid var(--color-border)',
-          }}
-        >
-          没有匹配的历史记录
-        </div>
+        <PageStatus busy title="正在加载历史记录" />
+      ) : loadError ? (
+        <PageStatus
+          error
+          title="加载历史记录失败"
+          description="请稍后重试。"
+          action="重新加载"
+          onAction={loadHistory}
+        />
+      ) : history.length === 0 ? (
+        <PageStatus
+          title="还没有历史记录"
+          description="播放歌曲后，你听过的音乐会显示在这里。"
+          action="去搜索音乐"
+          onAction={() => onTabChange('home')}
+        />
+      ) : filteredHistory.length === 0 ? (
+        <PageStatus
+          title="没有匹配的历史记录"
+          description="试试其他关键词，或清除搜索查看全部。"
+          action="清除筛选"
+          onAction={onClearSearch}
+        />
       ) : (
         <div className="history-grid row g-3">
           {filteredHistory.map((item) => {

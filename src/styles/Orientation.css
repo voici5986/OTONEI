@@ -3,7 +3,7 @@
  */
 
 /* 移动设备横屏时的样式优化 */
-@media screen and (max-width: 767px) and (orientation: landscape) {
+@media screen and (--viewport-md-below) and (orientation: landscape) {
   /* 导航栏在横屏时的特殊处理 */
   .navbar {
     padding: 0.3rem var(--spacing-md);
@@ -16,7 +16,7 @@
 }
 
 /* 平板横屏时的样式 */
-@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+@media screen and (--viewport-md-up) and (max-width: 1024px) and (orientation: landscape) {
   /* 平板设备横屏时可以正常显示，但做一些优化 */
   .search-result-card {
     margin-bottom: 15px;

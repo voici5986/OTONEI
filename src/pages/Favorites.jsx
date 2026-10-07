@@ -1,6 +1,7 @@
+import PageStatus from '../components/PageStatus';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MusicCardActions from '../components/MusicCardActions';
-import { getFavorites } from '../services/storage';
+import { getFavoritesStrict } from '../services/storage';
 import { toast } from 'react-toastify';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,7 +10,7 @@ import logger from '../utils/logger.js';
 import { getTrackKey } from '../utils/trackIdentity';
 import { getTrackArtist } from '../utils/trackFormatter';
 
-const Favorites = ({ globalSearchQuery, onTabChange }) => {
+const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   // 检查字符串是否匹配查询词
   const isMatch = useCallback(function match(text, query) {
     // 处理null/undefined
@@ -77,6 +78,7 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
 
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const [filteredFavorites, setFilteredFavorites] = useState([]);
 
@@ -84,12 +86,15 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
   const loadFavorites = useCallback(async () => {
     const requestedUserId = currentUser?.uid;
     setLoading(true);
+    setLoadError(false);
     try {
-      const favItems = await getFavorites(requestedUserId);
+      const favItems = await getFavoritesStrict(requestedUserId);
       if (activeUserIdRef.current !== requestedUserId) return;
       setFavorites(favItems);
       setFilteredFavorites(favItems); // 初始化过滤结果
     } catch (error) {
+      if (activeUserIdRef.current !== requestedUserId) return;
+      setLoadError(true);
       logger.error('加载收藏失败:', error);
       toast.error('加载收藏失败，请重试', { icon: '⚠️' });
     } finally {
@@ -269,20 +274,29 @@ const Favorites = ({ globalSearchQuery, onTabChange }) => {
       {renderLoginReminder()}
 
       {loading ? (
-        <div className="text-center my-5">
-          <span className="spinner-custom"></span>
-        </div>
-      ) : favorites.length === 0 ? null : filteredFavorites.length === 0 ? (
-        <div
-          className="alert-light text-center py-4 rounded"
-          style={{
-            backgroundColor: 'var(--color-background-alt)',
-            border: '1px solid var(--color-border)',
-          }}
-        >
-          <p className="mb-0">没有匹配的收藏歌曲</p>
-          <small className="text-muted">尝试使用不同的关键词搜索</small>
-        </div>
+        <PageStatus busy title="正在加载收藏" />
+      ) : loadError ? (
+        <PageStatus
+          error
+          title="加载收藏失败"
+          description="请稍后重试。"
+          action="重新加载"
+          onAction={loadFavorites}
+        />
+      ) : favorites.length === 0 ? (
+        <PageStatus
+          title="还没有收藏"
+          description="搜索歌曲后，点击收藏按钮，将喜欢的音乐保存在这里。"
+          action="去搜索音乐"
+          onAction={() => onTabChange('home')}
+        />
+      ) : filteredFavorites.length === 0 ? (
+        <PageStatus
+          title="没有匹配的收藏"
+          description="试试其他关键词，或清除搜索查看全部。"
+          action="清除筛选"
+          onAction={onClearSearch}
+        />
       ) : (
         <div className="favorites-grid row g-3">
           {filteredFavorites.map((track) => (

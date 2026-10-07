@@ -68,7 +68,7 @@ const SearchResultItem = ({ track, searchResults, quality }: SearchResultItemPro
     >
       <div className="music-card-row">
         <div className="music-card-info">
-          <h6>{track.name}</h6>
+          <h6 title={track.name}>{track.name}</h6>
           <small>{getTrackArtist(track) || '未知歌手'}</small>
         </div>
         <TypedMusicCardActions

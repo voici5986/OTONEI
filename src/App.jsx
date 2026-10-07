@@ -7,6 +7,7 @@ import UpdateNotification from './components/UpdateNotification';
 import AudioPlayer from './components/AudioPlayer';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
+import PageStatus from './components/PageStatus';
 import { useDevice } from './contexts/DeviceContext';
 import { usePlayer } from './contexts/PlayerContext';
 import { lockToPortrait } from './utils/orientationManager';
@@ -24,6 +25,21 @@ import './styles/AudioPlayer.css';
 import './styles/Orientation.css';
 import logger from './utils/logger.js';
 import { env } from './config/env';
+
+const SOURCE_LABELS = {
+  netease: '网易云音乐',
+  kuwo: '酷我音乐',
+  joox: 'JOOX',
+  bilibili: '哔哩哔哩',
+};
+
+const focusVisibleSearchInput = () => {
+  const inputs = document.querySelectorAll('.header-search-input, .mobile-search-input');
+  const visibleInput = Array.from(inputs).find(
+    (input) => input.getClientRects().length > 0 && getComputedStyle(input).visibility !== 'hidden'
+  );
+  visibleInput?.focus();
+};
 
 // 懒加载页面组件
 const Favorites = React.lazy(() => import('./pages/Favorites'));
@@ -70,6 +86,10 @@ const AppContent = () => {
     quality,
     loading,
     loadingMore,
+    error,
+    page,
+    activeQuery,
+    activeSource,
     hasMore,
     handleSearch,
     handleLoadMore,
@@ -187,6 +207,24 @@ const AppContent = () => {
     });
   }, []);
 
+  const closeSearchSuggestions = useCallback(() => {
+    setSuggestionsOpen(false);
+    setSelectedIndex(-1);
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  }, []);
+
+  const handleSearchAction = useCallback(
+    (event, nextQuery = query, nextSource = source) => {
+      event?.preventDefault();
+      setQuery(nextQuery);
+      setSource(nextSource);
+      closeSearchSuggestions();
+      handleTabChange('home');
+      void handleSearch(null, nextQuery, nextSource);
+    },
+    [query, source, setQuery, setSource, closeSearchSuggestions, handleTabChange, handleSearch]
+  );
+
   const handleSuggestionPick = (item) => {
     // 处理“查看更多”跳转
     if (item.type === 'more') {
@@ -195,34 +233,17 @@ const AppContent = () => {
     }
 
     if (item.isSearchHistory) {
-      // 如果是搜索历史建议：用点击项的原始 query/source 直接搜索，
-      // 不再依赖 setTimeout(0) 捕获的旧闭包（NZ-2）。
-      setQuery(item.rawQuery);
-      setSource(item.rawSource);
-      setSuggestionsOpen(false);
-      handleSearch(null, item.rawQuery, item.rawSource);
+      handleSearchAction(null, item.rawQuery, item.rawSource);
       return;
     }
 
     if (item.raw) {
       // 1. 如果是歌曲建议，直接播放
       playTrack(item.raw, -1, [item.raw], quality);
-      // 2. 清空搜索框并关闭建议
       setQuery('');
-      setSuggestionsOpen(false);
-      setSelectedIndex(-1);
-      // 3. 主动失去焦点，强制触发 CSS 状态回退
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
+      closeSearchSuggestions();
     } else {
-      // 如果没有原始数据，则回退到普通搜索
-      setQuery(item.name);
-      setSuggestionsOpen(false);
-      setSelectedIndex(-1);
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
+      handleSearchAction(null, item.name);
     }
   };
 
@@ -241,7 +262,7 @@ const AppContent = () => {
       searchHistory.slice(0, 5).map((item, index) => ({
         id: `history-${index}-${item.timestamp}`,
         name: item.query,
-        artist: `历史搜索 · ${item.source}`,
+        artist: `历史搜索 · ${SOURCE_LABELS[item.source] || item.source}`,
         isSearchHistory: true,
         rawQuery: item.query,
         rawSource: item.source,
@@ -276,22 +297,6 @@ const AppContent = () => {
 
     return items;
   }, [query, historySuggestionItems, favoritesItems, historyItems]);
-
-  const handleSearchAction = useCallback(
-    (e) => {
-      handleSearch(e);
-      setSuggestionsOpen(false);
-      setSelectedIndex(-1);
-      // 关键修复：主动失去焦点，让 CSS :focus-within 状态消失，搜索框样式恢复
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-      if (activeTab !== 'home') {
-        handleTabChange('home');
-      }
-    },
-    [handleSearch, activeTab, handleTabChange]
-  );
 
   const handleKeyDown = (e) => {
     // 处理输入法组合输入，避免误触发搜索
@@ -351,24 +356,18 @@ const AppContent = () => {
     return (
       <div className={`page-content-wrapper ${isDesktop ? 'home-desktop' : ''}`}>
         <div className="home-search-filter-bar mb-4">
-          <form onSubmit={handleSearch} className="home-filter-form">
+          <form onSubmit={handleSearchAction} className="home-filter-form">
             <div className="d-flex align-items-center flex-wrap gap-3">
               <div className="filter-group d-flex align-items-center">
                 <span className="text-muted small me-2">音源:</span>
                 <select
-                  className="form-select-custom"
+                  className="form-select-custom home-filter-select"
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  style={{
-                    height: '38px',
-                    width: isDesktop ? '120px' : 'auto',
-                    fontSize: '0.85rem',
-                    flex: isDesktop ? 'none' : 1,
-                  }}
                 >
                   {sources.map((src) => (
                     <option key={src} value={src}>
-                      {src}
+                      {SOURCE_LABELS[src]}
                     </option>
                   ))}
                 </select>
@@ -376,15 +375,9 @@ const AppContent = () => {
               <div className="filter-group d-flex align-items-center">
                 <span className="text-muted small me-2">音质:</span>
                 <select
-                  className="form-select-custom"
+                  className="form-select-custom home-filter-select"
                   value={quality}
                   onChange={(e) => setQuality(e.target.value)}
-                  style={{
-                    height: '38px',
-                    width: isDesktop ? '120px' : 'auto',
-                    fontSize: '0.85rem',
-                    flex: isDesktop ? 'none' : 1,
-                  }}
                 >
                   {qualities.map((q) => (
                     <option key={q} value={q}>
@@ -394,12 +387,7 @@ const AppContent = () => {
                 </select>
               </div>
               {isDesktop && (
-                <button
-                  type="submit"
-                  className="search-submit-btn"
-                  disabled={loading}
-                  style={{ height: '38px', padding: '0 var(--spacing-lg)', fontSize: '0.85rem' }}
-                >
+                <button type="submit" className="search-submit-btn" disabled={loading}>
                   {loading ? (
                     <span
                       className="spinner-custom"
@@ -414,7 +402,38 @@ const AppContent = () => {
           </form>
         </div>
 
-        {results.length > 0 ? (
+        {loading ? (
+          <PageStatus busy title="正在搜索音乐" description="搜索完成后，歌曲会显示在这里。" />
+        ) : error ? (
+          <PageStatus
+            error
+            title="搜索未完成"
+            description={
+              results.length > 0
+                ? `请检查网络后重试。下方保留的是“${activeQuery}”在${SOURCE_LABELS[activeSource] || activeSource}的上次结果。`
+                : '请检查网络，或更换音源后重试。'
+            }
+            action="重试搜索"
+            onAction={() => handleSearchAction()}
+          />
+        ) : results.length === 0 ? (
+          page > 0 ? (
+            <PageStatus
+              title="没有找到相关歌曲"
+              description={`“${activeQuery}”在${SOURCE_LABELS[activeSource] || activeSource}没有搜索结果。试试其他关键词或音源。`}
+              action="修改关键词"
+              onAction={focusVisibleSearchInput}
+            />
+          ) : (
+            <PageStatus
+              title="开始你的音乐搜索"
+              description="输入歌曲、歌手或专辑名称，按回车开始搜索。"
+              action="搜索音乐"
+              onAction={focusVisibleSearchInput}
+            />
+          )
+        ) : null}
+        {!loading && results.length > 0 ? (
           <div className={isDesktop ? 'home-results' : ''}>
             <div className={`row g-3 ${isDesktop ? 'home-results-row' : ''}`}>
               {results.map((track) => (
@@ -427,15 +446,9 @@ const AppContent = () => {
               <div className="d-flex justify-content-center mt-4 mb-2">
                 <button
                   type="button"
-                  className="search-submit-btn"
+                  className="search-submit-btn load-more-btn"
                   onClick={handleLoadMore}
                   disabled={loading || loadingMore}
-                  style={{
-                    height: '38px',
-                    minWidth: '128px',
-                    padding: '0 var(--spacing-lg)',
-                    fontSize: '0.85rem',
-                  }}
                 >
                   {loadingMore ? (
                     <span
@@ -456,12 +469,7 @@ const AppContent = () => {
 
   // 渲染不同标签页的内容
   const renderContent = () => {
-    const loadingFallback = (
-      <div className="text-center my-5">
-        <span className="spinner-custom" style={{ width: '2.5rem', height: '2.5rem' }}></span>
-        <p className="mt-3">加载中...</p>
-      </div>
-    );
+    const loadingFallback = <PageStatus busy title="正在加载页面" />;
 
     switch (activeTab) {
       case 'home':
@@ -469,13 +477,21 @@ const AppContent = () => {
       case 'favorites':
         return (
           <Suspense fallback={loadingFallback}>
-            <Favorites globalSearchQuery={query} onTabChange={handleTabChange} />
+            <Favorites
+              globalSearchQuery={query}
+              onTabChange={handleTabChange}
+              onClearSearch={() => setQuery('')}
+            />
           </Suspense>
         );
       case 'history':
         return (
           <Suspense fallback={loadingFallback}>
-            <History globalSearchQuery={query} onTabChange={handleTabChange} />
+            <History
+              globalSearchQuery={query}
+              onTabChange={handleTabChange}
+              onClearSearch={() => setQuery('')}
+            />
           </Suspense>
         );
       case 'user':

@@ -3,6 +3,8 @@
  * 提供精确的设备类型检测，包括移动设备、平板和桌面设备
  */
 
+import { DEVICE_THRESHOLDS } from '../config/responsive.mjs';
+
 // 缓存检测结果
 let deviceInfoCache = null;
 let lastDetectionTime = 0;
@@ -62,7 +64,8 @@ export const detectDevice = () => {
     // 大屏幕移动设备可能是平板
     // iPad Pro 和一些大屏Android平板的特征
     if (
-      (screenWidth >= 768 && screenHeight >= 768) || // 最小平板尺寸
+      (screenWidth >= DEVICE_THRESHOLDS.tabletMinScreenDimension &&
+        screenHeight >= DEVICE_THRESHOLDS.tabletMinScreenDimension) || // 最小平板尺寸
       Math.max(screenWidth, screenHeight) >= 1024 || // 大屏幕设备
       (screenRatio > 0.6 && screenRatio < 1.7) // 平板通常有更接近正方形的屏幕比例
     ) {

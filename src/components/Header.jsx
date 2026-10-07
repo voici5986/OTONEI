@@ -20,6 +20,7 @@ const Header = ({
   onShowMore,
   selectedIndex = -1,
   activeSuggestionId,
+  loading = false,
 }) => {
   const { currentUser } = useAuth();
   const getSuggestionOptionId = (extraClass, index) => `suggestion-option-${extraClass}-${index}`;
@@ -254,7 +255,7 @@ const Header = ({
         <div className={`header-search-container${suggestionsOpen ? ' is-suggestions-open' : ''}`}>
           <form onSubmit={onSearchSubmit} className="w-100">
             <div className="header-search-field-wrapper">
-              <FaSearch className="header-search-icon" />
+              <FaSearch className="header-search-icon" aria-hidden="true" />
               <input
                 type="search"
                 placeholder={getPlaceholder()}
@@ -264,6 +265,7 @@ const Header = ({
                 onBlur={onSearchBlur}
                 onKeyDown={onKeyDown}
                 role="combobox"
+                aria-busy={loading}
                 aria-autocomplete="list"
                 aria-expanded={suggestionsOpen}
                 aria-controls="search-suggestions-desktop-search-suggestions"
@@ -288,6 +290,11 @@ const Header = ({
               )}
             </div>
           </form>
+          {loading && (
+            <span className="header-search-status" role="status">
+              正在搜索…
+            </span>
+          )}
           {renderSuggestions('desktop-search-suggestions')}
         </div>
 
@@ -352,7 +359,7 @@ const Header = ({
         <div className={`mobile-search-container${suggestionsOpen ? ' is-suggestions-open' : ''}`}>
           <form onSubmit={onSearchSubmit} className="w-100">
             <div className="mobile-search-field-wrapper">
-              <FaSearch className="mobile-search-icon" />
+              <FaSearch className="mobile-search-icon" aria-hidden="true" />
               <input
                 type="search"
                 placeholder={getPlaceholder()}
@@ -362,6 +369,7 @@ const Header = ({
                 onBlur={onSearchBlur}
                 onKeyDown={onKeyDown}
                 role="combobox"
+                aria-busy={loading}
                 aria-autocomplete="list"
                 aria-expanded={suggestionsOpen}
                 aria-controls="search-suggestions-mobile-search-suggestions"
@@ -386,6 +394,11 @@ const Header = ({
               )}
             </div>
           </form>
+          {loading && (
+            <span className="header-search-status" role="status">
+              正在搜索…
+            </span>
+          )}
           {renderSuggestions('mobile-search-suggestions')}
         </div>
       </div>

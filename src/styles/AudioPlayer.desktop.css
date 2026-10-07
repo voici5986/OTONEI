@@ -1,5 +1,5 @@
 /* 桌面端播放器控制样式 */
-@media (min-width: 769px) {
+@media (--viewport-md-above) {
   .player-inner {
     padding: 0;
     height: 100%;
@@ -188,14 +188,6 @@
   .desktop-expanded-view .lyrics-scroll-container {
     flex: 1;
     overflow-y: auto;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 15%,
-      black 85%,
-      transparent 100%
-    );
   }
 
   .desktop-expanded-view .lyric-line {
@@ -203,12 +195,10 @@
     padding: 15px 0 !important;
     text-align: left !important; /* 桌面端左对齐更有现代感 */
     transition: all 0.3s ease;
-    opacity: 0.4;
     color: var(--color-text-secondary) !important;
   }
 
   .desktop-expanded-view .lyric-line.active {
-    opacity: 1;
     font-size: 1.4rem !important;
     font-weight: var(--font-weight-bold) !important;
     color: var(--color-accent) !important;
@@ -221,7 +211,7 @@
 }
 
 /* 全局隐藏规则：在桌面端隐藏移动端特有组件 */
-@media (min-width: 769px) {
+@media (--viewport-md-above) {
   .mobile-mini-player,
   .mobile-progress-container {
     display: none;
@@ -229,7 +219,7 @@
 }
 
 /* 769–991px 显示底部 Tab 时，桌面播放器也要避开 Tab 的命中区。 */
-@media (min-width: 769px) and (max-width: 991.98px) {
+@media (--viewport-md-above) and (max-width: 991.98px) {
   .audio-player.collapsed {
     bottom: max(var(--mobile-tab-bar-height), 60px);
   }

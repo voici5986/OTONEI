@@ -57,7 +57,7 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
         transition: 'all 0.3s ease',
         fontWeight: isActive ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
         fontSize: isActive ? 'var(--font-size-lg)' : 'var(--font-size-base)',
-        color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+        color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
         borderRadius: 0,
         boxShadow: 'none',
         marginBottom: 'var(--spacing-compact)',
@@ -82,7 +82,7 @@ export const LyricLine = ({ line, index, isActive, isNextActive }) => {
             wordBreak: 'break-word',
             paddingLeft: 0,
             marginTop: '6px',
-            color: isActive ? 'var(--color-text-tertiary)' : 'var(--color-text-muted)',
+            color: 'var(--color-text-secondary)',
             fontSize: isActive ? 'var(--font-size-base)' : '0.9rem',
             fontWeight: isActive ? 'var(--font-weight-medium)' : 'var(--font-weight-normal)',
           }}

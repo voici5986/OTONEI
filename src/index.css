@@ -169,7 +169,7 @@ img.rounded {
   z-index: var(--z-index-fixed-bottom);
 }
 
-@media (max-width: 768px) {
+@media (--viewport-md-down) {
   .fixed-bottom {
     height: auto;
     padding: 10px;
@@ -313,7 +313,7 @@ img.rounded {
   margin-top: 2px;
 }
 
-@media (max-width: 768px) {
+@media (--viewport-md-down) {
   .lyrics-preview-container {
     justify-content: center;
   }

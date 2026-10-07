@@ -83,7 +83,7 @@ const MobileMiniPlayer = ({
         >
           <div
             className="mobile-expanded-player-content d-flex flex-column h-100 justify-content-end pb-2"
-            style={{ position: 'relative', pointerEvents: 'auto' }}
+            style={{ position: 'relative', pointerEvents: 'none' }}
           >
             {/* 歌曲信息：移至播放控制上方，作为模块的一部分 */}
             <div className="mobile-track-info-expanded d-md-none">

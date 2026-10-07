@@ -246,25 +246,11 @@ button.player-track-summary {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  mask-image: linear-gradient(
-    to bottom,
-    var(--color-overlay-strong) 0%,
-    black 30%,
-    black 70%,
-    var(--color-overlay-strong) 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    var(--color-overlay-strong) 0%,
-    black 30%,
-    black 70%,
-    var(--color-overlay-strong) 100%
-  );
 }
 
 .lyric-line {
   padding: 10px 15px;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-weight: var(--font-weight-normal);
   text-align: center;
   font-size: var(--font-size-base);

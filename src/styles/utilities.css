@@ -276,7 +276,7 @@ dl {
   height: 100%;
 }
 .text-muted {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 .text-primary {
   color: var(--color-text-primary);
@@ -511,7 +511,7 @@ dl {
   z-index: var(--z-index-fixed-bottom);
 }
 
-@media (min-width: 768px) {
+@media (--viewport-md-up) {
   .d-md-none {
     display: none !important;
   }

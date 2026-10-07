@@ -1,6 +1,6 @@
 /* 移动端基础布局与交互样式 */
 
-@media (max-width: 768px) {
+@media (--viewport-md-down) {
   .mobile-mini-player {
     position: relative;
   }
@@ -32,8 +32,8 @@
     overflow: visible;
   }
 
-  body .audio-player.expanded .player-inner {
-    pointer-events: auto;
+  body .audio-player.mobile-player.expanded .player-inner {
+    pointer-events: none;
     height: 100%; /* 占据父容器全部高度 */
     width: 100%;
     /* 增加底部 padding，--safe-area-bottom 适配全面屏手势区 */
@@ -46,7 +46,7 @@
     z-index: var(--z-index-mobile-expanded-base);
   }
 
-  body .audio-player.expanded .progress-control-container {
+  body .audio-player.mobile-player.expanded .progress-control-container {
     display: none; /* 隐藏原有的绝对定位进度条，使用内部的新进度条 */
   }
 
@@ -85,6 +85,10 @@
     position: relative;
     z-index: var(--z-index-mobile-expanded-content);
     padding-top: 10px;
+  }
+
+  .mobile-expanded-player-content > div {
+    pointer-events: auto;
   }
 
   /* 手势拖动状态：禁用过渡动画，实现跟手感 */
@@ -135,7 +139,6 @@
   .mobile-track-info-expanded .track-artist {
     color: var(--color-text-secondary);
     font-size: var(--font-size-base);
-    opacity: 0.8;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

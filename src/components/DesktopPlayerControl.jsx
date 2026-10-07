@@ -55,6 +55,7 @@ const DesktopPlayerControl = ({
           <button
             type="button"
             onClick={handlePrevious}
+            aria-label="上一首"
             className="control-icon-btn ui-icon-button p-0 ms-3"
           >
             <MdSkipPrevious size={28} />
@@ -63,6 +64,7 @@ const DesktopPlayerControl = ({
           <button
             type="button"
             onClick={togglePlay}
+            aria-label={isPlaying ? '暂停' : '播放'}
             className="control-icon-btn ui-icon-button ui-icon-button--play accent-control mx-3 p-0"
           >
             <div className="play-pause-button">
@@ -73,6 +75,7 @@ const DesktopPlayerControl = ({
           <button
             type="button"
             onClick={handleNext}
+            aria-label="下一首"
             className="control-icon-btn ui-icon-button p-0 me-3"
           >
             <MdSkipNext size={28} />
