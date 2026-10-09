@@ -30,7 +30,14 @@ VITE_API_BASE=/api-v1/api.php
 REACT_APP_API_BASE=/api-v1/api.php
 ```
 
-仓库中的 `.node-version`、`engines.node` 和 `engines.pnpm` 是版本策略来源；Dashboard 中的变量是部署环境的镜像配置，修改后应与这些策略保持一致。当前未在本地验证 Cloudflare 控制台是否自动读取 `.node-version`，请在项目设置中显式确认 Node 26.x 与 pnpm 12.x。
+仓库中的 `.node-version`、`engines.node` 和 `engines.pnpm` 是版本策略来源；Dashboard 中的变量是部署环境的镜像配置，修改后应与这些策略保持一致。
+
+关于构建镜像的 Node 版本，2026-10-09 查证官方文档（Build image，更新于 2026-09-18）后确认：
+
+- 当前 v3 构建镜像的 Node 默认版本是 `22.16.0`，但版本列的约束是 `Any version`——官方定义为"支持该语言的所有版本，包括比默认版本更新的版本"。因此指定 Node 26 可用。
+- v3 支持在**项目根目录**放 `.nvmrc` / `.node-version` 来指定版本，所以仓库根的 `.node-version`(26) 会被读取。显式设置 `NODE_VERSION` 仍然更稳，不依赖文件与变量之间的优先级判断。
+- **v3 不再从 `package.json` 的 `engines` 检测 Node 版本，也不从 `pnpm-lock.yaml` 检测 pnpm 版本**——上面两个变量因此是必需的，不能依赖仓库内声明。
+- Pages Functions 运行在 workerd（V8 isolates）而不是 Node，所以 Node 版本只影响构建阶段，不影响线上运行时的兼容性。这与 Vercel 等"运行时跑 Node"的平台不同，不要直接套用后者的版本上限。
 
 Firebase 配置优先使用 `VITE_FIREBASE_*`；迁移窗口内仍兼容 `REACT_APP_FIREBASE_*`，新旧变量同时存在且冲突时以 `VITE_*` 为准。外部控制面变量需在确认新变量已配置后再移除旧变量。
 
