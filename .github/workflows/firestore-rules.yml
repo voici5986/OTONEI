@@ -26,7 +26,7 @@ concurrency:
 
 env:
   FIREBASE_TOOLS_VERSION: '15.30.0'
-  FIREBASE_RULES_TESTING_VERSION: '5.0.2'
+  FIREBASE_RULES_TESTING_VERSION: '6.0.0'
 
 jobs:
   validate:
@@ -47,13 +47,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
+          # @firebase/rules-unit-testing@6 要求 node >= 24.12，与项目 engines (>=26 <27) 对齐
+          node-version: '26'
 
       - name: Install Firestore rules behavior test dependencies
         run: >-
           npm install --no-save --no-package-lock --ignore-scripts
           "@firebase/rules-unit-testing@${FIREBASE_RULES_TESTING_VERSION}"
-          "firebase@12.19.0"
+          "firebase@13.0.0"
 
       # 模拟器启动同时覆盖规则语法，脚本再覆盖关键 allow/deny 场景。
       - name: Test Firestore rules behavior
@@ -78,7 +79,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
+          # 与 ci.yml / main.yml 一样取 .node-version，避免同一文件里两个 job
+          # 各写一个版本号。main.yml 会断言 .node-version 匹配 ^26。
+          node-version-file: .node-version
 
       - name: Skip deploy when Firebase credentials are missing
         if: env.FIREBASE_PROJECT_ID == '' || env.FIREBASE_TOKEN == ''
