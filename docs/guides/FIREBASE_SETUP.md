@@ -41,6 +41,15 @@
 
 将仓库根目录的 `firestore.rules` 部署到 Firestore。该规则同时校验 UID 归属、用户文档字段、收藏/tombstone 结构和历史记录结构。修改同步数据结构时，必须同步更新和验证该规则。
 
+**发布顺序：先部署规则，再发布客户端。**
+
+规则对同步协议有硬约束：文档一旦写入 `cloudRevision` / `syncedAt`，后续写入必须携带递增一版的 `cloudRevision`，且 `syncedAt` 必须等于 `request.time`——服务端时间由规则强制，客户端伪造不了。因此两个方向的风险并不对称：
+
+- **规则先上线是安全的**：新客户端遇到尚未升级的旧文档时，规则允许它补上版本字段。
+- **客户端先上线不安全**：旧客户端遇到已升级的文档时，写入会被规则明确拒绝（不是静默降级），用户需要刷新到新版客户端才能继续同步。
+
+本地可用 Firestore Emulator 跑 `scripts/test-firestore-rules.mjs` 验证规则（见 `.github/workflows/firestore-rules.yml`）。该工作流只覆盖模拟器，真实云端的部署与多设备同步仍需单独验收。
+
 ### 6. 设置环境变量
 
 在项目根目录创建`.env.local`文件，并添加以下配置（替换为你自己的Firebase项目信息）：
