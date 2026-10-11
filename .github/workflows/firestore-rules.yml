@@ -64,6 +64,7 @@ jobs:
           "node scripts/test-firestore-rules.mjs"
 
   deploy:
+    needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event_name == 'workflow_dispatch'

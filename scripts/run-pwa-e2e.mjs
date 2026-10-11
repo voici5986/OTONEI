@@ -23,10 +23,31 @@ const run = (args, env = {}) =>
     });
   });
 
-const buildExitCode = await run([viteEntry, 'build']);
+const isPwa = process.env.PLAYWRIGHT_PWA !== '0';
+const testEnv = {
+  VITE_API_BASE: '/api-v1/api.php',
+  REACT_APP_API_BASE: '',
+  ...Object.fromEntries(
+    [
+      'API_KEY',
+      'AUTH_DOMAIN',
+      'PROJECT_ID',
+      'STORAGE_BUCKET',
+      'MESSAGING_SENDER_ID',
+      'APP_ID',
+      'MEASUREMENT_ID',
+    ].flatMap((key) => [
+      [`VITE_FIREBASE_${key}`, ''],
+      [`REACT_APP_FIREBASE_${key}`, ''],
+    ])
+  ),
+};
+// Vite replaces environment variables at build time, so isolate both build and server.
+const buildExitCode = await run([viteEntry, 'build'], testEnv);
 if (buildExitCode !== 0) process.exit(buildExitCode);
 
 const testExitCode = await run([playwrightEntry, 'test', '--config=playwright.config.mjs'], {
-  PLAYWRIGHT_PWA: '1',
+  ...testEnv,
+  PLAYWRIGHT_PWA: isPwa ? '1' : '0',
 });
 process.exit(testExitCode);

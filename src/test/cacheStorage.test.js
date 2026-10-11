@@ -1,9 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearBrowserCaches } from '../utils/cacheStorage';
+import { clearBrowserCaches, clearApplicationCaches } from '../utils/cacheStorage';
+
+vi.mock('../services/storage', () => ({ clearCoverCache: vi.fn().mockResolvedValue(true) }));
 
 describe('browser cache cleanup', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('removes persistent image and lyric caches while retaining account data', async () => {
+    localStorage.setItem('avatar-cache:user', 'avatar');
+    localStorage.setItem('sonicflow_lyric_song', 'lyrics');
+    localStorage.setItem('account', 'retained');
+    await clearApplicationCaches();
+    expect(localStorage.getItem('avatar-cache:user')).toBeNull();
+    expect(localStorage.getItem('sonicflow_lyric_song')).toBeNull();
+    expect(localStorage.getItem('account')).toBe('retained');
+    localStorage.clear();
   });
 
   it('unregisters active workers and deletes every Cache Storage entry', async () => {

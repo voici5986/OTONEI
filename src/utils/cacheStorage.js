@@ -1,3 +1,14 @@
+import { clearCoverCache } from '../services/storage';
+import { clearAvatarCache } from './avatarCache';
+
+export const clearApplicationCaches = async () => {
+  await clearCoverCache();
+  clearAvatarCache();
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith('sonicflow_lyric_')) localStorage.removeItem(key);
+  }
+};
+
 export const clearBrowserCaches = async () => {
   const registrations =
     'serviceWorker' in (globalThis.navigator ?? {})

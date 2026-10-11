@@ -5,7 +5,9 @@ import {
   setDoc,
   collection,
   query,
-  where,
+  documentId,
+  startAfter,
+  serverTimestamp,
   getDocs,
   getCountFromServer,
   writeBatch,
@@ -23,6 +25,9 @@ import {
   MAX_HISTORY_ITEMS,
   getNetworkStatus,
   resetPendingChanges,
+  withStorageMutation,
+  acknowledgeSyncChanges,
+  rebaseSyncChange,
 } from './storage';
 import logger from '../utils/logger.js';
 import { getTrackDocumentId, getTrackKey } from '../utils/trackIdentity';
@@ -30,6 +35,10 @@ import { getTrackArtist } from '../utils/trackFormatter';
 
 // 同步时间戳存储键
 const SYNC_TIMESTAMP_KEY = 'last_sync_timestamp';
+let syncGeneration = 0;
+const assertSyncActive = (generation) => {
+  if (generation !== syncGeneration) throw new Error('账号或同步会话已切换');
+};
 
 // 延迟同步定时器：收藏与历史各自独立，互不取消
 const syncTimers = {
@@ -88,6 +97,21 @@ const toCloudTrack = (track) => {
 
 const toMillis = (value) =>
   typeof value === 'number' ? value : typeof value?.toMillis === 'function' ? value.toMillis() : 0;
+
+const compareCloudItems = (incoming, existing, field = 'modifiedAt') => {
+  if (!existing) return 1;
+  if (incoming.cloudRevision || existing.cloudRevision)
+    return (incoming.cloudRevision || 0) - (existing.cloudRevision || 0);
+  return toMillis(incoming[field]) - toMillis(existing[field]);
+};
+
+// Server recency takes precedence over legacy client timestamps, including future clocks.
+const compareHistoryRecency = (a, b) => {
+  if (Boolean(a.syncDirty) !== Boolean(b.syncDirty))
+    return Number(Boolean(b.syncDirty)) - Number(Boolean(a.syncDirty));
+  if (a.syncedAt || b.syncedAt) return toMillis(b.syncedAt) - toMillis(a.syncedAt);
+  return toMillis(b.timestamp) - toMillis(a.timestamp);
+};
 
 const touchCloudUser = async (userRef, timestamp) =>
   runTransaction(db, async (transaction) => {
@@ -213,31 +237,18 @@ const getUserDocRef = (uid) => {
  * @param {number} lastSyncTime 上次同步时间戳
  * @returns {Promise<{favorites: Array, favoriteTombstones: Array, history: Array}>} 本地变更数据
  */
-const getLocalChangesSince = async (lastSyncTime, uid) => {
+const getLocalChangesSince = async (_lastSyncTime, uid) => {
   try {
     // 获取所有本地数据
     const allFavorites = await getFavoritesStrict(uid);
     const allFavoriteTombstones = await getFavoriteTombstones(uid);
     const allHistory = await getHistoryStrict(uid);
 
-    // 筛选出变更的数据
-    // 注意：由于当前数据结构可能没有修改时间戳，我们添加一个检测逻辑
-    const changedFavorites = allFavorites.filter((item) => {
-      // 如果项目有modifiedAt字段，使用它判断
-      if (item.modifiedAt != null) {
-        return item.modifiedAt > lastSyncTime;
-      }
-      // 没有modifiedAt时，仅在首次同步时作为变更处理
-      return lastSyncTime === 0;
-    });
-
-    const changedHistory = allHistory.filter((item) => {
-      // 历史记录通常有timestamp字段
-      return item.timestamp > lastSyncTime;
-    });
-
+    // Legacy items get one reconciliation regardless of an old wall-clock cursor.
+    const changedFavorites = allFavorites.filter((item) => item.syncDirty !== false);
+    const changedHistory = allHistory.filter((item) => item.syncDirty !== false);
     const changedFavoriteTombstones = allFavoriteTombstones.filter(
-      (item) => item.modifiedAt > lastSyncTime
+      (item) => item.syncDirty !== false
     );
 
     return {
@@ -300,8 +311,9 @@ const clearPendingSyncCounter = async (uid) => {
  * @param {string} uid 用户ID
  * @returns {Promise<{success: boolean, data?: any, error?: any, unchanged?: boolean}>}
  */
-const executeIncrementalSync = async (uid) => {
+const executeIncrementalSync = async (uid, generation) => {
   try {
+    assertSyncActive(generation);
     logger.log('开始子集合增量同步...');
 
     // 触发同步开始事件
@@ -334,7 +346,8 @@ const executeIncrementalSync = async (uid) => {
     // 一次性遗留清理：正常同步开始前先清掉旧 docId 重复项，
     // 否则新设备首次全量拉取可能因 limit(100) 挤出最旧的唯一歌曲。
     // 内部自带错误隔离，不影响本轮同步结果。
-    await ensureHistoryLegacyCleanup(uid);
+    await ensureHistoryLegacyCleanup(uid, () => assertSyncActive(generation));
+    assertSyncActive(generation);
 
     // 获取上次同步时间
     const lastSyncTime = await getLastSyncTime(uid);
@@ -350,7 +363,9 @@ const executeIncrementalSync = async (uid) => {
     });
 
     // 获取本地变更数据
-    const localChanges = await getLocalChangesSince(lastSyncTime, uid);
+    const localChanges = await withStorageMutation(uid, () =>
+      getLocalChangesSince(lastSyncTime, uid)
+    );
     logger.log(
       `本地变更: 收藏=${localChanges.favorites.length}条, 删除=${localChanges.favoriteTombstones.length}条, 历史=${localChanges.history.length}条`
     );
@@ -374,27 +389,6 @@ const executeIncrementalSync = async (uid) => {
     const cloudLastUpdated = userData.lastUpdated || 0;
     logger.log(`云端最后更新时间: ${new Date(cloudLastUpdated).toLocaleString()}`);
 
-    // 如果本地没有变化且云端没有更新，跳过同步
-    if (!localChanges.hasChanges && cloudLastUpdated <= lastSyncTime) {
-      logger.log('没有变化，跳过同步');
-
-      // 更新同步时间戳为当前时间，即使没有实际同步
-      await saveLastSyncTime(uid, now);
-
-      // unchanged 表示本地已无待同步变更，可清理陈旧计数
-      await clearPendingSyncCounter(uid);
-
-      // 触发同步完成事件
-      triggerEvent(SyncEvents.SYNC_COMPLETED, {
-        uid,
-        timestamp: now,
-        syncType: 'incremental',
-        result: { success: true, unchanged: true },
-      });
-
-      return { success: true, unchanged: true, timestamp: now };
-    }
-
     // 触发同步进度事件
     triggerEvent(SyncEvents.SYNC_PROGRESS, {
       uid,
@@ -404,7 +398,14 @@ const executeIncrementalSync = async (uid) => {
     });
 
     // 获取云端收藏数据变更
-    const cloudFavorites = await getCloudFavoritesFromSubcollection(uid, lastSyncTime);
+    const relevantKeys = new Set(
+      [
+        ...(await getFavoritesStrict(uid)),
+        ...localChanges.favoriteTombstones.filter((item) => item.syncDirty),
+      ].map(getTrackKey)
+    );
+    const cloudFavorites = await getCloudFavoritesFromSubcollection(uid, relevantKeys);
+    assertSyncActive(generation);
 
     // 触发同步进度事件
     triggerEvent(SyncEvents.SYNC_PROGRESS, {
@@ -416,6 +417,7 @@ const executeIncrementalSync = async (uid) => {
 
     // 获取云端历史记录变更
     const cloudHistory = await getCloudHistoryFromSubcollection(uid, lastSyncTime);
+    assertSyncActive(generation);
 
     // 触发同步进度事件
     triggerEvent(SyncEvents.SYNC_PROGRESS, {
@@ -439,12 +441,24 @@ const executeIncrementalSync = async (uid) => {
       ...localChanges.favoriteTombstones,
     ].filter((item) => {
       const cloudItem = cloudFavoritesByKey.get(getTrackKey(item));
-      return !cloudItem || (item.modifiedAt || 0) > (cloudItem.modifiedAt || 0);
+      return item.syncDirty === true || !cloudItem || compareCloudItems(item, cloudItem) > 0;
     });
 
+    const accepted = { favorites: [], history: [] };
+    accepted.favorites.push(
+      ...[...localChanges.favorites, ...localChanges.favoriteTombstones]
+        .filter((item) => !item.syncDirty && cloudFavoritesByKey.has(getTrackKey(item)))
+        .map((item) => ({
+          ...item,
+          cloudRevision: cloudFavoritesByKey.get(getTrackKey(item)).cloudRevision || 0,
+        }))
+    );
     if (localFavoriteChangesToUpload.length > 0) {
       logger.log(`同步${localFavoriteChangesToUpload.length}条本地收藏变更到云端...`);
-      await saveCloudFavoritesToSubcollection(uid, localFavoriteChangesToUpload);
+      accepted.favorites.push(
+        ...(await saveCloudFavoritesToSubcollection(uid, localFavoriteChangesToUpload, generation))
+          .accepted
+      );
     }
 
     // 同步历史记录 - 本地到云端
@@ -455,14 +469,28 @@ const executeIncrementalSync = async (uid) => {
       const existing = cloudHistoryByKey.get(itemKey);
       if (!existing || item.timestamp > existing.timestamp) cloudHistoryByKey.set(itemKey, item);
     });
+    accepted.history.push(
+      ...localChanges.history
+        .filter(
+          (item) => !item.syncDirty && item.song && cloudHistoryByKey.has(getTrackKey(item.song))
+        )
+        .map((item) => ({
+          ...item,
+          cloudRevision: cloudHistoryByKey.get(getTrackKey(item.song)).cloudRevision || 0,
+        }))
+    );
     const localHistoryToUpload = localChanges.history.filter((item) => {
       const cloudItem = item.song ? cloudHistoryByKey.get(getTrackKey(item.song)) : null;
-      return !cloudItem || item.timestamp > cloudItem.timestamp;
+      return (
+        item.syncDirty === true || !cloudItem || compareCloudItems(item, cloudItem, 'timestamp') > 0
+      );
     });
 
     if (localHistoryToUpload.length > 0) {
       logger.log(`同步${localHistoryToUpload.length}条本地历史记录到云端...`);
-      await saveCloudHistoryToSubcollection(uid, localHistoryToUpload);
+      accepted.history.push(
+        ...(await saveCloudHistoryToSubcollection(uid, localHistoryToUpload, generation)).accepted
+      );
     }
 
     // 触发同步进度事件
@@ -473,129 +501,140 @@ const executeIncrementalSync = async (uid) => {
       timestamp: Date.now(),
     });
 
-    // 如果有云端数据变更，更新本地数据
-    let localFavoritesUpdated = false;
+    assertSyncActive(generation);
+    await acknowledgeSyncChanges(accepted, uid, () => assertSyncActive(generation));
 
-    // 处理云端收藏变更
-    if (cloudFavorites.length > 0) {
-      // 获取所有本地收藏
-      const allLocalFavorites = await getFavoritesStrict(uid);
-      const allLocalTombstones = await getFavoriteTombstones(uid);
-      const favoritesMap = new Map();
-      const tombstonesMap = new Map();
+    // Network awaits stay outside the lock so users can keep editing offline.
+    await withStorageMutation(uid, async () => {
+      assertSyncActive(generation);
+      // 如果有云端数据变更，更新本地数据
+      let localFavoritesUpdated = false;
 
-      // 添加所有本地收藏到Map
-      allLocalFavorites.forEach((item) => {
-        favoritesMap.set(getTrackKey(item), item);
-      });
-      allLocalTombstones.forEach((item) => tombstonesMap.set(getTrackKey(item), item));
+      // 处理云端收藏变更
+      if (cloudFavorites.length > 0) {
+        // 获取所有本地收藏
+        const allLocalFavorites = await getFavoritesStrict(uid);
+        const allLocalTombstones = await getFavoriteTombstones(uid);
+        const favoritesMap = new Map();
+        const tombstonesMap = new Map();
 
-      // 更新/添加云端变更的收藏
-      cloudFavorites.forEach((item) => {
-        // 确保docId不存储到本地
-        const itemData = { ...item };
-        delete itemData.docId;
+        // 添加所有本地收藏到Map
+        allLocalFavorites.forEach((item) => {
+          favoritesMap.set(getTrackKey(item), item);
+        });
+        allLocalTombstones.forEach((item) => tombstonesMap.set(getTrackKey(item), item));
 
-        const itemKey = getTrackKey(item);
-        const existingItem = favoritesMap.get(itemKey);
-        const existingTombstone = tombstonesMap.get(itemKey);
+        // 更新/添加云端变更的收藏
+        cloudFavorites.forEach((item) => {
+          // 确保docId不存储到本地
+          const itemData = { ...item, syncDirty: false };
+          delete itemData.docId;
 
-        if (item.deletedAt) {
-          if (!existingTombstone || item.modifiedAt > existingTombstone.modifiedAt) {
-            tombstonesMap.set(itemKey, itemData);
+          const itemKey = getTrackKey(item);
+          const existingItem = favoritesMap.get(itemKey);
+          const existingTombstone = tombstonesMap.get(itemKey);
+
+          if (existingItem?.syncDirty || existingTombstone?.syncDirty) return;
+          if (item.deletedAt) {
+            if (!existingTombstone || compareCloudItems(item, existingTombstone) > 0) {
+              tombstonesMap.set(itemKey, itemData);
+            }
+            if (!existingItem || compareCloudItems(item, existingItem) >= 0) {
+              favoritesMap.delete(itemKey);
+              localFavoritesUpdated = true;
+            }
+            return;
           }
-          if (!existingItem || item.modifiedAt >= (existingItem.modifiedAt || 0)) {
-            favoritesMap.delete(itemKey);
+
+          if (existingTombstone && compareCloudItems(existingTombstone, item) >= 0) {
+            return;
+          }
+
+          if (compareCloudItems(item, existingItem) > 0) {
+            favoritesMap.set(itemKey, existingItem ? { ...existingItem, ...itemData } : itemData);
+            tombstonesMap.delete(itemKey);
             localFavoritesUpdated = true;
           }
-          return;
-        }
+        });
 
-        if (existingTombstone && existingTombstone.modifiedAt >= (item.modifiedAt || 0)) {
-          return;
+        // 转换回数组并保存
+        if (localFavoritesUpdated) {
+          const mergedFavorites = Array.from(favoritesMap.values());
+          assertSyncActive(generation);
+          const favoritesSaved = await saveFavorites(mergedFavorites, uid, { fromSync: true });
+          if (!favoritesSaved) throw new Error('保存本地收藏失败');
+          await saveFavoriteTombstones(Array.from(tombstonesMap.values()), uid);
+          logger.log(`已更新本地收藏数据，总数: ${mergedFavorites.length}条`);
         }
-
-        // 如果本地没有该项，或者云端项更新，则使用云端项
-        if (
-          !existingItem ||
-          (item.modifiedAt &&
-            (!existingItem.modifiedAt || item.modifiedAt > existingItem.modifiedAt))
-        ) {
-          favoritesMap.set(itemKey, existingItem ? { ...existingItem, ...itemData } : itemData);
-          tombstonesMap.delete(itemKey);
-          localFavoritesUpdated = true;
-        }
-      });
-
-      // 转换回数组并保存
-      if (localFavoritesUpdated) {
-        const mergedFavorites = Array.from(favoritesMap.values());
-        const favoritesSaved = await saveFavorites(mergedFavorites, uid);
-        if (!favoritesSaved) throw new Error('保存本地收藏失败');
-        await saveFavoriteTombstones(Array.from(tombstonesMap.values()), uid);
-        logger.log(`已更新本地收藏数据，总数: ${mergedFavorites.length}条`);
       }
-    }
 
-    // 处理云端历史记录变更
-    if (cloudHistory.length > 0) {
-      let localHistoryUpdated = false;
-      // 获取所有本地历史记录
-      const allLocalHistory = await getHistoryStrict(uid);
-      const historyMap = new Map();
+      // 处理云端历史记录变更
+      if (cloudHistory.length > 0) {
+        let localHistoryUpdated = false;
+        // 获取所有本地历史记录
+        const allLocalHistory = await getHistoryStrict(uid);
+        const historyMap = new Map();
 
-      // 添加所有本地历史记录到Map，键为歌曲ID
-      allLocalHistory.forEach((item) => {
-        if (item.song && item.song.id) {
-          historyMap.set(getTrackKey(item.song), item);
-        }
-      });
-
-      // 更新/添加云端变更的历史记录
-      cloudHistory.forEach((item) => {
-        // 确保docId不存储到本地
-        const itemData = { ...item };
-        delete itemData.docId;
-
-        if (item.song && item.song.id) {
-          const itemKey = getTrackKey(item.song);
-          const existingItem = historyMap.get(itemKey);
-
-          // 如果本地没有该项，或者云端项更新，则使用云端项
-          if (!existingItem || item.timestamp > existingItem.timestamp) {
-            historyMap.set(
-              itemKey,
-              existingItem
-                ? {
-                    ...existingItem,
-                    ...itemData,
-                    song: { ...existingItem.song, ...itemData.song },
-                  }
-                : itemData
-            );
-            localHistoryUpdated = true;
+        // 添加所有本地历史记录到Map，键为歌曲ID
+        allLocalHistory.forEach((item) => {
+          if (item.song && item.song.id) {
+            historyMap.set(getTrackKey(item.song), item);
           }
+        });
+
+        // 更新/添加云端变更的历史记录
+        cloudHistory.forEach((item) => {
+          // 确保docId不存储到本地
+          const itemData = { ...item, syncDirty: false };
+          delete itemData.docId;
+
+          if (item.song && item.song.id) {
+            const itemKey = getTrackKey(item.song);
+            const existingItem = historyMap.get(itemKey);
+
+            // 如果本地没有该项，或者云端项更新，则使用云端项
+            if (
+              !existingItem?.syncDirty &&
+              compareCloudItems(item, existingItem, 'timestamp') > 0
+            ) {
+              historyMap.set(
+                itemKey,
+                existingItem
+                  ? {
+                      ...existingItem,
+                      ...itemData,
+                      song: { ...existingItem.song, ...itemData.song },
+                    }
+                  : itemData
+              );
+              localHistoryUpdated = true;
+            }
+          }
+        });
+
+        // 转换回数组，按时间戳排序，并保存
+        if (localHistoryUpdated) {
+          const mergedHistory = Array.from(historyMap.values())
+            .sort(compareHistoryRecency)
+            .slice(0, MAX_HISTORY_ITEMS); // 限制数量
+
+          assertSyncActive(generation);
+          const historySaved = await saveHistory(mergedHistory, uid, { fromSync: true });
+          if (!historySaved) throw new Error('保存本地历史失败');
+          logger.log(`已更新本地历史记录，总数: ${mergedHistory.length}条`);
         }
-      });
-
-      // 转换回数组，按时间戳排序，并保存
-      if (localHistoryUpdated) {
-        const mergedHistory = Array.from(historyMap.values())
-          .sort((a, b) => b.timestamp - a.timestamp)
-          .slice(0, MAX_HISTORY_ITEMS); // 限制数量
-
-        const historySaved = await saveHistory(mergedHistory, uid);
-        if (!historySaved) throw new Error('保存本地历史失败');
-        logger.log(`已更新本地历史记录，总数: ${mergedHistory.length}条`);
       }
-    }
 
+      assertSyncActive(generation);
+
+      const outstanding = await getLocalChangesSince(0, uid);
+      if (!outstanding.hasChanges) await clearPendingSyncCounter(uid);
+    });
     // 更新同步时间戳
     await saveLastSyncTime(uid, now);
     logger.log(`同步完成，新的同步时间: ${new Date(now).toLocaleString()}`);
 
-    // 同步成功（含 unchanged）后由同步服务统一清理 pending 计数
-    await clearPendingSyncCounter(uid);
+    // Pending intents created during network awaits remain dirty and counted.
 
     // 触发同步完成事件
     triggerEvent(SyncEvents.SYNC_COMPLETED, {
@@ -656,8 +695,10 @@ const runSerializedSync = (syncFn) => {
  * @param {string} uid 用户ID
  * @returns {Promise<{success: boolean, data?: any, error?: any, unchanged?: boolean}>}
  */
-const incrementalSyncWithSubcollections = (uid) =>
-  runSerializedSync(() => executeIncrementalSync(uid));
+const incrementalSyncWithSubcollections = (uid) => {
+  const generation = syncGeneration;
+  return runSerializedSync(() => executeIncrementalSync(uid, generation));
+};
 
 /**
  * 增量同步别名
@@ -787,7 +828,8 @@ export const shouldSyncOnLogin = async (uid) => {
 
     const userData = userDoc.data();
     const cloudLastUpdated = userData.lastUpdated || 0;
-    const hasCloudChanges = cloudLastUpdated > lastSyncTime;
+    // A client-clock cursor cannot prove the cloud has no changes.
+    const hasCloudChanges = true;
 
     // 如果本地和云端都没有变化，不需要同步
     if (!hasLocalChanges && !hasCloudChanges) {
@@ -851,6 +893,7 @@ export const cancelDelayedSync = () => clearSyncTimers();
  * @returns {boolean} 是否取消了延迟同步
  */
 export const resetSyncScheduler = () => {
+  syncGeneration++;
   const cleared = cancelDelayedSync();
   clearOfflineRetry();
   offlineRetryUsed = false;
@@ -1039,35 +1082,40 @@ export const triggerDelayedSync = async (uid, type = 'favorites') => {
  * @param {number} lastSyncTime 上次同步时间
  * @returns {Promise<Array>} 收藏数据数组
  */
-const getCloudFavoritesFromSubcollection = async (uid, lastSyncTime = 0) => {
-  try {
-    const favoritesRef = getFavoritesCollectionRef(uid);
-    let favoritesQuery;
-
-    if (lastSyncTime > 0) {
-      // 只获取上次同步后更新的数据
-      favoritesQuery = query(favoritesRef, where('modifiedAt', '>', lastSyncTime));
-    } else {
-      // 获取所有数据
-      favoritesQuery = favoritesRef;
+const getCloudFavoritesFromSubcollection = async (uid, relevantKeys) => {
+  const favoritesRef = getFavoritesCollectionRef(uid);
+  const favorites = [];
+  let cursor;
+  while (true) {
+    const constraints = [orderBy(documentId()), limit(BATCH_SIZE)];
+    if (cursor) constraints.push(startAfter(cursor));
+    const snapshot = await getDocs(query(favoritesRef, ...constraints));
+    const documents = [];
+    snapshot.forEach((entry) => documents.push(entry));
+    for (const entry of documents) {
+      const data = entry.data();
+      const item = {
+        ...data,
+        modifiedAt: toMillis(data.modifiedAt),
+        ...(data.deletedAt != null ? { deletedAt: toMillis(data.deletedAt) } : {}),
+        docId: entry.id,
+      };
+      if (item.deletedAt && !relevantKeys.has(getTrackKey(item))) continue;
+      favorites.push(item);
     }
-
-    const snapshot = await getDocs(favoritesQuery);
-    const favorites = [];
-
-    snapshot.forEach((doc) => {
-      favorites.push({
-        ...doc.data(),
-        docId: doc.id, // 保存文档ID用于后续操作
-      });
-    });
-
-    logger.log(`从云端获取到${favorites.length}条收藏数据`);
-    return favorites;
-  } catch (error) {
-    logger.error('从子集合获取收藏数据失败:', error);
-    throw error;
+    // Bound retained active songs as well as each read. Relevant deletions are never discarded.
+    const active = favorites
+      .filter((item) => !item.deletedAt)
+      .sort((a, b) => toMillis(b.modifiedAt) - toMillis(a.modifiedAt));
+    const retained = new Set(active.slice(0, 500));
+    for (let index = favorites.length - 1; index >= 0; index--) {
+      if (!favorites[index].deletedAt && !retained.has(favorites[index]))
+        favorites.splice(index, 1);
+    }
+    if (documents.length < BATCH_SIZE) break;
+    cursor = documents.at(-1);
   }
+  return favorites;
 };
 
 /**
@@ -1079,41 +1127,36 @@ const getCloudFavoritesFromSubcollection = async (uid, lastSyncTime = 0) => {
  */
 const getCloudHistoryFromSubcollection = async (
   uid,
-  lastSyncTime = 0,
+  _lastSyncTime = 0,
   maxItems = MAX_HISTORY_ITEMS
 ) => {
-  try {
-    const historyRef = getHistoryCollectionRef(uid);
-    let historyQuery;
-
-    if (lastSyncTime > 0) {
-      // 只获取上次同步后更新的数据
-      historyQuery = query(
-        historyRef,
-        where('timestamp', '>', lastSyncTime),
-        orderBy('timestamp', 'desc'),
-        limit(maxItems)
-      );
-    } else {
-      // 获取所有数据，但限制数量
-      historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(maxItems));
-    }
-
-    const snapshot = await getDocs(historyQuery);
-    const history = [];
-
-    snapshot.forEach((doc) => {
-      history.push({
-        ...doc.data(),
-        docId: doc.id, // 保存文档ID用于后续操作
-      });
+  const history = [];
+  await scanCloudDocuments(getHistoryCollectionRef(uid), (entry) => {
+    const data = entry.data();
+    history.push({
+      ...data,
+      timestamp: toMillis(data.timestamp),
+      syncedAt: toMillis(data.syncedAt),
+      docId: entry.id,
     });
+    history.sort(compareHistoryRecency);
+    if (history.length > maxItems) history.length = maxItems;
+  });
+  return history;
+};
 
-    logger.log(`从云端获取到${history.length}条历史记录数据`);
-    return history;
-  } catch (error) {
-    logger.error('从子集合获取历史记录数据失败:', error);
-    throw error;
+const scanCloudDocuments = async (reference, consume, assertActive = () => {}) => {
+  let cursor;
+  while (true) {
+    const constraints = [orderBy(documentId()), limit(BATCH_SIZE)];
+    if (cursor) constraints.push(startAfter(cursor));
+    const snapshot = await getDocs(query(reference, ...constraints));
+    assertActive();
+    const documents = [];
+    snapshot.forEach((entry) => documents.push(entry));
+    documents.forEach(consume);
+    if (documents.length < BATCH_SIZE) return;
+    cursor = documents.at(-1);
   }
 };
 
@@ -1123,11 +1166,12 @@ const getCloudHistoryFromSubcollection = async (
  * @param {Array} favorites 收藏数据数组
  * @returns {Promise<{success: boolean, error?: Error}>} 保存结果
  */
-const saveCloudFavoritesToSubcollection = async (uid, favorites) => {
+const saveCloudFavoritesToSubcollection = async (uid, favorites, generation) => {
   try {
     const favoritesRef = getFavoritesCollectionRef(uid);
     const now = Date.now();
     let modifiedCount = 0;
+    const accepted = [];
 
     for (const item of favorites) {
       const itemDocRef = doc(favoritesRef, getTrackDocumentId(item));
@@ -1139,27 +1183,46 @@ const saveCloudFavoritesToSubcollection = async (uid, favorites) => {
 
       const written = await runTransaction(db, async (transaction) => {
         const remoteSnapshot = await transaction.get(itemDocRef);
+        assertSyncActive(generation);
         const remoteData = remoteSnapshot.exists() ? remoteSnapshot.data() : null;
-        const remoteModifiedAt = remoteData?.modifiedAt || 0;
+        const remoteModifiedAt = toMillis(remoteData?.modifiedAt);
         const shouldWrite =
-          !remoteData ||
-          itemData.modifiedAt > remoteModifiedAt ||
-          (itemData.modifiedAt === remoteModifiedAt &&
-            Boolean(itemData.deletedAt) &&
-            !remoteData.deletedAt);
+          item.syncDirty === true
+            ? (remoteData?.cloudRevision || 0) === (item.cloudRevision || 0)
+            : !remoteData ||
+              itemData.modifiedAt > remoteModifiedAt ||
+              (itemData.modifiedAt === remoteModifiedAt &&
+                Boolean(itemData.deletedAt) &&
+                !remoteData.deletedAt);
         if (!shouldWrite) {
           return {
             written: false,
+            cloudRevision: remoteData?.cloudRevision || 0,
             conflict:
+              item.syncDirty === true ||
               remoteModifiedAt > itemData.modifiedAt ||
               Boolean(remoteData.deletedAt) !== Boolean(itemData.deletedAt),
           };
         }
-        transaction.set(itemDocRef, itemData);
-        return { written: true, conflict: false };
+        const cloudRevision = (remoteData?.cloudRevision || 0) + 1;
+        transaction.set(itemDocRef, { ...itemData, cloudRevision, syncedAt: serverTimestamp() });
+        return { written: true, conflict: false, cloudRevision };
       });
-      if (written.conflict) throw new Error('云端收藏在同步期间已更新，请重试同步');
-      if (written.written) modifiedCount++;
+      assertSyncActive(generation);
+      if (written.conflict) {
+        if (item.syncDirty)
+          await rebaseSyncChange('favorites', item, written.cloudRevision, uid, () =>
+            assertSyncActive(generation)
+          );
+        throw new Error('云端收藏在同步期间已更新，已保留本地操作，请重试同步');
+      }
+      if (written.written) {
+        modifiedCount++;
+        accepted.push({ ...item, cloudRevision: written.cloudRevision });
+        await acknowledgeSyncChanges({ favorites: accepted.slice(-1), history: [] }, uid, () =>
+          assertSyncActive(generation)
+        );
+      }
     }
 
     // 更新用户文档的lastUpdated字段
@@ -1167,7 +1230,7 @@ const saveCloudFavoritesToSubcollection = async (uid, favorites) => {
     await touchCloudUser(userRef, now);
 
     logger.log(`成功保存${modifiedCount}条收藏数据到云端子集合`);
-    return { success: true };
+    return { success: true, accepted };
   } catch (error) {
     logger.error('保存收藏数据到子集合失败:', error);
     throw error;
@@ -1203,7 +1266,7 @@ const HISTORY_LEGACY_CLEANUP_KEY = 'history_legacy_cleanup_v1_';
  * @param {string} uid 用户ID
  * @returns {Promise<boolean>} 是否已处于完成状态
  */
-export const ensureHistoryLegacyCleanup = async (uid) => {
+export const ensureHistoryLegacyCleanup = async (uid, assertActive = () => {}) => {
   if (!uid) return true;
 
   const flagKey = `${HISTORY_LEGACY_CLEANUP_KEY}${uid}`;
@@ -1212,19 +1275,23 @@ export const ensureHistoryLegacyCleanup = async (uid) => {
     if (localStorage.getItem(flagKey)) return true;
 
     const historyRef = getHistoryCollectionRef(uid);
-    const snapshot = await getDocs(query(historyRef, orderBy('timestamp', 'desc')));
-
     // 第一遍：desc 顺序下每组首个即最新，最多保留 MAX_HISTORY_ITEMS 个
     // 不同 trackKey（超出容量的整组丢弃，等价旧 prune 的容量裁剪）。
     const docs = [];
     const retainedByKey = new Map(); // trackKey -> { id, item }
 
-    snapshot.forEach((historyDoc) => {
-      const item = historyDoc.data();
-      const trackKey = item.song ? getTrackKey(item.song) : null;
-      docs.push({ id: historyDoc.id, item, trackKey });
-    });
+    await scanCloudDocuments(
+      historyRef,
+      (historyDoc) => {
+        const item = historyDoc.data();
+        const trackKey = item.song ? getTrackKey(item.song) : null;
+        docs.push({ id: historyDoc.id, item, trackKey });
+      },
+      assertActive
+    );
 
+    docs.sort((a, b) => compareHistoryRecency(a.item, b.item));
+    assertActive();
     for (const doc of docs) {
       if (!doc.trackKey || retainedByKey.has(doc.trackKey)) continue;
       if (retainedByKey.size >= MAX_HISTORY_ITEMS) continue;
@@ -1256,7 +1323,9 @@ export const ensureHistoryLegacyCleanup = async (uid) => {
     // 先迁写 canonical（带 CAS，避免覆盖清理期间的新写入），再批量删除
     for (const [canonicalId, item] of canonicalWrites) {
       documentsToDelete.delete(canonicalId);
-      await writeCanonicalHistoryDoc(historyRef, canonicalId, item);
+      assertActive();
+      await writeCanonicalHistoryDoc(historyRef, canonicalId, item, assertActive);
+      assertActive();
     }
 
     const deleteList = [...documentsToDelete];
@@ -1265,7 +1334,9 @@ export const ensureHistoryLegacyCleanup = async (uid) => {
       for (const documentId of deleteList.slice(i, i + BATCH_SIZE)) {
         batch.delete(doc(historyRef, documentId));
       }
+      assertActive();
       await batch.commit();
+      assertActive();
     }
 
     markLegacyCleanupDone(uid, flagKey);
@@ -1286,7 +1357,8 @@ export const ensureHistoryLegacyCleanup = async (uid) => {
  * @param {string} documentId canonical docId
  * @param {{ timestamp: number, song: Object }} item 历史记录数据
  */
-const writeCanonicalHistoryDoc = async (historyRef, documentId, item) => {
+const writeCanonicalHistoryDoc = async (historyRef, documentId, item, assertActive = () => {}) => {
+  assertActive();
   const itemDocRef = doc(historyRef, documentId);
   const itemData = {
     timestamp: item.timestamp,
@@ -1295,14 +1367,20 @@ const writeCanonicalHistoryDoc = async (historyRef, documentId, item) => {
 
   const written = await runTransaction(db, async (transaction) => {
     const remoteSnapshot = await transaction.get(itemDocRef);
+    assertActive();
     const remoteData = remoteSnapshot.exists() ? remoteSnapshot.data() : null;
-    if (remoteData && remoteData.timestamp >= itemData.timestamp) {
+    if (remoteData && compareCloudItems(remoteData, item, 'timestamp') >= 0) {
       return { written: false };
     }
-    transaction.set(itemDocRef, itemData);
+    transaction.set(itemDocRef, {
+      ...itemData,
+      cloudRevision: (remoteData?.cloudRevision || 0) + 1,
+      syncedAt: serverTimestamp(),
+    });
     return { written: true };
   });
 
+  assertActive();
   if (!written.written) {
     logger.log(`canonical 文档已存在更新的数据，跳过迁写: ${documentId}`);
   }
@@ -1329,27 +1407,37 @@ const markLegacyCleanupDone = (uid, flagKey) => {
  * @param {CollectionReference} historyRef 历史子集合引用
  * @returns {Promise<number>} 删除的文档数
  */
-const pruneCloudHistory = async (historyRef) => {
+const pruneCloudHistory = async (historyRef, assertActive = () => {}) => {
   try {
+    assertActive();
     const totalSnapshot = await getCountFromServer(historyRef);
+    assertActive();
     const total = totalSnapshot.data().count;
 
     if (total <= HISTORY_PRUNE_THRESHOLD) return 0;
 
     const overflow = total - MAX_HISTORY_ITEMS;
-    const oldestSnapshot = await getDocs(
-      query(historyRef, orderBy('timestamp', 'asc'), limit(overflow))
+    const oldest = [];
+    await scanCloudDocuments(
+      historyRef,
+      (entry) => {
+        oldest.push({ ...entry.data(), docId: entry.id });
+        oldest.sort(compareHistoryRecency).reverse();
+        if (oldest.length > overflow) oldest.length = overflow;
+      },
+      assertActive
     );
-
-    const documentIds = [];
-    oldestSnapshot.forEach((historyDoc) => documentIds.push(historyDoc.id));
+    assertActive();
+    const documentIds = oldest.map((entry) => entry.docId);
 
     for (let i = 0; i < documentIds.length; i += BATCH_SIZE) {
       const batch = writeBatch(db);
       for (const documentId of documentIds.slice(i, i + BATCH_SIZE)) {
         batch.delete(doc(historyRef, documentId));
       }
+      assertActive();
       await batch.commit();
+      assertActive();
     }
 
     logger.log(`云端历史记录已裁剪 ${documentIds.length} 条，保留 ${MAX_HISTORY_ITEMS} 条`);
@@ -1366,11 +1454,12 @@ const pruneCloudHistory = async (historyRef) => {
  * @param {Array} history 历史记录数据数组
  * @returns {Promise<{success: boolean, error?: Error}>} 保存结果
  */
-const saveCloudHistoryToSubcollection = async (uid, history) => {
+const saveCloudHistoryToSubcollection = async (uid, history, generation) => {
   try {
     const historyRef = getHistoryCollectionRef(uid);
     const now = Date.now();
     let modifiedCount = 0;
+    const accepted = [];
 
     for (const item of history) {
       const itemDocRef = doc(historyRef, getTrackDocumentId(item.song));
@@ -1380,23 +1469,50 @@ const saveCloudHistoryToSubcollection = async (uid, history) => {
       };
       const written = await runTransaction(db, async (transaction) => {
         const remoteSnapshot = await transaction.get(itemDocRef);
+        assertSyncActive(generation);
         const remoteData = remoteSnapshot.exists() ? remoteSnapshot.data() : null;
-        if (remoteData && remoteData.timestamp >= itemData.timestamp) {
+        if (
+          item.syncDirty === true
+            ? (remoteData?.cloudRevision || 0) !== (item.cloudRevision || 0)
+            : remoteData && remoteData.timestamp >= itemData.timestamp
+        ) {
           return {
             written: false,
-            conflict: remoteData.timestamp > itemData.timestamp,
+            cloudRevision: remoteData?.cloudRevision || 0,
+            conflict: item.syncDirty === true || remoteData.timestamp > itemData.timestamp,
           };
         }
-        transaction.set(itemDocRef, itemData);
-        return { written: true, conflict: false };
+        const cloudRevision = (remoteData?.cloudRevision || 0) + 1;
+        transaction.set(itemDocRef, { ...itemData, cloudRevision, syncedAt: serverTimestamp() });
+        return { written: true, conflict: false, cloudRevision };
       });
-      if (written.conflict) throw new Error('云端历史在同步期间已更新，请重试同步');
-      if (written.written) modifiedCount++;
+      assertSyncActive(generation);
+      if (written.conflict) {
+        if (item.syncDirty)
+          await rebaseSyncChange('history', item, written.cloudRevision, uid, () =>
+            assertSyncActive(generation)
+          );
+        throw new Error('云端历史在同步期间已更新，已保留本地操作，请重试同步');
+      }
+      if (written.written) {
+        modifiedCount++;
+        const snapshot = await getDoc(itemDocRef);
+        assertSyncActive(generation);
+        accepted.push({
+          ...item,
+          cloudRevision: written.cloudRevision,
+          syncedAt: toMillis(snapshot.data()?.syncedAt),
+        });
+        await acknowledgeSyncChanges({ favorites: [], history: accepted.slice(-1) }, uid, () =>
+          assertSyncActive(generation)
+        );
+      }
     }
 
     // 只有本轮确实写入了历史才做容量维护，避免无谓的 Firestore 读取
     if (modifiedCount > 0) {
-      await pruneCloudHistory(historyRef);
+      await pruneCloudHistory(historyRef, () => assertSyncActive(generation));
+      assertSyncActive(generation);
     }
 
     // 更新用户文档的lastUpdated字段
@@ -1404,7 +1520,7 @@ const saveCloudHistoryToSubcollection = async (uid, history) => {
     await touchCloudUser(userRef, now);
 
     logger.log(`成功保存${modifiedCount}条历史记录到云端子集合`);
-    return { success: true };
+    return { success: true, accepted };
   } catch (error) {
     logger.error('保存历史记录到子集合失败:', error);
     throw error;

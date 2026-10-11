@@ -1,6 +1,13 @@
 const AVATAR_CACHE_PREFIX = 'avatar-cache:';
 const MAX_DATA_URL_LENGTH = 200000; // ~200KB safety cap
 const AVATAR_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+let cacheVersion = 0;
+const cacheListeners = new Set();
+export const getAvatarCacheVersion = () => cacheVersion;
+export const subscribeAvatarCache = (listener) => {
+  cacheListeners.add(listener);
+  return () => cacheListeners.delete(listener);
+};
 
 export const getAvatarCache = (key) => {
   if (!key) return null;
@@ -48,4 +55,12 @@ export const fetchAvatarDataUrl = async (url) => {
   } catch {
     return null;
   }
+};
+
+export const clearAvatarCache = () => {
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith(AVATAR_CACHE_PREFIX)) localStorage.removeItem(key);
+  }
+  cacheVersion += 1;
+  for (const listener of cacheListeners) listener();
 };

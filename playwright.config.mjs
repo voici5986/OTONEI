@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isPwa = process.env.PLAYWRIGHT_PWA === '1';
-const port = isPwa ? 4173 : 3000;
+const port = Number(process.env.PLAYWRIGHT_PORT || (isPwa ? 4173 : 3000));
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PLAYWRIGHT_PORT');
 const baseURL = `http://127.0.0.1:${port}`;
 const viteCommand = 'node node_modules/vite/bin/vite.js';
 
@@ -31,9 +32,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: isPwa
-      ? `${viteCommand} preview --host 127.0.0.1 --port 4173`
-      : `${viteCommand} --host 127.0.0.1 --port 3000 --open=false`,
+    command: `${viteCommand} preview --host 127.0.0.1 --port ${port} --strictPort`,
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120000,

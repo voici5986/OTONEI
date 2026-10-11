@@ -4,7 +4,12 @@
  */
 import { apiClient } from './apiClient';
 import { withRateLimit } from './rateLimiter';
-import { getMemoryCache, setMemoryCache, CACHE_TYPES } from './memoryCache';
+import {
+  getMemoryCache,
+  setMemoryCache,
+  getMemoryCacheGeneration,
+  CACHE_TYPES,
+} from './memoryCache';
 import audioStateManager from './audioStateManager';
 import { isPlaybackRequestReplacedError, PlaybackRequestReplacedError } from './AudioEngine';
 import { validateSearchResults } from '../utils/dataValidator';
@@ -60,10 +65,11 @@ const releaseCoverSlot = () => {
  * @returns {Promise<Object>} - 搜索结果
  */
 export const searchMusic = async (query, source, count = 20, page = 1, signal) => {
+  const cacheGeneration = getMemoryCacheGeneration();
   try {
     assertSupportedApiSource(source);
     // 生成缓存键
-    const cacheKey = `${query}_${source}_${count}_${page}`;
+    const cacheKey = JSON.stringify([query, source, count, page]);
 
     // 检查内存缓存
     const cachedResults = getMemoryCache(CACHE_TYPES.SEARCH_RESULTS, cacheKey);
@@ -78,30 +84,30 @@ export const searchMusic = async (query, source, count = 20, page = 1, signal) =
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
     // 支持调用方主动取消（新搜索取代旧搜索时），外部 abort 会同步中止内部请求
+    const onAbort = () => controller.abort();
     if (signal) {
       if (signal.aborted) {
         controller.abort();
       } else {
-        signal.addEventListener('abort', () => controller.abort(), { once: true });
+        signal.addEventListener('abort', onAbort, { once: true });
       }
     }
 
-    const response = await withRateLimit(() =>
-      apiClient.get('', {
-        params: {
-          types: 'search',
-          source: source,
-          name: query,
-          count: count,
-          pages: page,
-        },
-        signal: controller.signal,
-        timeout: REQUEST_TIMEOUT,
-      })
-    );
-
-    // 清除超时
-    clearTimeout(timeoutId);
+    let response;
+    try {
+      response = await withRateLimit(
+        () =>
+          apiClient.get('', {
+            params: { types: 'search', source, name: query, count, pages: page },
+            signal: controller.signal,
+            timeout: REQUEST_TIMEOUT,
+          }),
+        { signal: controller.signal }
+      );
+    } finally {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener('abort', onAbort);
+    }
 
     // 检查响应并校验数据
     if (!response.data) {
@@ -109,7 +115,10 @@ export const searchMusic = async (query, source, count = 20, page = 1, signal) =
       return [];
     }
 
-    const validatedData = validateSearchResults(response.data);
+    const validatedData = validateSearchResults(response.data).map((track) => ({
+      ...track,
+      source,
+    }));
 
     if (validatedData.length === 0) {
       logger.log('[searchMusic] 搜索结果为空或数据无效');
@@ -119,7 +128,8 @@ export const searchMusic = async (query, source, count = 20, page = 1, signal) =
     logger.log(`[searchMusic] 搜索成功，找到 ${validatedData.length} 条有效结果`);
 
     // 缓存校验后的结果到内存
-    setMemoryCache(CACHE_TYPES.SEARCH_RESULTS, cacheKey, validatedData);
+    if (cacheGeneration === getMemoryCacheGeneration())
+      setMemoryCache(CACHE_TYPES.SEARCH_RESULTS, cacheKey, validatedData);
 
     return validatedData;
   } catch (error) {
@@ -152,13 +162,14 @@ export const searchMusic = async (query, source, count = 20, page = 1, signal) =
  * @returns {Promise<Object>} - 返回API响应结果
  */
 export const getAudioUrl = async (track, quality = 999, forceRefresh = false) => {
+  const cacheGeneration = getMemoryCacheGeneration();
   try {
     assertSupportedApiSource(track.source);
     // 生成请求唯一标识符
     const requestId = `${track.source}_${track.id}_${quality}_${Date.now()}`;
 
     // 检查是否有相同URL的请求正在进行中
-    const pendingKey = `${track.source}_${track.id}_${quality}`;
+    const pendingKey = `${cacheGeneration}:${track.source}_${track.id}_${quality}`;
     if (pendingUrlRequests.has(pendingKey)) {
       logger.log(`[getAudioUrl] 检测到重复请求: ${track.name} (${track.id}), 使用现有请求`);
       return pendingUrlRequests.get(pendingKey);
@@ -171,43 +182,44 @@ export const getAudioUrl = async (track, quality = 999, forceRefresh = false) =>
     // 生成缓存键
     const cacheKey = `${track.source}_${track.id}_${quality}`;
 
-    // 创建一个Promise并存储到映射中
+    const cachedData = !forceRefresh ? getMemoryCache(CACHE_TYPES.AUDIO_URLS, cacheKey) : null;
+    if (cachedData) return cachedData;
+
     const urlPromise = (async () => {
-      try {
-        // 检查内存缓存
-        const cachedData = !forceRefresh ? getMemoryCache(CACHE_TYPES.AUDIO_URLS, cacheKey) : null;
-        if (cachedData) {
-          logger.log(`[getAudioUrl] 使用内存缓存的音频URL: ${requestId}`);
-          return cachedData;
-        }
+      logger.log(
+        `[getAudioUrl] ${forceRefresh ? '强制刷新' : '内存缓存未命中'}，调用API: ${requestId}`
+      );
 
-        logger.log(
-          `[getAudioUrl] ${forceRefresh ? '强制刷新' : '内存缓存未命中'}，调用API: ${requestId}`
-        );
+      const response = await withRateLimit(() =>
+        apiClient.get('', {
+          params: {
+            types: 'url',
+            source: track.source,
+            id: track.id,
+            br: quality,
+          },
+          timeout: REQUEST_TIMEOUT,
+        })
+      );
 
-        const response = await withRateLimit(() =>
-          apiClient.get('', {
-            params: {
-              types: 'url',
-              source: track.source,
-              id: track.id,
-              br: quality,
-            },
-            timeout: REQUEST_TIMEOUT,
-          })
-        );
-
-        // 缓存结果到内存
+      if (typeof response.data?.url !== 'string' || !response.data.url.trim()) {
+        throw new Error('无效的音频链接');
+      }
+      const url = response.data.url.replace(/\\/g, '');
+      const parsedUrl = new URL(url, window.location.href);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('无效的音频链接');
+      }
+      // Only successful audio payloads may enter the cache.
+      if (cacheGeneration === getMemoryCacheGeneration())
         setMemoryCache(CACHE_TYPES.AUDIO_URLS, cacheKey, response.data);
 
-        logger.log(`[getAudioUrl] 请求完成: ${requestId}`);
-        return response.data;
-      } finally {
-        // 请求完成后从映射中移除
-        pendingUrlRequests.delete(pendingKey);
-        logger.log(`[getAudioUrl] 请求映射已清理: ${requestId}`);
-      }
-    })();
+      logger.log(`[getAudioUrl] 请求完成: ${requestId}`);
+      return response.data;
+    })().finally(() => {
+      pendingUrlRequests.delete(pendingKey);
+      logger.log(`[getAudioUrl] 请求映射已清理: ${requestId}`);
+    });
 
     // 存储Promise到映射中
     pendingUrlRequests.set(pendingKey, urlPromise);
@@ -230,6 +242,7 @@ export const getAudioUrl = async (track, quality = 999, forceRefresh = false) =>
  * @returns {Promise<Object>} - 歌词数据
  */
 export const getLyrics = async (track) => {
+  const cacheGeneration = getMemoryCacheGeneration();
   try {
     // 如果没有歌词ID，返回空歌词
     if (!track.lyric_id) {
@@ -241,7 +254,7 @@ export const getLyrics = async (track) => {
     const requestId = `${track.source}_${track.lyric_id}_${Date.now()}`;
 
     // 检查是否有相同歌词的请求正在进行中
-    const pendingKey = `${track.source}_${track.lyric_id}`;
+    const pendingKey = `${cacheGeneration}:${track.source}_${track.lyric_id}`;
     if (pendingLyricRequests.has(pendingKey)) {
       logger.log(`[getLyrics] 检测到重复请求: ${track.name} (${track.lyric_id}), 使用现有请求`);
       return pendingLyricRequests.get(pendingKey);
@@ -278,7 +291,8 @@ export const getLyrics = async (track) => {
             } else if (payload) {
               logger.log(`[getLyrics] 使用 LocalStorage 缓存的歌词: ${requestId}`);
               // 同时更新到内存缓存，提高下次访问速度
-              setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, payload);
+              if (cacheGeneration === getMemoryCacheGeneration())
+                setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, payload);
               return payload;
             }
           }
@@ -300,19 +314,21 @@ export const getLyrics = async (track) => {
         );
 
         const lyrics = {
-          raw: response.data.lyric || '',
-          translated: response.data.tlyric || '',
+          raw: typeof response.data?.lyric === 'string' ? response.data.lyric : '',
+          translated: typeof response.data?.tlyric === 'string' ? response.data.tlyric : '',
         };
 
         // 3. 缓存结果到内存
-        setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, lyrics);
+        if (cacheGeneration === getMemoryCacheGeneration())
+          setMemoryCache(CACHE_TYPES.LYRICS, cacheKey, lyrics);
 
         // 4. 持久化到 LocalStorage（带时间戳，便于过期清理）
         try {
-          localStorage.setItem(
-            `${STORAGE_KEY_PREFIX}${cacheKey}`,
-            JSON.stringify({ timestamp: Date.now(), data: lyrics })
-          );
+          if (cacheGeneration === getMemoryCacheGeneration())
+            localStorage.setItem(
+              `${STORAGE_KEY_PREFIX}${cacheKey}`,
+              JSON.stringify({ timestamp: Date.now(), data: lyrics })
+            );
         } catch (e) {
           logger.warn('[getLyrics] 写入 LocalStorage 缓存失败:', e);
         }
@@ -347,6 +363,7 @@ export const getLyrics = async (track) => {
  * 强制获取封面图片 (仅限播放等核心场景按需使用，以节省API额度)
  */
 export const forceGetCoverImage = async (source, picId, size = 500) => {
+  const cacheGeneration = getMemoryCacheGeneration();
   try {
     assertSupportedApiSource(source);
     const cacheKey = `${source}_${picId}_${size}`;
@@ -366,7 +383,8 @@ export const forceGetCoverImage = async (source, picId, size = 500) => {
 
       if (response.data?.url) {
         const url = response.data.url.replace(/\\/g, '');
-        setMemoryCache(CACHE_TYPES.COVER_IMAGES, cacheKey, url);
+        if (cacheGeneration === getMemoryCacheGeneration())
+          setMemoryCache(CACHE_TYPES.COVER_IMAGES, cacheKey, url);
         return url;
       }
       return 'default_cover.svg';

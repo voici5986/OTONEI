@@ -51,6 +51,9 @@ vi.mock('../services/firebase', () => ({
 }));
 
 vi.mock('firebase/firestore', () => ({
+  documentId: vi.fn(() => '__name__'),
+  startAfter: vi.fn((cursor) => ({ startAfter: cursor })),
+  serverTimestamp: vi.fn(() => 'server-time'),
   collection: vi.fn((...segments) => segments.join('/')),
   doc: vi.fn((...segments) => segments.join('/')),
   getDoc: firestoreGetDoc,
@@ -67,6 +70,9 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 vi.mock('../services/storage', () => ({
+  withStorageMutation: (_uid, operation) => operation(),
+  rebaseSyncChange: vi.fn().mockResolvedValue(undefined),
+  acknowledgeSyncChanges: vi.fn().mockResolvedValue(undefined),
   MAX_HISTORY_ITEMS: 100,
   getFavorites,
   getFavoritesStrict,
@@ -178,18 +184,21 @@ describe('sync service safeguards', () => {
     });
   });
 
-  it('classifies local changes using modification timestamps', async () => {
+  it('classifies durable dirty changes regardless of clock rollback', async () => {
     getFavorites.mockResolvedValue([
       { id: 'changed', modifiedAt: 200 },
-      { id: 'old', modifiedAt: 50 },
+      { id: 'old', modifiedAt: 50, syncDirty: false },
       { id: 'first-sync' },
     ]);
-    getHistory.mockResolvedValue([{ timestamp: 300 }, { timestamp: 20 }]);
+    getHistory.mockResolvedValue([
+      { timestamp: 300, syncDirty: false },
+      { timestamp: 20, syncDirty: true },
+    ]);
 
     await expect(getLocalChangesSince(100)).resolves.toEqual({
-      favorites: [{ id: 'changed', modifiedAt: 200 }],
+      favorites: [{ id: 'changed', modifiedAt: 200 }, { id: 'first-sync' }],
       favoriteTombstones: [],
-      history: [{ timestamp: 300 }],
+      history: [{ timestamp: 20, syncDirty: true }],
       hasChanges: true,
     });
   });
@@ -472,7 +481,7 @@ describe('sync service safeguards', () => {
     await Promise.all([first, queued]);
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(completed).toHaveBeenCalledTimes(1);
+    expect(completed).not.toHaveBeenCalled();
 
     removeSyncListener(SyncEvents.SYNC_COMPLETED, completed);
   });
@@ -606,6 +615,8 @@ describe('sync service safeguards', () => {
       pic_id: 'cover',
       lyric_id: 'lyric',
       modifiedAt: 10,
+      cloudRevision: 1,
+      syncedAt: 'server-time',
     });
   });
 
@@ -658,7 +669,8 @@ describe('sync service safeguards', () => {
           modifiedAt: 20,
         }),
       ],
-      'user-1'
+      'user-1',
+      { fromSync: true }
     );
     expect(saveHistory).toHaveBeenCalledWith(
       [
@@ -670,7 +682,8 @@ describe('sync service safeguards', () => {
           }),
         }),
       ],
-      'user-1'
+      'user-1',
+      { fromSync: true }
     );
   });
 
@@ -697,7 +710,7 @@ describe('sync service safeguards', () => {
 
     await expect(initialSync('user-1')).resolves.toMatchObject({ success: true });
     expect(firestoreRunTransaction).not.toHaveBeenCalled();
-    expect(saveFavorites).toHaveBeenCalledWith([], 'user-1');
+    expect(saveFavorites).toHaveBeenCalledWith([], 'user-1', { fromSync: true });
     expect(saveFavoriteTombstones).toHaveBeenCalledWith(
       [expect.objectContaining({ id: '1', source: 'netease', deletedAt: 20 })],
       'user-1'
@@ -835,6 +848,212 @@ describe('sync service safeguards', () => {
     vi.useRealTimers();
   });
 
+  it('pages historical favorite tombstones without retaining unrelated deletions', async () => {
+    saveFavorites.mockResolvedValue(true);
+    firebaseState.available = true;
+    checkFirebaseAvailability.mockResolvedValue(true);
+    firestoreGetDoc.mockResolvedValue({ exists: () => true, data: () => ({ lastUpdated: 0 }) });
+    const page = (entries) => ({ forEach: (callback) => entries.forEach(callback) });
+    firestoreGetDocs
+      .mockResolvedValueOnce(
+        page(
+          Array.from({ length: 100 }, (_, index) => ({
+            id: `deleted-${index}`,
+            data: () => ({ id: String(index), source: 'netease', modifiedAt: 10, deletedAt: 10 }),
+          }))
+        )
+      )
+      .mockResolvedValueOnce(
+        page([{ id: 'active', data: () => ({ id: 'active', source: 'netease', modifiedAt: 10 }) }])
+      )
+      .mockResolvedValueOnce(page([]));
+    const result = await initialSync('user-1');
+    expect(result).toMatchObject({ success: true, cloudFavorites: 1 });
+    expect(firestoreGetDocs).toHaveBeenCalledTimes(3);
+    expect(saveFavorites).toHaveBeenCalledWith(
+      [expect.objectContaining({ id: 'active' })],
+      'user-1',
+      { fromSync: true }
+    );
+  });
+
+  it('uploads dirty history after clock rollback using revision CAS rather than timestamp', async () => {
+    firebaseState.available = true;
+    checkFirebaseAvailability.mockResolvedValue(true);
+    getHistory.mockResolvedValue([
+      {
+        timestamp: 1,
+        song: { id: '1', source: 'netease' },
+        syncDirty: true,
+        localRevision: 'intent',
+        cloudRevision: 3,
+      },
+    ]);
+    firestoreGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ lastUpdated: 999999, syncedAt: 50 }),
+    });
+    firestoreGetDocs.mockResolvedValue({ forEach: vi.fn() });
+    const transactionSet = vi.fn();
+    firestoreRunTransaction.mockImplementation(async (_db, operation) =>
+      operation({
+        get: vi.fn().mockResolvedValue({
+          exists: () => true,
+          data: () => ({ timestamp: 999999, cloudRevision: 3 }),
+        }),
+        set: transactionSet,
+      })
+    );
+    expect(await initialSync('user-1')).toMatchObject({ success: true });
+    expect(transactionSet).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ timestamp: 1, cloudRevision: 4, syncedAt: 'server-time' })
+    );
+  });
+
+  it('never restores a stale future-clock active snapshot over an acknowledged deletion', async () => {
+    firebaseState.available = true;
+    checkFirebaseAvailability.mockResolvedValue(true);
+    const dirty = {
+      id: '1',
+      source: 'netease',
+      modifiedAt: 1,
+      deletedAt: 1,
+      localRevision: 'delete',
+      syncDirty: true,
+      cloudRevision: 1,
+    };
+    getFavoriteTombstones
+      .mockResolvedValueOnce([dirty])
+      .mockResolvedValue([{ ...dirty, syncDirty: false, cloudRevision: 2 }]);
+    firestoreGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ lastUpdated: 999999 }),
+    });
+    firestoreGetDocs
+      .mockResolvedValueOnce({
+        forEach: (callback) =>
+          callback({
+            id: '1',
+            data: () => ({ id: '1', source: 'netease', modifiedAt: 999999, cloudRevision: 1 }),
+          }),
+      })
+      .mockResolvedValueOnce({ forEach: vi.fn() });
+    firestoreRunTransaction.mockImplementation(async (_db, operation) =>
+      operation({
+        get: vi.fn().mockResolvedValue({
+          exists: () => true,
+          data: () => ({ modifiedAt: 999999, cloudRevision: 1 }),
+        }),
+        set: vi.fn(),
+      })
+    );
+    expect(await initialSync('user-1')).toMatchObject({ success: true });
+    expect(saveFavorites).not.toHaveBeenCalled();
+  });
+
+  it('cancels a late canonical migration transaction after the scheduler resets', async () => {
+    localStorage.removeItem('history_legacy_cleanup_v1_user-1');
+    firebaseState.available = true;
+    checkFirebaseAvailability.mockResolvedValue(true);
+    firestoreGetDocs.mockResolvedValue({
+      forEach: (callback) => {
+        callback({
+          id: 'legacy',
+          data: () => ({ timestamp: 200, song: { id: '1', source: 'netease' } }),
+        });
+        callback({
+          id: 'netease%3A1',
+          data: () => ({ timestamp: 100, song: { id: '1', source: 'netease' } }),
+        });
+      },
+    });
+    let settleRead;
+    let enteredRead;
+    const entered = new Promise((resolve) => {
+      enteredRead = resolve;
+    });
+    const pendingRead = new Promise((resolve) => {
+      settleRead = resolve;
+    });
+    const transactionSet = vi.fn();
+    firestoreRunTransaction.mockImplementation(async (_db, operation) =>
+      operation({
+        get: () => {
+          enteredRead();
+          return pendingRead;
+        },
+        set: transactionSet,
+      })
+    );
+    const pending = initialSync('user-1');
+    await entered;
+    resetSyncScheduler();
+    settleRead({ exists: () => true, data: () => ({ timestamp: 100 }) });
+    expect(await pending).toMatchObject({ success: false });
+    expect(transactionSet).not.toHaveBeenCalled();
+    expect(firestoreWriteBatch).not.toHaveBeenCalled();
+    expect(localStorage.getItem('history_legacy_cleanup_v1_user-1')).toBeNull();
+  });
+
+  it.each(['count', 'page'])(
+    'cancels late history pruning after a deferred %s read and scheduler reset',
+    async (phase) => {
+      firebaseState.available = true;
+      checkFirebaseAvailability.mockResolvedValue(true);
+      getHistory.mockResolvedValue([
+        {
+          timestamp: 1,
+          song: { id: '1', source: 'netease' },
+          syncDirty: true,
+          localRevision: 'intent',
+          cloudRevision: 0,
+        },
+      ]);
+      firestoreGetDoc.mockResolvedValue({
+        exists: () => true,
+        data: () => ({ lastUpdated: 0, syncedAt: 50 }),
+      });
+      firestoreGetDocs.mockResolvedValue({ forEach: vi.fn() });
+      let settleRead;
+      let enteredRead;
+      const entered = new Promise((resolve) => {
+        enteredRead = resolve;
+      });
+      const pendingRead = new Promise((resolve) => {
+        settleRead = resolve;
+      });
+      const defer = () => {
+        enteredRead();
+        return pendingRead;
+      };
+      if (phase === 'count') firestoreGetCount.mockImplementation(defer);
+      else {
+        firestoreGetCount.mockResolvedValue({ data: () => ({ count: 121 }) });
+        firestoreGetDocs
+          .mockResolvedValueOnce({ forEach: vi.fn() })
+          .mockResolvedValueOnce({ forEach: vi.fn() })
+          .mockImplementationOnce(defer);
+      }
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      firestoreWriteBatch.mockReturnValue(batch);
+      const pending = initialSync('user-1');
+      await entered;
+      resetSyncScheduler();
+      settleRead(
+        phase === 'count'
+          ? { data: () => ({ count: 121 }) }
+          : {
+              forEach: (callback) => callback({ id: 'old', data: () => ({ timestamp: 1 }) }),
+            }
+      );
+      expect(await pending).toMatchObject({ success: false });
+      expect(batch.commit).not.toHaveBeenCalled();
+      expect(batch.delete).not.toHaveBeenCalled();
+      expect(localStorage.getItem('last_sync_timestamp_user-1')).toBeNull();
+    }
+  );
+
   describe('legacy history cleanup', () => {
     it('deduplicates legacy doc ids once and records the migration flag', async () => {
       localStorage.removeItem('history_legacy_cleanup_v1_user-1');
@@ -944,6 +1163,43 @@ describe('sync service safeguards', () => {
       expect(localStorage.getItem('history_legacy_cleanup_v1_user-1')).toBeNull();
     });
 
+    it('retains server-recent modern history over legacy future-clock records', async () => {
+      localStorage.removeItem('history_legacy_cleanup_v1_user-1');
+      const page = (items) => ({ forEach: (callback) => items.forEach(callback) });
+      firestoreGetDocs
+        .mockResolvedValueOnce(
+          page(
+            Array.from({ length: 100 }, (_, index) => ({
+              id: `netease%3Am-${index}`,
+              data: () => ({
+                timestamp: index,
+                syncedAt: 1000 + index,
+                cloudRevision: 1,
+                song: { id: `m-${index}`, source: 'netease' },
+              }),
+            }))
+          )
+        )
+        .mockResolvedValueOnce(
+          page(
+            Array.from({ length: 30 }, (_, index) => ({
+              id: `netease%3Al-${index}`,
+              data: () => ({
+                timestamp: 9999999999999 + index,
+                song: { id: `l-${index}`, source: 'netease' },
+              }),
+            }))
+          )
+        );
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      firestoreWriteBatch.mockReturnValue(batch);
+      expect(await ensureHistoryLegacyCleanup('user-1')).toBe(true);
+      expect(batch.delete).toHaveBeenCalledTimes(30);
+      expect(
+        batch.delete.mock.calls.every(([reference]) => reference.includes('netease%3Al-'))
+      ).toBe(true);
+    });
+
     it('runs legacy cleanup before a fresh sync pull on an upgraded device', async () => {
       localStorage.removeItem('history_legacy_cleanup_v1_user-1');
       firebaseState.available = true;
@@ -967,6 +1223,7 @@ describe('sync service safeguards', () => {
             }
           },
         })
+        .mockResolvedValueOnce({ forEach: vi.fn() }) // end of paginated legacy scan
         .mockResolvedValueOnce({ forEach: vi.fn() }) // 云收藏
         .mockResolvedValueOnce({ forEach: vi.fn() }); // 云历史（清理后）
       const batches = [];

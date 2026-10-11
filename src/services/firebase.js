@@ -61,8 +61,8 @@ if (isConfigInvalid) {
 if (!isFirebaseAvailable) {
   auth = {
     onAuthStateChanged: (callback) => {
-      setTimeout(() => callback(null), 0);
-      return () => {};
+      const timer = setTimeout(() => callback(null), 0);
+      return () => clearTimeout(timer);
     },
     signOut: () => Promise.resolve(),
     currentUser: null,
@@ -99,34 +99,18 @@ export const checkFirebaseAvailability = async () => {
       logger.warn('Firebase配置不完整，可能导致连接失败');
     }
 
-    // 尝试轻量级操作以验证连接
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Firebase连接超时')), 5000)
-    );
-
-    await Promise.race([
-      timeout,
-      new Promise((resolve, reject) => {
-        try {
-          // 测试auth服务连接
-          const unsubscribe = auth.onAuthStateChanged(
-            () => {
-              logger.log('Firebase Auth连接成功');
-              unsubscribe();
-              resolve(true);
-            },
-            (error) => {
-              logger.error('Firebase Auth连接失败:', error);
-              unsubscribe();
-              reject(error);
-            }
-          );
-        } catch (error) {
-          logger.error('Firebase Auth测试过程中出错:', error);
-          reject(error);
-        }
-      }),
-    ]);
+    // Auth readiness establishes SDK availability, not Firestore reachability.
+    let unsubscribe = () => {};
+    let timer;
+    try {
+      await new Promise((resolve, reject) => {
+        timer = setTimeout(() => reject(new Error('Firebase连接超时')), 5000);
+        unsubscribe = auth.onAuthStateChanged(() => resolve(true), reject);
+      });
+    } finally {
+      clearTimeout(timer);
+      unsubscribe();
+    }
 
     logger.log('Firebase服务可用');
     isFirebaseAvailable = true;

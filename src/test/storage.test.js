@@ -36,6 +36,10 @@ vi.mock('localforage', () => ({
 }));
 
 import {
+  importFavorites,
+  acknowledgeSyncChanges,
+  withStorageMutation,
+  clearCoverCache,
   addSearchHistory,
   addToHistory,
   clearExpiredCovers,
@@ -235,7 +239,7 @@ describe('storage service', () => {
     expect(saved.picUrl).toBeUndefined();
   });
 
-  it('bounds favorite tombstones to a recent window', async () => {
+  it('retains tombstones beyond the legacy window to prevent resurrection', async () => {
     const tombstones = Array.from({ length: MAX_FAVORITE_TOMBSTONES + 1 }, (_, index) => ({
       id: index,
       source: 'netease',
@@ -244,7 +248,7 @@ describe('storage service', () => {
     }));
     await expect(saveFavoriteTombstones(tombstones)).resolves.toBe(true);
     const saved = await getFavoriteTombstones();
-    expect(saved).toHaveLength(MAX_FAVORITE_TOMBSTONES);
+    expect(saved).toHaveLength(MAX_FAVORITE_TOMBSTONES + 1);
     expect(saved[0].id).toBe(String(MAX_FAVORITE_TOMBSTONES));
   });
 
@@ -409,5 +413,101 @@ describe('storage service', () => {
     await expect(resetPendingChanges()).resolves.toBe(false);
     syncStore.getItem = originalSyncGetItem;
     syncStore.setItem = originalSyncSetItem;
+  });
+});
+
+describe('durable mutation regressions', () => {
+  beforeEach(() => {
+    resetStores();
+    setStorageScope(null);
+  });
+  it('serializes concurrent favorites and history mutations without losing an item', async () => {
+    await Promise.all(
+      Array.from({ length: 12 }, (_, index) =>
+        toggleFavorite({ id: String(index), source: 'netease' })
+      )
+    );
+    expect(await getFavorites()).toHaveLength(12);
+    await Promise.all(
+      Array.from({ length: 12 }, (_, index) =>
+        addToHistory({ id: String(index), source: 'netease' })
+      )
+    );
+    expect(await getHistory()).toHaveLength(12);
+  });
+  it('keeps later intent dirty when an older revision is acknowledged after clock rollback', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
+    await toggleFavorite({ id: '1', source: 'netease' });
+    const [original] = await getFavorites();
+    now.mockReturnValue(1);
+    await toggleFavorite(original);
+    await toggleFavorite(original);
+    await acknowledgeSyncChanges({ favorites: [{ ...original, cloudRevision: 1 }], history: [] });
+    const [current] = await getFavorites();
+    expect(current.syncDirty).toBe(true);
+    expect(current.localRevision).not.toBe(original.localRevision);
+    now.mockRestore();
+  });
+  it('makes imported favorites and bulk deletions durable intents', async () => {
+    await saveFavorites([{ id: '1', source: 'netease', modifiedAt: 1 }], 'user');
+    const [favorite] = await getFavorites('user');
+    expect(favorite).toMatchObject({ syncDirty: true, localRevision: expect.any(String) });
+    await saveFavorites([], 'user');
+    expect(await getFavoriteTombstones('user')).toEqual([
+      expect.objectContaining({ id: '1', syncDirty: true, localRevision: expect.any(String) }),
+    ]);
+  });
+  it('uses a scoped Web Lock for array mutations', async () => {
+    const request = vi.fn(async (_name, operation) => operation());
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: { request } });
+    await withStorageMutation('alice', async () => {});
+    expect(request).toHaveBeenCalledWith('otonei-data:user:alice', expect.any(Function));
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined });
+  });
+  it('clears the persistent cover cache', async () => {
+    await saveCoverToStorage('cover', 'https://example.test/a.jpg');
+    await clearCoverCache();
+    expect(await getCoverFromStorage('cover')).toBeNull();
+  });
+  it('preserves existing favorites when an import races with a full collection', async () => {
+    const current = Array.from({ length: 500 }, (_, index) => ({
+      id: String(index),
+      source: 'netease',
+    }));
+    await saveFavorites(current, 'user', { fromSync: true });
+    const result = await importFavorites([{ id: 'new', source: 'netease' }], 'user');
+    expect(result).toMatchObject({ success: true, addedCount: 0 });
+    expect(await getFavorites('user')).toHaveLength(500);
+    expect(await getFavoriteTombstones('user')).toEqual([]);
+  });
+  it('captures the guest scope before a queued mutation and account switch', async () => {
+    let release;
+    const barrier = withStorageMutation(
+      undefined,
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        })
+    );
+    await Promise.resolve();
+    const pending = toggleFavorite({ id: 'guest', source: 'netease' });
+    setStorageScope({ uid: 'alice' });
+    release();
+    await barrier;
+    await pending;
+    expect(await getFavorites(null)).toEqual([expect.objectContaining({ id: 'guest' })]);
+    expect(await getFavorites('alice')).toEqual([]);
+  });
+  it('fails acknowledgement when its local durable write fails', async () => {
+    await toggleFavorite({ id: '1', source: 'netease' });
+    const [item] = await getFavorites();
+    const write = vi
+      .spyOn(getStore('favorites'), 'setItem')
+      .mockRejectedValueOnce(new Error('disk'));
+    await expect(
+      acknowledgeSyncChanges({ favorites: [{ ...item, cloudRevision: 1 }], history: [] })
+    ).rejects.toThrow('同步确认');
+    expect((await getFavorites())[0].syncDirty).toBe(true);
+    write.mockRestore();
   });
 });

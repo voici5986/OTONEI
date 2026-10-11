@@ -8,7 +8,5 @@ ignoredBuiltDependencies:
   - protobufjs
 minimumReleaseAgeExclude:
   - vite@8.1.2
-audit:
-  ignore:
-    - GHSA-m9gg-hp2v-232j
-    - GHSA-f596-whhp-79r4
+overrides:
+  '@grpc/grpc-js': '1.14.6'

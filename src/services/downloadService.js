@@ -21,7 +21,8 @@ const getFileExtension = (url, quality = 999) => {
 
     // 使用正则表达式提取后缀
     const extensionMatch = fileName.match(/\.([a-z0-9]+)$/i);
-    if (extensionMatch) return extensionMatch[1];
+    if (extensionMatch && /^(mp3|flac|m4a|aac|ogg|opus|wav|wma)$/i.test(extensionMatch[1]))
+      return extensionMatch[1].toLowerCase();
 
     // 如果URL没有扩展名，根据音质决定
     return quality >= 999 ? 'flac' : 'mp3';
@@ -89,6 +90,7 @@ const formatFileSizeMessage = (rawSize) => {
 // 下载队列管理
 const downloadQueue = [];
 let isProcessingQueue = false;
+const DOWNLOAD_TIMEOUT_MS = 30000;
 const MIN_DOWNLOAD_INTERVAL = 2000; // 2秒间隔
 
 /**
@@ -183,7 +185,19 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
 
     // 设置下载文件名
     const extension = getFileExtension(downloadUrl, quality);
-    const fileName = `${track.name} - ${getTrackArtist(track) || '未知歌手'}.${extension}`;
+    const basename = Array.from(
+      `${track.name || '未知歌曲'} - ${getTrackArtist(track) || '未知歌手'}`,
+      (character) =>
+        character.charCodeAt(0) < 32 ||
+        character.charCodeAt(0) === 127 ||
+        '<>:"/\\|?*'.includes(character)
+          ? '_'
+          : character
+    )
+      .join('')
+      .slice(0, 180)
+      .replace(/[. ]+$/g, '');
+    const fileName = `${basename || '音频'}.${extension}`;
 
     // 确定音质描述
     const qualityDesc = getQualityDescription(quality);
@@ -197,17 +211,36 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
     });
 
     // 直接下载
+    const controller = new AbortController();
+    let timeoutId;
+    const timeout = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        controller.abort();
+        reject(new Error('下载超时，请稍后重试'));
+      }, DOWNLOAD_TIMEOUT_MS);
+    });
     try {
-      // 使用fetch获取音频内容
-      const audioResponse = await fetch(downloadUrl);
+      // Bound both response headers and body reading; abort the underlying fetch on timeout.
+      const audioResponse = await Promise.race([
+        fetch(downloadUrl, { signal: controller.signal }),
+        timeout,
+      ]);
       if (!audioResponse.ok) {
         throw new Error(`下载失败: ${audioResponse.status} ${audioResponse.statusText}`);
       }
-      const contentType = audioResponse.headers.get('content-type') || '';
-      if (contentType && !contentType.startsWith('audio/')) {
+      const contentType = (audioResponse.headers.get('content-type') || '')
+        .split(';')[0]
+        .trim()
+        .toLowerCase();
+      if (
+        contentType &&
+        !contentType.startsWith('audio/') &&
+        !['application/octet-stream', 'application/ogg'].includes(contentType)
+      ) {
         throw new Error(`下载内容类型异常: ${contentType}`);
       }
-      const blob = await audioResponse.blob();
+      const blob = await Promise.race([audioResponse.blob(), timeout]);
+      if (!blob.size) throw new Error('下载内容为空');
 
       // 创建blob URL
       const blobUrl = window.URL.createObjectURL(blob);
@@ -227,20 +260,8 @@ const _processDownload = async (track, quality = 999, onStartDownload, onFinishD
       }, 100);
 
       return true;
-    } catch (fetchError) {
-      logger.error('Fetch error:', fetchError);
-
-      // 备用下载方法
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', fileName);
-      link.setAttribute('target', '_blank');
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      return true;
+    } finally {
+      clearTimeout(timeoutId);
     }
   } catch (error) {
     logger.error('Download error:', error);

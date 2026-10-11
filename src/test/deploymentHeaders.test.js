@@ -21,7 +21,7 @@ describe('deployment security headers', () => {
       .map((match) => match[1])
       .filter((body) => body.includes('add_header'));
 
-    expect(locationsWithHeaders).toHaveLength(4);
+    expect(locationsWithHeaders).toHaveLength(6);
     for (const location of locationsWithHeaders) {
       expect(location).toContain('include /etc/nginx/otonei-security-headers.conf;');
     }
@@ -31,5 +31,31 @@ describe('deployment security headers', () => {
     expect(readRepoFile('Dockerfile')).toContain(
       'COPY ./conf/security-headers.conf /etc/nginx/otonei-security-headers.conf'
     );
+  });
+
+  it('revalidates HTML while keeping hashed assets immutable', () => {
+    const cloudflare = readRepoFile('public/_headers');
+    expect(cloudflare).toMatch(/\n\/\r?\n\s+Cache-Control: no-cache/);
+    expect(cloudflare).toMatch(/\/\*\.html\r?\n\s+Cache-Control: no-cache/);
+    // Pages concatenates headers from overlapping rules. A global cache rule
+    // would add no-cache to immutable assets and force needless revalidation.
+    const blocks = cloudflare.trim().split(/\r?\n\s*\r?\n/);
+    const assetPolicies = blocks
+      .filter((block) => {
+        const pattern = block.split(/\r?\n/)[0];
+        const escaped = pattern
+          .split('*')
+          .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+          .join('.*');
+        return new RegExp(`^${escaped}$`).test('/assets/app-hash.js');
+      })
+      .flatMap((block) => [...block.matchAll(/Cache-Control: (.+)/g)].map((match) => match[1]));
+    expect(assetPolicies).toEqual(['public, max-age=31536000, immutable']);
+    expect(cloudflare).toMatch(
+      /\/assets\/\*\r?\n\s+Cache-Control: public, max-age=31536000, immutable/
+    );
+    const nginx = readRepoFile('conf/nginx.conf');
+    expect(nginx).toMatch(/location \/ \{[^}]+Cache-Control "no-cache"/);
+    expect(nginx).toMatch(/location \/assets\/ \{[^}]+immutable/);
   });
 });

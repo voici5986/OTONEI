@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { apiGet, cache, loadTrack, setError } = vi.hoisted(() => ({
+const { apiGet, cache, loadTrack, setError, cacheEpoch } = vi.hoisted(() => ({
   apiGet: vi.fn(),
+  cacheEpoch: { value: 0 },
   cache: new Map(),
   loadTrack: vi.fn(),
   setError: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('../services/memoryCache', () => ({
     LYRICS: 'lyrics',
     COVER_IMAGES: 'covers',
   },
+  getMemoryCacheGeneration: () => cacheEpoch.value,
   getMemoryCache: (type, key) => cache.get(`${type}:${key}`),
   setMemoryCache: (type, key, value) => cache.set(`${type}:${key}`, value),
 }));
@@ -43,6 +45,34 @@ import {
 } from '../services/musicApiService';
 
 describe('music API service', () => {
+  it('does not repopulate cleared caches from an earlier lyrics or cover request', async () => {
+    let resolveLyrics;
+    apiGet.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveLyrics = resolve;
+      })
+    );
+    const request = getLyrics({ id: 'clear-race', source: 'netease', lyric_id: 'clear-race' });
+    cacheEpoch.value += 1;
+    cache.clear();
+    localStorage.clear();
+    resolveLyrics({ data: { lyric: 'stale lyrics' } });
+    await request;
+    expect(cache.size).toBe(0);
+    expect(localStorage.getItem('sonicflow_lyric_netease_clear-race')).toBeNull();
+    let resolveCover;
+    apiGet.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCover = resolve;
+      })
+    );
+    const cover = forceGetCoverImage('netease', 'clear-race', 500);
+    cacheEpoch.value += 1;
+    resolveCover({ data: { url: 'https://test/cover.png' } });
+    await cover;
+    expect(cache.size).toBe(0);
+  });
+
   beforeEach(() => {
     apiGet.mockReset();
     cache.clear();
@@ -73,6 +103,48 @@ describe('music API service', () => {
     await expect(searchMusic('song', 'netease', 20, 1)).resolves.toEqual(results);
     await expect(searchMusic('song', 'netease', 20, 1)).resolves.toEqual(results);
     expect(apiGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('stamps requested source onto validated search results', async () => {
+    apiGet.mockResolvedValueOnce({ data: [{ id: 'source', name: 'Song', source: 'unknown' }] });
+    await expect(searchMusic('source', 'kuwo')).resolves.toEqual([
+      { id: 'source', name: 'Song', source: 'kuwo' },
+    ]);
+  });
+
+  it('refreshes after a cold request and cache hit and coalesces concurrent refreshes', async () => {
+    const track = { id: 'refresh', source: 'netease' };
+    apiGet.mockResolvedValueOnce({ data: { url: '/old.mp3' } });
+    await getAudioUrl(track);
+    await getAudioUrl(track);
+    apiGet.mockResolvedValueOnce({ data: { url: '/fresh.mp3' } });
+    await expect(
+      Promise.all([getAudioUrl(track, 999, true), getAudioUrl(track, 999, true)])
+    ).resolves.toEqual([{ url: '/fresh.mp3' }, { url: '/fresh.mp3' }]);
+    expect(apiGet).toHaveBeenCalledTimes(2);
+    apiGet.mockResolvedValueOnce({ data: { url: '/next.mp3' } });
+    await expect(getAudioUrl(track, 999, true)).resolves.toEqual({ url: '/next.mp3' });
+    expect(apiGet).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([null, { code: -1 }, { url: 42 }, { url: ' ' }, { url: 'javascript:alert(1)' }])(
+    'rejects invalid audio payload without poisoning cache: %j',
+    async (data) => {
+      const track = { id: `invalid-${JSON.stringify(data)}`, source: 'netease' };
+      apiGet.mockResolvedValueOnce({ data });
+      await expect(getAudioUrl(track)).rejects.toThrow('无效的音频链接');
+      apiGet.mockResolvedValueOnce({ data: { url: '/valid.mp3' } });
+      await expect(getAudioUrl(track)).resolves.toEqual({ url: '/valid.mp3' });
+      expect(apiGet).toHaveBeenCalledTimes(2);
+    }
+  );
+
+  it('normalizes null lyric data to empty lyrics', async () => {
+    apiGet.mockResolvedValueOnce({ data: null });
+    await expect(getLyrics({ source: 'netease', lyric_id: 'null-lyric' })).resolves.toEqual({
+      raw: '',
+      translated: '',
+    });
   });
 
   it('rejects legacy or unknown sources before contacting the upstream API', async () => {

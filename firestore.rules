@@ -43,19 +43,33 @@ service cloud.firestore {
         && (!('history' in data) || (data.history is list && data.history.size() <= 100));
     }
 
+    function isValidSyncMetadata(data) {
+      return (
+          (!('cloudRevision' in data) && !('syncedAt' in data))
+          || (data.cloudRevision is int && data.cloudRevision > 0
+            && data.syncedAt is timestamp && data.syncedAt == request.time)
+        )
+        // Once upgraded, old clients cannot strip revision protection from this document.
+        && (resource == null || !('cloudRevision' in resource.data)
+          || (data.cloudRevision == resource.data.cloudRevision + 1
+            && data.syncedAt == request.time));
+    }
+
     function isValidFavorite(data) {
       return data.keys().hasOnly([
           'id', 'source', 'name', 'artist', 'album', 'pic_id', 'lyric_id',
-          'modifiedAt', 'deletedAt'
+          'modifiedAt', 'deletedAt', 'cloudRevision', 'syncedAt'
         ])
         && isValidTrack(data)
+        && isValidSyncMetadata(data)
         && isSyncTime(data.modifiedAt)
         && (!('deletedAt' in data) || isSyncTime(data.deletedAt));
     }
 
     function isValidHistory(data) {
-      return data.keys().hasOnly(['song', 'timestamp'])
+      return data.keys().hasOnly(['song', 'timestamp', 'cloudRevision', 'syncedAt'])
         && isSyncTime(data.timestamp)
+        && isValidSyncMetadata(data)
         && data.song.keys().hasOnly([
           'id', 'source', 'name', 'artist', 'album', 'pic_id', 'lyric_id'
         ])

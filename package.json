@@ -26,7 +26,7 @@
     "format:check": "oxfmt --check .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test --config=playwright.config.mjs",
+    "test:e2e": "node scripts/run-browser-e2e.mjs",
     "test:e2e:pwa": "node scripts/run-pwa-e2e.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check:toolchain": "node scripts/check-toolchain.mjs",

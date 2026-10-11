@@ -78,10 +78,11 @@ export default defineConfig({
               url.origin === self.location.origin && url.pathname.startsWith('/api-v1'),
             handler: 'NetworkOnly',
           },
-          // 封面图片：缓存优先，设置过期时间
+          // 图片后台更新，避免同一 URL 换图后长期显示旧封面
           {
-            urlPattern: /^https:\/\/.*(jpg|jpeg|png|webp|gif).*$/i,
-            handler: 'CacheFirst',
+            urlPattern: ({ request, url }) =>
+              request.destination === 'image' && url.protocol === 'https:',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'image-cache',
               expiration: {
@@ -94,7 +95,7 @@ export default defineConfig({
           {
             urlPattern: ({ url }) =>
               url.origin === self.location.origin && url.pathname === '/MiSansVF.woff2',
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'misans-font-cache',
               expiration: {

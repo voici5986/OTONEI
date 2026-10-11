@@ -30,6 +30,15 @@ describe('memory cache', () => {
     expect(getMemoryCache(CACHE_TYPES.SEARCH_RESULTS, 'track')).toBeNull();
   });
 
+  it('retains an overwritten entry as most recently used when evicting', () => {
+    for (let index = 0; index < 200; index++)
+      setMemoryCache(CACHE_TYPES.SEARCH_RESULTS, String(index), index);
+    setMemoryCache(CACHE_TYPES.SEARCH_RESULTS, '0', 'updated');
+    setMemoryCache(CACHE_TYPES.SEARCH_RESULTS, 'new', 'new');
+    expect(getMemoryCache(CACHE_TYPES.SEARCH_RESULTS, '0')).toBe('updated');
+    expect(getMemoryCache(CACHE_TYPES.SEARCH_RESULTS, '1')).toBeNull();
+  });
+
   it('clears one cache type without touching another', () => {
     setMemoryCache(CACHE_TYPES.SEARCH_RESULTS, 'search', ['result']);
     setMemoryCache(CACHE_TYPES.LYRICS, 'lyric', { raw: 'text', translated: '' });

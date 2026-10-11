@@ -73,7 +73,9 @@ export const installApiFixtures = async (page) => {
 
     const isLocalApp =
       requestUrl.hostname === '127.0.0.1' &&
-      (requestUrl.port === '3000' || requestUrl.port === '4173');
+      (requestUrl.port === '3000' ||
+        requestUrl.port === '4173' ||
+        requestUrl.port === process.env.PLAYWRIGHT_PORT);
     if (requestUrl.protocol === 'data:' || isLocalApp) {
       await route.continue();
       return;

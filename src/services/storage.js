@@ -15,7 +15,46 @@ export const setStorageScope = (user) => {
   return activeDataScope;
 };
 
+const captureUserId = (userId) =>
+  userId !== undefined ? userId : activeDataScope === GUEST_SCOPE ? null : activeDataScope.slice(5);
+
+// Scoped Web Locks serialize array mutations across tabs; fallback queues within this tab.
+const mutationQueues = new Map();
+export const withStorageMutation = (userId, operation) => {
+  const capturedUserId = captureUserId(userId);
+  const scope = toDataScope(capturedUserId);
+  const run = () =>
+    globalThis.navigator?.locks?.request
+      ? navigator.locks.request(`otonei-data:${scope}`, () => operation(capturedUserId))
+      : operation(capturedUserId);
+  const pending = (mutationQueues.get(scope) || Promise.resolve()).then(run, run);
+  mutationQueues.set(
+    scope,
+    pending.catch(() => {})
+  );
+  return pending;
+};
+const storageListeners = new Set();
+export const subscribeStorageChanges = (listener) => {
+  storageListeners.add(listener);
+  return () => storageListeners.delete(listener);
+};
+const notifyStorageChange = (type, userId) => {
+  const event = { type, scope: userId === undefined ? activeDataScope : toDataScope(userId) };
+  for (const listener of storageListeners) {
+    try {
+      listener(event);
+    } catch (error) {
+      logger.error('Storage listener failed:', error);
+    }
+  }
+  if (typeof window !== 'undefined')
+    window.dispatchEvent(new CustomEvent(`${type}_changed`, { detail: event }));
+};
+const newRevision = () => globalThis.crypto.randomUUID();
+
 const getScopedItem = async (store, baseKey, userId) => {
+  userId = captureUserId(userId);
   const key = scopedKey(baseKey, userId);
   const scopedValue = await store.getItem(key);
   if (scopedValue != null) return scopedValue;
@@ -35,6 +74,7 @@ const getScopedItem = async (store, baseKey, userId) => {
 };
 
 const getScopedSyncValue = async (baseKey, userId) => {
+  userId = captureUserId(userId);
   const key = scopedKey(baseKey, userId);
   const value = await syncStore.getItem(key);
   if (value != null) return value;
@@ -106,7 +146,7 @@ const COVER_CACHE_TTL = 30 * 24 * 60 * 60 * 1000;
  * @param {string} imageUrl 图片URL
  * @returns {Promise<boolean>} 是否成功
  */
-export async function saveCoverToStorage(key, imageUrl) {
+async function saveCoverToStorageUnlocked(key, imageUrl) {
   try {
     // 如果是默认封面，不需要缓存
     if (!imageUrl || imageUrl.includes('default_cover')) {
@@ -159,7 +199,7 @@ export async function getCoverFromStorage(key) {
  * 清除过期的封面缓存
  * @returns {Promise<number>} 清除的项目数量
  */
-export async function clearExpiredCovers(options = {}) {
+async function clearExpiredCoversUnlocked(options = {}) {
   try {
     const { batchSize = 50 } = options;
     const now = Date.now();
@@ -199,8 +239,7 @@ export async function clearExpiredCovers(options = {}) {
  */
 // 设置收藏上限为500条
 export const MAX_FAVORITES_ITEMS = 500;
-// 删除标记只需保留一个有界的近期窗口，用于跨设备传播删除操作。
-// 旧标记超过窗口后不再占用本地存储，最新标记优先保留。
+// Kept for compatibility; tombstones cannot safely expire while offline devices exist.
 export const MAX_FAVORITE_TOMBSTONES = 500;
 
 const toPersistedTrack = (track) => {
@@ -251,16 +290,68 @@ export async function getFavorites(userId) {
   }
 }
 
-export async function saveFavorites(favoritesArray, userId) {
+async function saveFavoritesUnlocked(favoritesArray, userId, fromSync = false) {
   try {
-    const normalizedFavorites = favoritesArray.slice(0, MAX_FAVORITES_ITEMS).map(toPersistedTrack);
+    let normalizedFavorites = favoritesArray.slice(0, MAX_FAVORITES_ITEMS).map(toPersistedTrack);
+    if (!fromSync) {
+      const previous = await getFavoritesStrict(userId);
+      const tombstones = await getFavoriteTombstones(userId);
+      const nextKeys = new Set(normalizedFavorites.map(getTrackKey));
+      for (const item of previous) {
+        if (!nextKeys.has(getTrackKey(item))) {
+          const modifiedAt = Date.now();
+          const previousTombstone = tombstones.findIndex(
+            (entry) => getTrackKey(entry) === getTrackKey(item)
+          );
+          if (previousTombstone >= 0) tombstones.splice(previousTombstone, 1);
+          tombstones.push({
+            id: item.id,
+            source: item.source,
+            modifiedAt,
+            deletedAt: modifiedAt,
+            localRevision: newRevision(),
+            syncDirty: true,
+            cloudRevision: item.cloudRevision || 0,
+          });
+        }
+      }
+      normalizedFavorites = normalizedFavorites.map((item) => {
+        const existing = previous.find((entry) => getTrackKey(entry) === getTrackKey(item));
+        if (existing && JSON.stringify(existing) === JSON.stringify(item)) return existing;
+        return {
+          ...item,
+          modifiedAt: Date.now(),
+          localRevision: newRevision(),
+          syncDirty: true,
+          cloudRevision:
+            existing?.cloudRevision ||
+            tombstones.find((entry) => getTrackKey(entry) === getTrackKey(item))?.cloudRevision ||
+            0,
+        };
+      });
+      // Persist deletion intent first: a failure cannot remove a song without an outbox entry.
+      await saveFavoriteTombstones(tombstones, userId);
+    }
     await favoritesStore.setItem(scopedKey('items', userId), normalizedFavorites);
+    if (!fromSync) {
+      const keys = new Set(normalizedFavorites.map(getTrackKey));
+      await saveFavoriteTombstones(
+        (await getFavoriteTombstones(userId)).filter((item) => !keys.has(getTrackKey(item))),
+        userId
+      );
+    }
+    notifyStorageChange('favorites', userId);
     return true;
   } catch (error) {
     logger.error('保存收藏列表失败:', error);
     return false;
   }
 }
+// Sync already owns the scope lock and must not manufacture a local mutation.
+export const saveFavorites = (favoritesArray, userId, options = {}) =>
+  options.fromSync
+    ? saveFavoritesUnlocked(favoritesArray, userId, true)
+    : withStorageMutation(userId, (scopeUid) => saveFavoritesUnlocked(favoritesArray, scopeUid));
 
 // 添加或移除收藏
 export async function getFavoriteTombstones(userId) {
@@ -276,13 +367,12 @@ export async function getFavoriteTombstones(userId) {
 export async function saveFavoriteTombstones(tombstones, userId) {
   const normalized = tombstones
     .map(toPersistedTrack)
-    .sort((a, b) => (b.modifiedAt || b.deletedAt || 0) - (a.modifiedAt || a.deletedAt || 0))
-    .slice(0, MAX_FAVORITE_TOMBSTONES);
+    .sort((a, b) => (b.modifiedAt || b.deletedAt || 0) - (a.modifiedAt || a.deletedAt || 0)); // Retain tombstones so offline devices cannot resurrect deleted favorites.
   await favoriteTombstonesStore.setItem(scopedKey('items', userId), normalized);
   return true;
 }
 
-export async function toggleFavorite(track, userId) {
+async function toggleFavoriteUnlocked(track, userId) {
   const normalizedTrack = normalizeTrackIdentity(track);
   const trackKey = getTrackKey(normalizedTrack);
   const favorites = await getFavoritesStrict(userId);
@@ -290,10 +380,9 @@ export async function toggleFavorite(track, userId) {
 
   if (index > -1) {
     // 已收藏，则移除
-    favorites.splice(index, 1);
+    const previous = favorites.splice(index, 1)[0];
     const modifiedAt = Date.now();
-    const favoritesSaved = await saveFavorites(favorites, userId);
-    if (!favoritesSaved) throw new Error('保存收藏列表失败');
+    const localRevision = newRevision();
     const tombstones = await getFavoriteTombstones(userId);
     const remainingTombstones = tombstones.filter((item) => getTrackKey(item) !== trackKey);
     remainingTombstones.unshift({
@@ -301,9 +390,14 @@ export async function toggleFavorite(track, userId) {
       source: normalizedTrack.source,
       modifiedAt,
       deletedAt: modifiedAt,
+      localRevision,
+      syncDirty: true,
+      cloudRevision: previous.cloudRevision || 0,
     });
     await saveFavoriteTombstones(remainingTombstones, userId);
-    return { added: false, full: false };
+    const favoritesSaved = await saveFavorites(favorites, userId, { fromSync: true });
+    if (!favoritesSaved) throw new Error('保存收藏列表失败');
+    return { added: false, full: false, track: toPersistedTrack(normalizedTrack) };
   } else {
     // 检查是否已达到上限
     if (favorites.length >= MAX_FAVORITES_ITEMS) {
@@ -312,19 +406,27 @@ export async function toggleFavorite(track, userId) {
     // 未收藏，则添加到列表开头，并添加修改时间戳
     const trackWithTimestamp = {
       ...toPersistedTrack(normalizedTrack),
-      modifiedAt: Date.now(), // 添加修改时间戳
+      modifiedAt: Date.now(),
+      localRevision: newRevision(),
+      syncDirty: true,
+      cloudRevision:
+        (await getFavoriteTombstones(userId)).find((item) => getTrackKey(item) === trackKey)
+          ?.cloudRevision || 0,
     };
     favorites.unshift(trackWithTimestamp);
-    const favoritesSaved = await saveFavorites(favorites, userId);
+    const favoritesSaved = await saveFavorites(favorites, userId, { fromSync: true });
     if (!favoritesSaved) throw new Error('保存收藏列表失败');
     const tombstones = await getFavoriteTombstones(userId);
     await saveFavoriteTombstones(
       tombstones.filter((item) => getTrackKey(item) !== trackKey),
       userId
     );
-    return { added: true, full: false };
+    return { added: true, full: false, track: trackWithTimestamp };
   }
 }
+
+export const toggleFavorite = (track, userId) =>
+  withStorageMutation(userId, (scopeUid) => toggleFavoriteUnlocked(track, scopeUid));
 
 /**
  * 本地用户操作
@@ -515,16 +617,41 @@ export async function getHistoryStrict(userId) {
 }
 
 // 保存播放历史
-export async function saveHistory(historyArray, userId) {
-  const normalizedHistory = historyArray.map((item) => ({
+async function saveHistoryUnlocked(historyArray, userId, fromSync) {
+  let normalizedHistory = historyArray.map((item) => ({
     ...item,
     song: item.song ? toPersistedTrack(item.song) : item.song,
   }));
-  return saveHistoryGeneric(historyStore, normalizedHistory, MAX_HISTORY_ITEMS, userId);
+  if (!fromSync) {
+    const previous = await getHistoryStrict(userId);
+    normalizedHistory = normalizedHistory.map((item) => {
+      const existing = previous.find((entry) => getTrackKey(entry.song) === getTrackKey(item.song));
+      if (existing && JSON.stringify(existing) === JSON.stringify(item)) return existing;
+      return {
+        ...item,
+        localRevision: newRevision(),
+        syncDirty: true,
+        cloudRevision: existing?.cloudRevision || 0,
+      };
+    });
+  }
+  const saved = await saveHistoryGeneric(
+    historyStore,
+    normalizedHistory,
+    MAX_HISTORY_ITEMS,
+    userId
+  );
+  if (saved) notifyStorageChange('history', userId);
+  return saved;
 }
 
+export const saveHistory = (historyArray, userId, options = {}) =>
+  options.fromSync
+    ? saveHistoryUnlocked(historyArray, userId, true)
+    : withStorageMutation(userId, (scopeUid) => saveHistoryUnlocked(historyArray, scopeUid, false));
+
 // 添加到播放历史
-export async function addToHistory(track, userId) {
+async function addToHistoryUnlocked(track, userId) {
   try {
     const normalizedTrack = toPersistedTrack(track);
     const history = await getHistoryStrict(userId);
@@ -532,18 +659,32 @@ export async function addToHistory(track, userId) {
       const song = item.song || item;
       return song && getTrackKey(song) === getTrackKey(normalizedTrack);
     });
-    if (existingIndex !== -1) history.splice(existingIndex, 1);
-    history.unshift({ timestamp: Date.now(), song: normalizedTrack });
-    return await saveHistory(history, userId);
+    const previous = existingIndex !== -1 ? history.splice(existingIndex, 1)[0] : null;
+    history.unshift({
+      timestamp: Date.now(),
+      song: normalizedTrack,
+      localRevision: newRevision(),
+      syncDirty: true,
+      cloudRevision: previous?.cloudRevision || 0,
+    });
+    return await saveHistory(history, userId, { fromSync: true });
   } catch (error) {
     logger.error('Error adding to history:', error);
     return false;
   }
 }
 
+export const addToHistory = (track, userId) =>
+  withStorageMutation(userId, (scopeUid) => addToHistoryUnlocked(track, scopeUid));
+
 // 清空播放历史
 export async function clearHistory(userId) {
-  return clearHistoryGeneric(historyStore, userId);
+  return withStorageMutation(userId, async (scopeUid) => {
+    userId = scopeUid;
+    const saved = await clearHistoryGeneric(historyStore, userId);
+    if (saved) notifyStorageChange('history', userId);
+    return saved;
+  });
 }
 
 /**
@@ -560,7 +701,7 @@ export async function saveSearchHistory(historyArray, userId) {
 }
 
 // 添加搜索历史
-export async function addSearchHistory(query, source, userId) {
+async function addSearchHistoryUnlocked(query, source, userId) {
   return addToHistoryGeneric(
     searchHistoryStore,
     { query, source },
@@ -654,7 +795,7 @@ async function savePendingSyncChanges(counter, userId) {
 }
 
 // 增加待同步变更计数
-export async function incrementPendingChanges(type, userId) {
+async function incrementPendingChangesUnlocked(type, userId) {
   try {
     const counter = await getPendingSyncChangesStrict(userId);
     const newCounter = {
@@ -685,3 +826,122 @@ export async function resetPendingChanges(userId) {
     return false;
   }
 }
+
+export const incrementPendingChanges = (type, userId) =>
+  withStorageMutation(userId, (scopeUid) => incrementPendingChangesUnlocked(type, scopeUid));
+let coverMutationQueue = Promise.resolve();
+const withCoverMutation = (operation) => {
+  const pending = coverMutationQueue.then(operation, operation);
+  coverMutationQueue = pending.catch(() => {});
+  return pending;
+};
+export const clearCoverCache = () => withCoverMutation(() => coverStore.clear());
+export const saveCoverToStorage = (key, imageUrl) =>
+  withCoverMutation(() => saveCoverToStorageUnlocked(key, imageUrl));
+export const clearExpiredCovers = (options = {}) =>
+  withCoverMutation(() => clearExpiredCoversUnlocked(options));
+
+// Acknowledgement never clears a newer local revision.
+async function acknowledgeSyncChangesUnlocked(changes, userId, assertActive) {
+  assertActive();
+  const acknowledge = (items, keyOf, accepted) =>
+    items.map((item) => {
+      const match = accepted.find(
+        (entry) => keyOf(entry) === keyOf(item) && entry.localRevision === item.localRevision
+      );
+      return match
+        ? {
+            ...item,
+            syncDirty: false,
+            cloudRevision: match.cloudRevision,
+            ...(match.syncedAt != null ? { syncedAt: match.syncedAt } : {}),
+          }
+        : item;
+    });
+  const favoritesSaved = await saveFavorites(
+    acknowledge(await getFavoritesStrict(userId), getTrackKey, changes.favorites),
+    userId,
+    { fromSync: true }
+  );
+  await saveFavoriteTombstones(
+    acknowledge(await getFavoriteTombstones(userId), getTrackKey, changes.favorites),
+    userId,
+    { fromSync: true }
+  );
+  if (!favoritesSaved) throw new Error('保存收藏同步确认失败');
+  const historySaved = await saveHistory(
+    acknowledge(await getHistoryStrict(userId), (item) => getTrackKey(item.song), changes.history),
+    userId,
+    { fromSync: true }
+  );
+  if (!historySaved) throw new Error('保存历史同步确认失败');
+}
+
+export const addSearchHistory = (query, source, userId) =>
+  withStorageMutation(userId, (scopeUid) => addSearchHistoryUnlocked(query, source, scopeUid));
+
+// Surface a CAS conflict once, then retry the preserved intent against the observed revision.
+async function rebaseSyncChangeUnlocked(type, change, cloudRevision, userId, assertActive) {
+  assertActive();
+  const update = (items, keyOf) =>
+    items.map((item) =>
+      keyOf(item) === keyOf(change) && item.localRevision === change.localRevision
+        ? { ...item, cloudRevision }
+        : item
+    );
+  if (type === 'favorites') {
+    const saved = await saveFavorites(
+      update(await getFavoritesStrict(userId), getTrackKey),
+      userId,
+      {
+        fromSync: true,
+      }
+    );
+    if (!saved) throw new Error('保存收藏冲突状态失败');
+    await saveFavoriteTombstones(update(await getFavoriteTombstones(userId), getTrackKey), userId);
+  } else {
+    const saved = await saveHistory(
+      update(await getHistoryStrict(userId), (item) => getTrackKey(item.song)),
+      userId,
+      { fromSync: true }
+    );
+    if (!saved) throw new Error('保存历史冲突状态失败');
+  }
+}
+
+export const acknowledgeSyncChanges = (changes, userId, assertActive = () => {}) =>
+  withStorageMutation(userId, (scopeUid) =>
+    acknowledgeSyncChangesUnlocked(changes, scopeUid, assertActive)
+  );
+export const rebaseSyncChange = (type, change, cloudRevision, userId, assertActive = () => {}) =>
+  withStorageMutation(userId, (scopeUid) =>
+    rebaseSyncChangeUnlocked(type, change, cloudRevision, scopeUid, assertActive)
+  );
+
+export const clearLocalFavorites = (userId) =>
+  withStorageMutation(userId, async (scopeUid) => {
+    userId = scopeUid;
+    await saveFavoriteTombstones([], userId);
+    const saved = await saveFavoritesUnlocked([], userId, true);
+    if (!saved) throw new Error('清除本地收藏失败');
+    return true;
+  });
+export const importFavorites = (favorites, userId) =>
+  withStorageMutation(userId, async (scopeUid) => {
+    userId = scopeUid;
+    const current = await getFavoritesStrict(userId);
+    const keys = new Set(current.map(getTrackKey));
+    const added = [];
+    for (const item of favorites) {
+      if (keys.has(getTrackKey(item)) || added.length + current.length >= MAX_FAVORITES_ITEMS)
+        continue;
+      keys.add(getTrackKey(item));
+      added.push(item);
+    }
+    const success = await saveFavoritesUnlocked([...added, ...current], userId);
+    return {
+      success,
+      addedCount: success ? added.length : 0,
+      addedKeys: success ? added.map(getTrackKey) : [],
+    };
+  });

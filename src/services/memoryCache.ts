@@ -3,7 +3,6 @@ import logger from '../utils/logger.js';
 export const CACHE_TYPES = {
   COVER_IMAGES: 'coverImages',
   AUDIO_URLS: 'audioUrls',
-  AUDIO_METADATA: 'audioMetadata',
   LYRICS: 'lyrics',
   SEARCH_RESULTS: 'searchResults',
 } as const;
@@ -19,7 +18,6 @@ interface CacheItem {
 const memoryCache: Record<CacheType, Map<string, CacheItem>> = {
   [CACHE_TYPES.COVER_IMAGES]: new Map(),
   [CACHE_TYPES.AUDIO_URLS]: new Map(),
-  [CACHE_TYPES.AUDIO_METADATA]: new Map(),
   [CACHE_TYPES.LYRICS]: new Map(),
   [CACHE_TYPES.SEARCH_RESULTS]: new Map(),
 };
@@ -28,7 +26,6 @@ const cacheConfig: Record<CacheType, { ttl: number }> = {
   [CACHE_TYPES.SEARCH_RESULTS]: { ttl: 5 * 60 * 1000 },
   [CACHE_TYPES.COVER_IMAGES]: { ttl: 72 * 60 * 60 * 1000 },
   [CACHE_TYPES.AUDIO_URLS]: { ttl: 10 * 60 * 1000 },
-  [CACHE_TYPES.AUDIO_METADATA]: { ttl: 10 * 60 * 1000 },
   [CACHE_TYPES.LYRICS]: { ttl: 30 * 60 * 1000 },
 };
 
@@ -36,7 +33,6 @@ const cacheMaxEntries: Record<CacheType, number> = {
   [CACHE_TYPES.SEARCH_RESULTS]: 200,
   [CACHE_TYPES.COVER_IMAGES]: 300,
   [CACHE_TYPES.AUDIO_URLS]: 200,
-  [CACHE_TYPES.AUDIO_METADATA]: 200,
   [CACHE_TYPES.LYRICS]: 300,
 };
 
@@ -61,6 +57,7 @@ export const setMemoryCache = <T>(type: CacheType, key: string, data: T): T => {
       timestamp: Date.now(),
       ttl: cacheConfig[type].ttl,
     };
+    memoryCache[type].delete(key);
     memoryCache[type].set(key, cacheItem);
     enforceCacheLimit(type);
     logger.log(`[内存缓存] 已缓存: ${type}/${key}`);
@@ -95,7 +92,11 @@ export const getMemoryCache = <T = unknown>(type: CacheType, key: string): T | n
   }
 };
 
+let cacheGeneration = 0;
+export const getMemoryCacheGeneration = (): number => cacheGeneration;
+
 export const clearMemoryCache = (type?: CacheType): void => {
+  cacheGeneration += 1;
   try {
     if (type) {
       memoryCache[type].clear();
