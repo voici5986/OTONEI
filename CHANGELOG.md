@@ -1,3 +1,27 @@
+# [1.8.0](https://github.com/voici5986/OTONEI/compare/v1.7.2...v1.8.0) (2026-10-11)
+
+### Bug Fixes
+
+- **api-v1:** 调整代理请求头以排查上游拒绝问题 ([6be055f](https://github.com/voici5986/OTONEI/commit/6be055f85320fb9667786877d19c089fc3498e07))
+- **api:** 添加临时日志用于诊断 /api-v1 代理问题 ([b029656](https://github.com/voici5986/OTONEI/commit/b029656462177f20beea18d04f67ed95b9e8143b))
+- **data:** 保留专辑封面回退并让排队同步失败时正确回执 ([251a805](https://github.com/voici5986/OTONEI/commit/251a805df356b3c4bc5ab2f597fa5d2f3fe3eab6))
+- **data:** 加固同步协议、缓存与部署配置 ([b77d1e5](https://github.com/voici5986/OTONEI/commit/b77d1e57e0757353e2ed809bc1199e48e872bc3e))
+- **player:** 消除快速切歌竞态并校准播放历史记录时机 ([fe70811](https://github.com/voici5986/OTONEI/commit/fe70811918dfb7dce232acaa2a7679d08843f6d4))
+- **sync:** 优化同步逻辑及历史记录去重迁移 ([311c333](https://github.com/voici5986/OTONEI/commit/311c333ac7fadec5a67dd11a9070a08e34d41858))
+- **ui:** 修复失效的令牌引用并清理零引用令牌 ([209e5de](https://github.com/voici5986/OTONEI/commit/209e5de90c045628185defd0fac4033a34ff94c4)), closes [#d32f2f](https://github.com/voici5986/OTONEI/issues/d32f2f)
+- **ui:** 修复渲染与缓存时序问题并恢复被关闭的 React 规则 ([bcffceb](https://github.com/voici5986/OTONEI/commit/bcffceb84ef2cd37961ca29181743d5514d914f8))
+
+### Features
+
+- **data:** 加固存储同步一致性与 API 代理防护 ([efc7ab3](https://github.com/voici5986/OTONEI/commit/efc7ab39c1171285375dbe317f9572b2657c6950))
+- **ui:** 落地 UI 设计规范，收敛令牌、焦点环与层级治理 ([cab1bdb](https://github.com/voici5986/OTONEI/commit/cab1bdb8ee901aa0a60ad3e51d702bd47f160ecd))
+- **ui:** 统一对比度与断点来源，补齐空态与窄屏播放体验 ([b1aef94](https://github.com/voici5986/OTONEI/commit/b1aef943029ab71187ea33ac276451f812adb388)), closes [#2383e2](https://github.com/voici5986/OTONEI/issues/2383e2) [#b34444](https://github.com/voici5986/OTONEI/issues/b34444)
+- **ui:** 引入交互控件原语并补齐组件可访问性 ([5ae54fa](https://github.com/voici5986/OTONEI/commit/5ae54faa5973f54a3b18e5e5f2cb815bb8651bd9))
+
+### Performance Improvements
+
+- **sync:** 提升同步触发频率并降低云端历史维护成本 ([d06738a](https://github.com/voici5986/OTONEI/commit/d06738a227c7d0367243fbfa3dde1b2c05e68fd1))
+
 ## [1.7.2](https://github.com/voici5986/OTONEI/compare/v1.7.1...v1.7.2) (2026-09-03)
 
 ### Bug Fixes
