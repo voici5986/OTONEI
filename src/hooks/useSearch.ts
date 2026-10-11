@@ -127,8 +127,7 @@ export function searchReducer(state: SearchState, action: SearchAction): SearchS
 
 const useSearch = (isOnline: boolean): UseSearchResult => {
   const [state, dispatch] = useReducer(searchReducer, searchInitialState);
-  const { query, results, source, loading, loadingMore, page, hasMore, activeQuery, activeSource } =
-    state;
+  const { query, source, loading, loadingMore, page, hasMore, activeQuery, activeSource } = state;
   const lastLoadMoreAtRef = useRef(0);
   const searchRequestIdRef = useRef(0);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
@@ -241,15 +240,6 @@ const useSearch = (isOnline: boolean): UseSearchResult => {
       handleError(toError(error), ErrorTypes.SEARCH, ErrorSeverity.ERROR, '加载更多失败，请重试');
     }
   }, [activeQuery, activeSource, hasMore, isOnline, loading, loadingMore, page]);
-
-  useEffect(() => {
-    const handleFavoritesChanged = () => {
-      dispatch({ type: 'REFRESH_RESULTS', payload: [...results] });
-    };
-
-    window.addEventListener('favorites_changed', handleFavoritesChanged);
-    return () => window.removeEventListener('favorites_changed', handleFavoritesChanged);
-  }, [results]);
 
   const setQuery = useCallback((value: string) => {
     dispatch({ type: 'SET_FIELD', field: 'query', value });

@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import { memo, type ComponentType } from 'react';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useDownload } from '../contexts/DownloadContext';
 import MusicCardActions from './MusicCardActions';
@@ -81,4 +81,4 @@ const SearchResultItem = ({ track, searchResults, quality }: SearchResultItemPro
   );
 };
 
-export default SearchResultItem;
+export default memo(SearchResultItem);

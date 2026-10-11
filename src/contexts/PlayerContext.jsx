@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 import { toast } from 'react-toastify';
 import { playMusic, forceGetCoverImage, getLyrics } from '../services/musicApiService';
 import { addToHistory, getCoverFromStorage, saveCoverToStorage } from '../services/storage';
@@ -12,10 +20,41 @@ import { useAuth } from './AuthContext';
 import { incrementPendingChanges } from '../services/storage';
 import { triggerDelayedSync } from '../services/syncService';
 import { getTrackKey } from '../utils/trackIdentity';
+import { getMemoryCacheGeneration } from '../services/memoryCache';
 
 const DEFAULT_COVER = '/default_cover.svg';
 const PlayerContext = createContext();
 export const usePlayer = () => useContext(PlayerContext);
+const PlayerProgressContext = createContext({ playProgress: 0, playedSeconds: 0, totalSeconds: 0 });
+export const usePlayerProgress = () => useContext(PlayerProgressContext);
+const PlayerProgressProvider = ({ children }) => {
+  const [progress, setProgress] = useState({ playProgress: 0, playedSeconds: 0, totalSeconds: 0 });
+  useEffect(() => {
+    const update = () => {
+      const playedSeconds = audioEngine.currentTime || 0;
+      const totalSeconds = Number.isFinite(audioEngine.duration) ? audioEngine.duration : 0;
+      setProgress({
+        playedSeconds,
+        totalSeconds,
+        playProgress: totalSeconds > 0 ? (playedSeconds / totalSeconds) * 100 : 0,
+      });
+    };
+    let trackKey = null;
+    const cleanupTrack = audioStateManager.addListener((state) => {
+      const nextKey = state.track ? getTrackKey(state.track) : null;
+      if (nextKey !== trackKey) {
+        trackKey = nextKey;
+        setProgress({ playProgress: 0, playedSeconds: 0, totalSeconds: 0 });
+      }
+    });
+    const cleanups = ['timeupdate', 'loadedmetadata'].map((event) => audioEngine.on(event, update));
+    cleanups.push(cleanupTrack);
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, []);
+  return (
+    <PlayerProgressContext.Provider value={progress}>{children}</PlayerProgressContext.Provider>
+  );
+};
 
 export const PlayerProvider = ({ children }) => {
   const { isOnline } = useNetworkStatus();
@@ -24,9 +63,6 @@ export const PlayerProvider = ({ children }) => {
   const [currentTrack, setCurrentTrack] = useState(null);
   const [playerUrl, setPlayerUrl] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playProgress, setPlayProgress] = useState(0);
-  const [playedSeconds, setPlayedSeconds] = useState(0);
-  const [totalSeconds, setTotalSeconds] = useState(0);
   const [currentPlaylist, setCurrentPlaylist] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [playMode, setPlayMode] = useState(localStorage.getItem('playMode') || 'repeat-all');
@@ -36,6 +72,8 @@ export const PlayerProvider = ({ children }) => {
   const [coverCache, setCoverCache] = useState({});
   const coverCacheRef = useRef({});
   const lyricIndexRef = useRef(-1);
+  const cacheGenerationRef = useRef(0);
+  const selectedQualityRef = useRef(999);
   const retryCountRef = useRef(0); // 记录单曲播放重试次数
   const playRequestIdRef = useRef(0);
   const historyRecordedKeyRef = useRef(null);
@@ -124,7 +162,17 @@ export const PlayerProvider = ({ children }) => {
     async (track) => {
       if (!track) return;
       try {
+        const generation = cacheGenerationRef.current;
+        const memoryGeneration = getMemoryCacheGeneration();
         const data = await getLyrics(track);
+        const activeTrack = audioStateManager.getCurrentTrack();
+        if (
+          generation !== cacheGenerationRef.current ||
+          memoryGeneration !== getMemoryCacheGeneration() ||
+          !activeTrack ||
+          getTrackKey(activeTrack) !== getTrackKey(track)
+        )
+          return;
         if (data && data.raw) {
           setLyricData({
             rawLyric: data.raw,
@@ -140,25 +188,21 @@ export const PlayerProvider = ({ children }) => {
   );
 
   const toggleLyric = useCallback(() => {
-    setLyricExpanded((prev) => {
-      const nextState = !prev;
-      // 如果即将展开且当前没有歌词，则触发加载
-      if (nextState && currentTrack && !lyricData.rawLyric) {
-        fetchLyrics(currentTrack);
-      }
-      return nextState;
-    });
-  }, [currentTrack, lyricData.rawLyric, fetchLyrics]);
+    setLyricExpanded((prev) => !prev);
+  }, []);
 
   // 监听切歌：如果歌词面板已展开，自动获取新歌词
   useEffect(() => {
     if (lyricExpanded && currentTrack && !lyricData.rawLyric) {
-      fetchLyrics(currentTrack);
+      const timer = setTimeout(() => void fetchLyrics(currentTrack), 0);
+      return () => clearTimeout(timer);
     }
   }, [currentTrack, lyricExpanded, lyricData.rawLyric, fetchLyrics]);
 
   // 获取封面的统一方法
   const fetchCover = useCallback(async (source, picId, size = 500) => {
+    const generation = cacheGenerationRef.current;
+    const memoryGeneration = getMemoryCacheGeneration();
     const cacheKey = `${source}_${picId}_${size}`;
 
     // 1. 检查内存缓存（使用ref避免频繁重建）
@@ -167,6 +211,11 @@ export const PlayerProvider = ({ children }) => {
     // 2. 检查本地存储
     try {
       const storedUrl = await getCoverFromStorage(cacheKey);
+      if (
+        generation !== cacheGenerationRef.current ||
+        memoryGeneration !== getMemoryCacheGeneration()
+      )
+        return DEFAULT_COVER;
       if (storedUrl) {
         coverCacheRef.current[cacheKey] = storedUrl;
         setCoverCache((prev) => ({ ...prev, [cacheKey]: storedUrl }));
@@ -179,6 +228,11 @@ export const PlayerProvider = ({ children }) => {
     // 3. 强制获取并缓存
     try {
       const url = await forceGetCoverImage(source, picId, size);
+      if (
+        generation !== cacheGenerationRef.current ||
+        memoryGeneration !== getMemoryCacheGeneration()
+      )
+        return DEFAULT_COVER;
       if (url && !url.includes('default_cover')) {
         coverCacheRef.current[cacheKey] = url;
         setCoverCache((prev) => ({ ...prev, [cacheKey]: url }));
@@ -205,6 +259,7 @@ export const PlayerProvider = ({ children }) => {
         // 如果不是重试，则重置重试计数
         if (!forceRefresh) {
           retryCountRef.current = 0;
+          selectedQualityRef.current = quality;
         }
 
         // 更新列表逻辑
@@ -213,9 +268,6 @@ export const PlayerProvider = ({ children }) => {
 
         // 重置 UI 进度项（防止旧歌进度闪烁）
         if (!forceRefresh) {
-          setPlayProgress(0);
-          setPlayedSeconds(0);
-          setTotalSeconds(0);
           setLyricData({ rawLyric: '', tLyric: '', parsedLyric: [] });
           setCurrentLyricIndex(-1);
         }
@@ -233,6 +285,7 @@ export const PlayerProvider = ({ children }) => {
           logger.warn(`[PlayerContext] 音质 ${quality} 请求失败，尝试降级到 320:`, error);
           if (quality !== 320) {
             if (isSuperseded()) return;
+            selectedQualityRef.current = 320;
             await playMusic(track, 320, forceRefresh, () => !isSuperseded());
             if (isSuperseded()) return;
           } else {
@@ -306,13 +359,6 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     const updateProgress = () => {
       const current = audioEngine.currentTime;
-      const duration = audioEngine.duration;
-      setPlayedSeconds(current);
-      if (duration > 0) {
-        setTotalSeconds(duration);
-        setPlayProgress((current / duration) * 100);
-      }
-
       // 更新歌词索引
       if (lyricData.parsedLyric.length > 0) {
         let index = lyricData.parsedLyric.findIndex((line) => line.time > current);
@@ -348,7 +394,7 @@ export const PlayerProvider = ({ children }) => {
             `[PlayerContext] 播放出错，尝试刷新 URL 并重试 (${retryCountRef.current + 1}/${MAX_RETRIES})`
           );
           retryCountRef.current += 1;
-          handlePlay(state.track, currentIndex, currentPlaylist, 999, true); // 强制刷新重试
+          handlePlay(state.track, currentIndex, currentPlaylist, selectedQualityRef.current, true); // 强制刷新重试
         } else {
           handleError(state.error, ErrorTypes.PLAYBACK, ErrorSeverity.ERROR, '播放器引擎错误');
           retryCountRef.current = 0; // 超过最大重试次数，重置
@@ -359,37 +405,75 @@ export const PlayerProvider = ({ children }) => {
     });
   }, [currentTrack, currentIndex, currentPlaylist, handlePlay]);
 
-  const contextValue = {
-    currentTrack,
-    playerUrl,
-    isPlaying,
-    playProgress,
-    playedSeconds,
-    totalSeconds,
-    currentPlaylist,
-    currentIndex,
-    playMode,
-    lyricData,
-    currentLyricIndex,
-    lyricExpanded,
-    coverCache,
-    lyricsContainerRef,
-    setIsPlaying,
-    setTotalSeconds,
-    setCurrentPlaylist,
-    togglePlay,
-    setLyricExpanded,
-    toggleLyric,
-    handleEnded,
-    handlePlay,
-    handleNext,
-    handlePrevious,
-    handleTogglePlayMode,
-    formatTime,
-    parseLyric,
-    seekTo,
-    fetchCover,
-  };
+  useEffect(() => {
+    const clearCache = (event) => {
+      if (!event.detail?.cache) return;
+      cacheGenerationRef.current += 1;
+      coverCacheRef.current = {};
+      setCoverCache({});
+      setLyricData({ rawLyric: '', tLyric: '', parsedLyric: [] });
+      setCurrentLyricIndex(-1);
+    };
+    window.addEventListener('local:data_cleared', clearCache);
+    return () => window.removeEventListener('local:data_cleared', clearCache);
+  }, []);
 
-  return <PlayerContext.Provider value={contextValue}>{children}</PlayerContext.Provider>;
+  const contextValue = useMemo(
+    () => ({
+      currentTrack,
+      playerUrl,
+      isPlaying,
+      currentPlaylist,
+      currentIndex,
+      playMode,
+      lyricData,
+      currentLyricIndex,
+      lyricExpanded,
+      coverCache,
+      lyricsContainerRef,
+      setIsPlaying,
+      setCurrentPlaylist,
+      togglePlay,
+      setLyricExpanded,
+      toggleLyric,
+      handleEnded,
+      handlePlay,
+      handleNext,
+      handlePrevious,
+      handleTogglePlayMode,
+      formatTime,
+      parseLyric,
+      seekTo,
+      fetchCover,
+    }),
+    [
+      currentTrack,
+      playerUrl,
+      isPlaying,
+      currentPlaylist,
+      currentIndex,
+      playMode,
+      lyricData,
+      currentLyricIndex,
+      lyricExpanded,
+      coverCache,
+      togglePlay,
+      toggleLyric,
+      handleEnded,
+      handlePlay,
+      handleNext,
+      handlePrevious,
+      handleTogglePlayMode,
+      formatTime,
+      parseLyric,
+      seekTo,
+      fetchCover,
+    ]
+  );
+
+  return (
+    <PlayerContext.Provider value={contextValue}>
+      <PlayerProgressProvider>{children}</PlayerProgressProvider>
+    </PlayerContext.Provider>
+  );
 };

@@ -1,9 +1,11 @@
+import { subscribeStorageChanges } from '../services/storage';
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useRef,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -18,6 +20,7 @@ import { getTrackKey } from '../utils/trackIdentity';
 interface FavoriteToggleResult {
   added: boolean;
   full?: boolean;
+  track?: FavoriteRecord;
   error?: string;
 }
 
@@ -36,13 +39,15 @@ export const useFavorites = (): FavoritesContextValue => {
   return context;
 };
 
-export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
+const FavoritesProviderState = ({ children }: { children: ReactNode }) => {
   const [favorites, setFavorites] = useState<FavoriteRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { currentUser } = useAuth() as { currentUser: AppUser | null };
   const { updatePendingChanges } = useSync();
   const activeUserIdRef = useRef(currentUser?.uid);
-  activeUserIdRef.current = currentUser?.uid;
+  useEffect(() => {
+    activeUserIdRef.current = currentUser?.uid;
+  }, [currentUser?.uid]);
 
   const loadFavorites = useCallback(async (): Promise<void> => {
     const requestedUserId = currentUser?.uid;
@@ -59,9 +64,8 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
   }, [currentUser]);
 
   useEffect(() => {
-    setFavorites([]);
-    void loadFavorites();
-  }, [loadFavorites]);
+    void Promise.resolve().then(loadFavorites);
+  }, [loadFavorites, currentUser?.uid]);
 
   useEffect(() => {
     const handleExternalDataChange = () => {
@@ -74,20 +78,26 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
 
     window.addEventListener('local:data_cleared', handleLocalDataCleared);
     window.addEventListener('sync:data_refreshed', handleExternalDataChange);
+    const unsubscribe = subscribeStorageChanges((event: { type: string; scope: string }) => {
+      const scope = currentUser?.uid ? `user:${currentUser.uid}` : 'guest';
+      if (event.type === 'favorites' && event.scope === scope) void loadFavorites();
+    });
 
     return () => {
       window.removeEventListener('local:data_cleared', handleLocalDataCleared);
       window.removeEventListener('sync:data_refreshed', handleExternalDataChange);
+      unsubscribe();
     };
-  }, [loadFavorites]);
+  }, [loadFavorites, currentUser?.uid]);
 
+  const favoriteKeys = useMemo(() => new Set(favorites.map(getTrackKey)), [favorites]);
   const isFavorite = useCallback(
     (track: Pick<Track, 'id' | 'source'> | null | undefined): boolean => {
       if (!track?.id) return false;
       const trackKey = getTrackKey(track);
-      return favorites.some((item) => getTrackKey(item) === trackKey);
+      return favoriteKeys.has(trackKey);
     },
-    [favorites]
+    [favoriteKeys]
   );
 
   const toggleFavorite = useCallback(
@@ -102,14 +112,13 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
 
         if (activeUserIdRef.current === requestedUserId) {
           if (result.added) {
-            setFavorites((prev) => [{ ...track, modifiedAt: Date.now() }, ...prev]);
+            setFavorites((prev) => [
+              result.track || { ...track, modifiedAt: Date.now() },
+              ...prev.filter((item) => getTrackKey(item) !== getTrackKey(track)),
+            ]);
           } else {
             setFavorites((prev) => prev.filter((item) => getTrackKey(item) !== getTrackKey(track)));
           }
-
-          window.dispatchEvent(
-            new CustomEvent('favorites_changed', { detail: { track, added: result.added } })
-          );
         }
 
         if (currentUser && !currentUser.isLocal) {
@@ -138,9 +147,16 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
     [currentUser, updatePendingChanges]
   );
 
+  const value = useMemo(
+    () => ({ favorites, isLoading, isFavorite, toggleFavorite }),
+    [favorites, isLoading, isFavorite, toggleFavorite]
+  );
+  return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;
+};
+
+export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
+  const { currentUser } = useAuth() as { currentUser: AppUser | null };
   return (
-    <FavoritesContext.Provider value={{ favorites, isLoading, isFavorite, toggleFavorite }}>
-      {children}
-    </FavoritesContext.Provider>
+    <FavoritesProviderState key={currentUser?.uid || 'guest'}>{children}</FavoritesProviderState>
   );
 };

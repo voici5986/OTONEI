@@ -43,12 +43,12 @@ const useNavigationState = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      const isScrolled = window.scrollY > 20;
+      const isScrolled = (document.querySelector('.main-content')?.scrollTop ?? 0) > 20;
       setScrolled((previous) => (previous === isScrolled ? previous : isScrolled));
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('scroll', handleScroll, true);
+    return () => document.removeEventListener('scroll', handleScroll, true);
   }, []);
 
   const handleNavItemClick = (id: NavigationTab) => {

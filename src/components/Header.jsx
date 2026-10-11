@@ -21,6 +21,7 @@ const Header = ({
   selectedIndex = -1,
   activeSuggestionId,
   loading = false,
+  suggestionsLoading = false,
 }) => {
   const { currentUser } = useAuth();
   const getSuggestionOptionId = (extraClass, index) => `suggestion-option-${extraClass}-${index}`;
@@ -79,10 +80,12 @@ const Header = ({
           id={`search-suggestions-${extraClass}`}
           role="listbox"
           aria-label="搜索建议"
+          aria-busy={suggestionsLoading}
           className={`header-search-suggestions ${extraClass || ''}`.trim()}
           onMouseDown={(e) => e.preventDefault()}
         >
           <div className="suggestion-scroll-area">
+            {suggestionsLoading && <div role="status">正在查找本地建议…</div>}
             <div className="suggestion-section">
               <div className="suggestion-section-title d-flex justify-content-between align-items-center">
                 <span>最近搜索</span>
@@ -141,10 +144,12 @@ const Header = ({
         id={`search-suggestions-${extraClass}`}
         role="listbox"
         aria-label="搜索建议"
+        aria-busy={suggestionsLoading}
         className={`header-search-suggestions ${extraClass || ''}`.trim()}
         onMouseDown={(e) => e.preventDefault()}
       >
         <div className="suggestion-scroll-area">
+          {suggestionsLoading && <div role="status">正在查找本地建议…</div>}
           <div className="suggestion-section">
             <div className="suggestion-section-title">收藏中</div>
             {displayFavorites.length > 0 ? (
@@ -265,7 +270,7 @@ const Header = ({
                 onBlur={onSearchBlur}
                 onKeyDown={onKeyDown}
                 role="combobox"
-                aria-busy={loading}
+                aria-busy={loading || suggestionsLoading}
                 aria-autocomplete="list"
                 aria-expanded={suggestionsOpen}
                 aria-controls="search-suggestions-desktop-search-suggestions"
@@ -369,7 +374,7 @@ const Header = ({
                 onBlur={onSearchBlur}
                 onKeyDown={onKeyDown}
                 role="combobox"
-                aria-busy={loading}
+                aria-busy={loading || suggestionsLoading}
                 aria-autocomplete="list"
                 aria-expanded={suggestionsOpen}
                 aria-controls="search-suggestions-mobile-search-suggestions"

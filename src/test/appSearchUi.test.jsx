@@ -22,6 +22,7 @@ vi.mock('../utils/orientationManager', () => ({ lockToPortrait: () => Promise.re
 vi.mock('../config/env', () => ({ env: { isDevelopment: false } }));
 vi.mock('../services/musicApiService', () => ({ searchMusic: vi.fn() }));
 vi.mock('../services/storage', () => ({
+  subscribeStorageChanges: () => () => {},
   clearExpiredCovers: () => Promise.resolve(0),
   getSearchHistory: () => Promise.resolve([{ query: '晴天', source: 'kuwo', timestamp: 1 }]),
   addSearchHistory: vi.fn(),

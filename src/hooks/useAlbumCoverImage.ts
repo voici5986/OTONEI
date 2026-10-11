@@ -26,48 +26,52 @@ const useAlbumCoverImage = (
   forceFetch = false
 ): UseAlbumCoverImageResult => {
   const { coverCache, fetchCover } = usePlayer() as PlayerCoverContext;
-  const [imageUrl, setImageUrl] = useState(DEFAULT_COVER);
+  const [loadedCover, setLoadedCover] = useState<{ key: string; url: string } | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const cacheKey = track?.pic_id ? `${track.source}_${track.pic_id}_${imgSize}` : '';
+  const directCoverUrl = getTrackCoverUrl(track);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const resolvedImageUrl =
+    lazy && !isLoaded
+      ? DEFAULT_COVER
+      : directCoverUrl ||
+        (!forceFetch && coverCache[cacheKey]) ||
+        (loadedCover?.key === cacheKey ? loadedCover.url : DEFAULT_COVER);
+  const imageUrl = failedUrl === resolvedImageUrl ? DEFAULT_COVER : resolvedImageUrl;
+  const setImageUrl = (url: string) => setLoadedCover({ key: cacheKey, url });
 
   useEffect(() => {
-    if (lazy && !isLoaded) {
-      setImageUrl(DEFAULT_COVER);
+    if (
+      (lazy && !isLoaded) ||
+      directCoverUrl ||
+      !track?.pic_id ||
+      (!forceFetch && coverCache[cacheKey])
+    )
       return;
-    }
-
-    const loadCover = async () => {
-      const directCoverUrl = getTrackCoverUrl(track);
-      if (directCoverUrl) {
-        setImageUrl(directCoverUrl);
-        return;
-      }
-
-      if (!track || !track.pic_id) {
-        setImageUrl(DEFAULT_COVER);
-        return;
-      }
-
-      try {
-        const cacheKey = `${track.source}_${track.pic_id}_${imgSize}`;
-        if (!forceFetch && coverCache[cacheKey]) {
-          setImageUrl(coverCache[cacheKey]);
-          return;
-        }
-
-        const coverUrl = await fetchCover(track.source, track.pic_id, imgSize);
-        setImageUrl(coverUrl);
-      } catch (error) {
-        logger.error('[useAlbumCoverImage] 加载封面失败:', error);
-        setImageUrl(DEFAULT_COVER);
-      }
+    let active = true;
+    void fetchCover(track.source, track.pic_id, imgSize)
+      .then((url) => {
+        if (active) setLoadedCover({ key: cacheKey, url });
+      })
+      .catch((error) => logger.error('[useAlbumCoverImage] 加载封面失败:', error));
+    return () => {
+      active = false;
     };
-
-    void loadCover();
-  }, [track, coverCache, fetchCover, imgSize, lazy, isLoaded, forceFetch]);
+  }, [
+    track,
+    coverCache,
+    fetchCover,
+    imgSize,
+    lazy,
+    isLoaded,
+    forceFetch,
+    cacheKey,
+    directCoverUrl,
+  ]);
 
   const handleImageError = () => {
     logger.warn(`[useAlbumCoverImage] 封面加载失败: ${imageUrl}`);
-    setImageUrl(DEFAULT_COVER);
+    setFailedUrl(resolvedImageUrl);
   };
 
   const forceLoadCover = async (): Promise<void> => {

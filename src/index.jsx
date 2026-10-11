@@ -30,33 +30,32 @@ initInputModality();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-// 注意：不使用React.StrictMode包裹应用
-// 严格模式会导致组件在开发环境下重复渲染，可能导致多次播放音频问题
-// 仅在开发环境影响，不影响生产环境
 root.render(
-  <AuthProvider>
-    <DeviceProvider>
-      <SyncProvider>
-        <PlayerProvider>
-          <FavoritesProvider>
-            <DownloadProvider>
-              <App />
-              <ToastContainer
-                position="bottom-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-              />
-            </DownloadProvider>
-          </FavoritesProvider>
-        </PlayerProvider>
-      </SyncProvider>
-    </DeviceProvider>
-  </AuthProvider>
+  <React.StrictMode>
+    <AuthProvider>
+      <DeviceProvider>
+        <SyncProvider>
+          <PlayerProvider>
+            <FavoritesProvider>
+              <DownloadProvider>
+                <App />
+                <ToastContainer
+                  position="bottom-right"
+                  autoClose={3000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="colored"
+                />
+              </DownloadProvider>
+            </FavoritesProvider>
+          </PlayerProvider>
+        </SyncProvider>
+      </DeviceProvider>
+    </AuthProvider>
+  </React.StrictMode>
 );

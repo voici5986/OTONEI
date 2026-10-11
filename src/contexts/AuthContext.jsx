@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import {
   auth,
   loginWithEmailAndPassword,
@@ -45,6 +53,23 @@ const hashLocalPassword = async (password, salt) => {
   return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, '0')).join('');
 };
 
+const syncWithTimeout = async (uid, isCurrent) => {
+  let timer;
+  try {
+    return await Promise.race([
+      initialSync(uid),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          if (isCurrent()) resetSyncScheduler();
+          reject(new Error('同步操作超时'));
+        }, 30000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 // 创建认证上下文
 export const AuthContext = createContext();
 
@@ -53,6 +78,7 @@ export const useAuth = () => useContext(AuthContext);
 
 // 认证提供者组件
 export const AuthProvider = ({ children }) => {
+  const session = useRef({ generation: 0, uid: null });
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncComplete, setSyncComplete] = useState(false);
@@ -63,113 +89,131 @@ export const AuthProvider = ({ children }) => {
     manualCheck: true, // 手动检查
   });
 
-  const [isOfflineMode, setIsOfflineMode] = useState(!isFirebaseAvailable);
-
-  // 仅根据 Firebase 可用性状态设置离线模式
-  useEffect(() => {
-    setIsOfflineMode(!isFirebaseAvailable);
-  }, [isFirebaseAvailable]);
+  const isOfflineMode = !isFirebaseAvailable;
 
   // 注册
-  const register = async (email, password, displayName) => {
-    // 如果处于离线模式，创建本地用户
-    if (isOfflineMode) {
-      try {
-        const passwordSalt = createLocalPasswordSalt();
-        const passwordHash = await hashLocalPassword(password, passwordSalt);
+  const register = useCallback(
+    async (email, password, displayName) => {
+      // 如果处于离线模式，创建本地用户
+      if (isOfflineMode) {
+        try {
+          const passwordSalt = createLocalPasswordSalt();
+          const passwordHash = await hashLocalPassword(password, passwordSalt);
 
-        // 创建简单的本地用户对象
-        const localUser = {
-          uid: `local_${Date.now()}`,
-          email,
-          displayName: displayName || email,
-          isAnonymous: false,
-          isLocal: true,
-          passwordSalt,
-          passwordHash,
-        };
+          // 创建简单的本地用户对象
+          const localUser = {
+            uid: `local_${Date.now()}`,
+            email,
+            displayName: displayName || email,
+            isAnonymous: false,
+            isLocal: true,
+            passwordSalt,
+            passwordHash,
+          };
 
-        // 保存本地用户
-        await saveLocalUser(localUser);
-        setStorageScope(localUser);
-        setCurrentUser(localUser);
-        return { success: true, user: localUser };
-      } catch (err) {
-        toast.error('创建本地账户失败');
-        return { success: false, error: err };
-      }
-    }
-
-    try {
-      const { user, error } = await registerWithEmailAndPassword(email, password, displayName);
-      if (error) {
-        let errorMessage = '注册失败';
-        if (error.code === 'auth/email-already-in-use') {
-          errorMessage = '该邮箱已被注册';
-        } else if (error.code === 'auth/weak-password') {
-          errorMessage = '密码强度太弱';
-        } else if (error.code === 'auth/invalid-email') {
-          errorMessage = '无效的邮箱地址';
-        }
-        toast.error(errorMessage);
-        return { success: false, error };
-      }
-
-      return { success: true, user };
-    } catch (err) {
-      toast.error('注册过程中发生错误');
-      return { success: false, error: err };
-    }
-  };
-
-  // 邮箱密码登录
-  const login = async (email, password) => {
-    // 如果处于离线模式，尝试获取本地用户
-    if (isOfflineMode) {
-      try {
-        const localUser = await getLocalUser();
-
-        const canVerifyPassword = localUser?.passwordSalt && localUser?.passwordHash;
-        const passwordMatches =
-          canVerifyPassword &&
-          (await hashLocalPassword(password, localUser.passwordSalt)) === localUser.passwordHash;
-
-        if (localUser && localUser.email === email && passwordMatches) {
+          // 保存本地用户
+          await saveLocalUser(localUser);
+          session.current = { generation: session.current.generation + 1, uid: localUser.uid };
           setStorageScope(localUser);
           setCurrentUser(localUser);
           return { success: true, user: localUser };
+        } catch (err) {
+          toast.error('创建本地账户失败');
+          return { success: false, error: err };
+        }
+      }
+
+      try {
+        const { user, error } = await registerWithEmailAndPassword(email, password, displayName);
+        if (error) {
+          let errorMessage = '注册失败';
+          if (error.code === 'auth/email-already-in-use') {
+            errorMessage = '该邮箱已被注册';
+          } else if (error.code === 'auth/weak-password') {
+            errorMessage = '密码强度太弱';
+          } else if (error.code === 'auth/invalid-email') {
+            errorMessage = '无效的邮箱地址';
+          }
+          toast.error(errorMessage);
+          return { success: false, error };
         }
 
-        toast.error(canVerifyPassword ? '邮箱或密码错误' : '本地账户缺少密码凭据，请重新注册');
-        return { success: false, error: new Error('邮箱或密码错误') };
+        return { success: true, user };
       } catch (err) {
-        toast.error('登录失败');
+        toast.error('注册过程中发生错误');
         return { success: false, error: err };
       }
-    }
+    },
+    [isOfflineMode]
+  );
 
-    try {
-      const { user, error } = await loginWithEmailAndPassword(email, password);
-      if (error) {
-        let errorMessage = '登录失败';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          errorMessage = '邮箱或密码错误';
-        } else if (error.code === 'auth/too-many-requests') {
-          errorMessage = '尝试次数过多，请稍后再试';
+  // 邮箱密码登录
+  const login = useCallback(
+    async (email, password) => {
+      // 如果处于离线模式，尝试获取本地用户
+      if (isOfflineMode) {
+        try {
+          const attemptKey = 'otonei:local-login-attempts';
+          const now = Date.now();
+          let attempts;
+          try {
+            attempts = JSON.parse(localStorage.getItem(attemptKey) || '[]');
+          } catch {
+            attempts = [];
+          }
+          attempts = Array.isArray(attempts)
+            ? attempts.filter((value) => Number.isFinite(value) && now - value < 15 * 60 * 1000)
+            : [];
+          if (attempts.length >= 5)
+            return { success: false, error: new Error('尝试次数过多，请15分钟后重试') };
+          localStorage.setItem(attemptKey, JSON.stringify([...attempts, now]));
+          const localUser = await getLocalUser();
+
+          const canVerifyPassword = localUser?.passwordSalt && localUser?.passwordHash;
+          const passwordMatches =
+            canVerifyPassword &&
+            (await hashLocalPassword(password, localUser.passwordSalt)) === localUser.passwordHash;
+
+          if (localUser && localUser.email === email && passwordMatches) {
+            localStorage.removeItem(attemptKey);
+            session.current = { generation: session.current.generation + 1, uid: localUser.uid };
+            setStorageScope(localUser);
+            setCurrentUser(localUser);
+            return { success: true, user: localUser };
+          }
+
+          toast.error(canVerifyPassword ? '邮箱或密码错误' : '本地账户缺少密码凭据，请重新注册');
+          return { success: false, error: new Error('邮箱或密码错误') };
+        } catch (err) {
+          toast.error('登录失败');
+          return { success: false, error: err };
         }
-        toast.error(errorMessage);
-        return { success: false, error };
       }
 
-      return { success: true, user };
-    } catch (err) {
-      toast.error('登录过程中发生错误');
-      return { success: false, error: err };
-    }
-  };
+      try {
+        const { user, error } = await loginWithEmailAndPassword(email, password);
+        if (error) {
+          let errorMessage = '登录失败';
+          if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            errorMessage = '邮箱或密码错误';
+          } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = '尝试次数过多，请稍后再试';
+          }
+          toast.error(errorMessage);
+          return { success: false, error };
+        }
+
+        return { success: true, user };
+      } catch (err) {
+        toast.error('登录过程中发生错误');
+        return { success: false, error: err };
+      }
+    },
+    [isOfflineMode]
+  );
 
   // Google登录
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     if (isOfflineMode) {
       toast.error('当前网络不可用，Google登录不可用');
       return { success: false, error: new Error('当前网络不可用，Google登录不可用') };
@@ -187,13 +231,22 @@ export const AuthProvider = ({ children }) => {
       toast.error('登录过程中发生错误');
       return { success: false, error: err };
     }
-  };
+  }, [isOfflineMode]);
 
   // 退出登录
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
+    const captured = session.current;
+    const uid = currentUser?.uid ?? null;
+    const isCurrent = () =>
+      session.current.generation === captured.generation &&
+      session.current.uid === uid &&
+      (currentUser?.isLocal || (auth.currentUser?.uid ?? null) === uid);
+    const cancelled = () => ({ success: false, error: new Error('账户已切换，退出操作已取消') });
+    if (!isCurrent()) return cancelled();
     resetSyncScheduler();
     // 如果是本地用户，直接清除
     if (currentUser?.isLocal) {
+      session.current = { generation: captured.generation + 1, uid: null };
       setStorageScope(null);
       setCurrentUser(null);
       toast.info('您已退出本地账户');
@@ -208,12 +261,15 @@ export const AuthProvider = ({ children }) => {
 
           // 检查网络状态
           const networkStatus = await getNetworkStatus();
+          if (!isCurrent()) return cancelled();
           if (networkStatus.online) {
             // 检查Firebase可用性
             const firebaseAvailable = await checkAvailability();
+            if (!isCurrent()) return cancelled();
             if (firebaseAvailable) {
               // 检查是否有数据需要同步
-              const syncCheck = await shouldSyncOnLogin(currentUser.uid);
+              const syncCheck = await shouldSyncOnLogin(uid);
+              if (!isCurrent()) return cancelled();
 
               if (syncCheck.shouldSync) {
                 logger.log(`退出前执行同步: ${syncCheck.reason}`);
@@ -237,7 +293,9 @@ export const AuthProvider = ({ children }) => {
                 );
 
                 // 执行同步
-                const result = await initialSync(currentUser.uid);
+                if (!isCurrent()) return cancelled();
+                const result = await syncWithTimeout(uid, isCurrent);
+                if (!isCurrent()) return cancelled();
 
                 // 触发同步完成/失败事件
                 if (result.success) {
@@ -274,6 +332,7 @@ export const AuthProvider = ({ children }) => {
             }
           }
         } catch (syncError) {
+          if (!isCurrent()) return cancelled();
           logger.error('退出前同步失败:', syncError);
 
           // 触发同步失败事件
@@ -287,184 +346,150 @@ export const AuthProvider = ({ children }) => {
       }
 
       // 执行退出登录
-      await logout();
+      if (!isCurrent()) return cancelled();
+      const { error } = await logout();
+      if (auth.currentUser && auth.currentUser.uid !== uid) return cancelled();
+      if (error) throw error;
       toast.info('您已退出登录');
       return { success: true };
     } catch (err) {
       toast.error('退出登录失败');
       return { success: false, error: err };
     }
-  };
+  }, [currentUser, isOfflineMode, checkAvailability]);
 
   // 重置密码
-  const resetPassword = async (email) => {
-    if (isOfflineMode) {
-      toast.error('当前网络不可用，重置密码功能不可用');
-      return { success: false, error: new Error('当前网络不可用，重置密码功能不可用') };
-    }
-
-    try {
-      const { error } = await sendPasswordReset(email);
-      if (error) {
-        toast.error('重置密码邮件发送失败');
-        return { success: false, error };
+  const resetPassword = useCallback(
+    async (email) => {
+      if (isOfflineMode) {
+        toast.error('当前网络不可用，重置密码功能不可用');
+        return { success: false, error: new Error('当前网络不可用，重置密码功能不可用') };
       }
 
-      toast.success('重置密码邮件已发送，请查收');
-      return { success: true };
-    } catch (err) {
-      toast.error('发送重置密码邮件失败');
-      return { success: false, error: err };
-    }
-  };
+      try {
+        const { error } = await sendPasswordReset(email);
+        if (error) {
+          toast.error('重置密码邮件发送失败');
+          return { success: false, error };
+        }
 
-  // 监听用户登录状态
+        toast.success('重置密码邮件已发送，请查收');
+        return { success: true };
+      } catch (err) {
+        toast.error('发送重置密码邮件失败');
+        return { success: false, error: err };
+      }
+    },
+    [isOfflineMode]
+  );
+
   useEffect(() => {
-    // 离线模式下不需要监听Firebase身份验证状态
-    if (isOfflineMode) {
-      setLoading(false);
-      return () => {};
-    }
-
+    let active = true;
+    let generation = 0;
+    let timer;
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!active) return;
+      const requestGeneration = ++generation;
+      session.current = { generation: session.current.generation + 1, uid: user?.uid ?? null };
+      clearTimeout(timer);
       resetSyncScheduler();
       setStorageScope(user);
       setCurrentUser(user);
       setLoading(false);
-
-      // 如果用户登录了，执行数据同步
-      if (user) {
-        setSyncComplete(false);
-        try {
-          // 先检查网络和Firebase可用性
-          logger.log('登录后同步：检查网络和Firebase可用性');
-
-          // 检查网络状态
-          const networkStatus = await getNetworkStatus();
-          if (!networkStatus.online) {
-            logger.warn('网络离线，跳过登录同步');
-            setSyncComplete(true);
-            await saveSyncStatus(
-              {
-                loading: false,
-                success: false,
-                message: '网络离线，同步已跳过',
-                timestamp: new Date(),
-              },
-              user.uid
-            );
-            return;
-          }
-
-          // 检查Firebase可用性，使用Hook提供的方法
-          const firebaseAvailable = await checkAvailability();
-          if (!firebaseAvailable) {
-            logger.warn('Firebase不可用，跳过登录同步');
-            setSyncComplete(true);
-            await saveSyncStatus(
-              {
-                loading: false,
-                success: false,
-                message: 'Firebase不可用，同步已跳过',
-                timestamp: new Date(),
-              },
-              user.uid
-            );
-            return;
-          }
-
-          // 新增：检查是否需要同步
-          const syncCheck = await shouldSyncOnLogin(user.uid);
-          if (!syncCheck.shouldSync) {
-            logger.log(`跳过登录同步: ${syncCheck.reason}`);
-            setSyncComplete(true);
-            await saveSyncStatus(
-              {
-                loading: false,
-                success: true,
-                message: `同步已跳过: ${syncCheck.reason}`,
-                timestamp: new Date(),
-              },
-              user.uid
-            );
-            return;
-          }
-
-          // 更新同步状态为"正在同步"
-          await saveSyncStatus(
-            {
-              loading: true,
-              success: null,
-              message: '登录后自动同步...',
-              timestamp: null,
-            },
-            user.uid
-          );
-
-          // 添加超时处理
-          const syncPromise = initialSync(user.uid);
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('同步操作超时')), 30000)
-          );
-
-          // 使用Promise.race确保同步不会永久挂起
-          const result = await Promise.race([syncPromise, timeoutPromise]).catch((error) => {
-            logger.error('登录同步失败:', error);
-            return { success: false, error: error.message };
-          });
-
+      setSyncComplete(!user);
+      const isCurrent = () => active && requestGeneration === generation;
+      if (!user) return;
+      try {
+        const networkStatus = await getNetworkStatus();
+        if (!isCurrent()) return;
+        const available = networkStatus.online && (await checkAvailability());
+        if (!isCurrent()) return;
+        const syncCheck = available && (await shouldSyncOnLogin(user.uid));
+        if (!isCurrent()) return;
+        if (!syncCheck || !syncCheck.shouldSync) {
           setSyncComplete(true);
-
-          // 更新同步状态
-          await saveSyncStatus(
-            {
-              loading: false,
-              success: result.success,
-              message: result.success ? '同步完成' : `同步失败: ${result.error}`,
-              timestamp: new Date(),
-            },
-            user.uid
-          );
-
-          if (result.success) {
-            logger.log('登录同步成功');
-          } else {
-            logger.warn('登录同步失败:', result.error);
-          }
-        } catch (error) {
-          logger.error('同步过程中发生错误:', error);
-          setSyncComplete(true);
-
-          // 更新同步状态
-          await saveSyncStatus(
-            {
-              loading: false,
-              success: false,
-              message: `同步错误: ${error.message}`,
-              timestamp: new Date(),
-            },
-            user.uid
-          );
+          return;
         }
+        await saveSyncStatus(
+          { loading: true, success: null, message: '登录后自动同步...', timestamp: null },
+          user.uid
+        );
+        if (!isCurrent()) return;
+        let timeout;
+        const timeoutPromise = new Promise((_, reject) => {
+          timeout = setTimeout(() => {
+            if (isCurrent()) resetSyncScheduler();
+            reject(new Error('同步操作超时'));
+          }, 30000);
+          timer = timeout;
+        });
+        let result;
+        try {
+          result = await Promise.race([initialSync(user.uid), timeoutPromise]);
+        } finally {
+          clearTimeout(timeout);
+        }
+        if (!isCurrent()) return;
+        setSyncComplete(true);
+        await saveSyncStatus(
+          {
+            loading: false,
+            success: result.success,
+            message: result.success ? '同步完成' : `同步失败: ${result.error}`,
+            timestamp: new Date(),
+          },
+          user.uid
+        );
+      } catch (error) {
+        if (!isCurrent()) return;
+        setSyncComplete(true);
+        await saveSyncStatus(
+          {
+            loading: false,
+            success: false,
+            message: `同步错误: ${error.message}`,
+            timestamp: new Date(),
+          },
+          user.uid
+        );
       }
     });
-
-    return () => unsubscribe();
-  }, [isOfflineMode, checkAvailability]);
+    return () => {
+      active = false;
+      session.current = { generation: session.current.generation + 1, uid: null };
+      generation += 1;
+      clearTimeout(timer);
+      unsubscribe();
+      resetSyncScheduler();
+    };
+  }, [checkAvailability]);
 
   // 上下文值
-  const value = {
-    currentUser,
-    isOfflineMode,
-    loading,
-    syncComplete,
-    login,
-    register,
-    signInWithGoogle,
-    signOut,
-    resetPassword,
-    firebaseInitError,
-  };
+  const value = useMemo(
+    () => ({
+      currentUser,
+      isOfflineMode,
+      loading,
+      syncComplete,
+      login,
+      register,
+      signInWithGoogle,
+      signOut,
+      resetPassword,
+      firebaseInitError,
+    }),
+    [
+      currentUser,
+      isOfflineMode,
+      loading,
+      syncComplete,
+      login,
+      register,
+      signInWithGoogle,
+      signOut,
+      resetPassword,
+    ]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

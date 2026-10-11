@@ -16,6 +16,7 @@ vi.mock('../contexts/SyncContext', () => ({
 
 vi.mock('../services/storage', () => ({
   getFavorites,
+  subscribeStorageChanges: () => () => {},
   toggleFavorite: vi.fn(),
 }));
 

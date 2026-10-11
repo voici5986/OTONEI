@@ -9,7 +9,7 @@ const { useDevice, useViewState, usePlayer, audioStateManager } = vi.hoisted(() 
 }));
 
 vi.mock('../contexts/DeviceContext', () => ({ useDevice }));
-vi.mock('../contexts/PlayerContext', () => ({ usePlayer }));
+vi.mock('../contexts/PlayerContext', () => ({ usePlayer, usePlayerProgress: () => usePlayer() }));
 vi.mock('../services/audioStateManager', () => ({ default: audioStateManager }));
 vi.mock('../hooks/useAudioPlayerViewState', () => ({ default: useViewState }));
 vi.mock('../components/MobilePlayerView', () => ({

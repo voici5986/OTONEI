@@ -1,10 +1,11 @@
+import { subscribeStorageChanges } from '../services/storage';
 import PageStatus from '../components/PageStatus';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getHistoryStrict } from '../services/storage';
 import { toast } from 'react-toastify';
 import MusicCardActions from '../components/MusicCardActions';
 import './History.css';
-import { downloadTrack } from '../services/downloadService';
+import { useDownload } from '../contexts/DownloadContext';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useAuth } from '../contexts/AuthContext';
 import logger from '../utils/logger.js';
@@ -12,21 +13,18 @@ import { getTrackKey } from '../utils/trackIdentity';
 import { getTrackArtist } from '../utils/trackFormatter';
 
 const getHistoryTrack = (item) => item?.song || item;
-const getHistoryTimestamp = (item) => item?.timestamp || Date.now();
+const getHistoryTimestamp = (item) => item?.timestamp || 0;
 
-const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
+const HistoryContent = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   const [history, setHistory] = useState([]);
-  const [filteredHistory, setFilteredHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [currentDownloadingTrack, setCurrentDownloadingTrack] = useState(null);
+  const { handleDownload, isTrackDownloading } = useDownload();
 
   const performSearch = (query, currentHistory) => {
     const trimmedQuery = query.trim().toLowerCase();
     if (!trimmedQuery) {
-      setFilteredHistory(currentHistory);
-      return;
+      return currentHistory;
     }
 
     const filtered = currentHistory.filter((item) => {
@@ -51,15 +49,13 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
 
       return nameMatch || albumMatch || artistMatch;
     });
-    setFilteredHistory(filtered);
+    return filtered;
   };
 
-  // 监听全局搜索
-  useEffect(() => {
-    if (globalSearchQuery !== undefined) {
-      performSearch(globalSearchQuery, history);
-    }
-  }, [globalSearchQuery, history]);
+  const filteredHistory = useMemo(
+    () => performSearch(globalSearchQuery || '', history),
+    [globalSearchQuery, history]
+  );
 
   // 从PlayerContext获取状态和方法
   const { handlePlay, currentTrack } = usePlayer();
@@ -67,7 +63,9 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   // 从AuthContext获取用户状态
   const { currentUser } = useAuth();
   const activeUserIdRef = useRef(currentUser?.uid);
-  activeUserIdRef.current = currentUser?.uid;
+  useEffect(() => {
+    activeUserIdRef.current = currentUser?.uid;
+  }, [currentUser?.uid]);
 
   // 添加单独的播放处理函数
   const handleTrackPlay = (track) => {
@@ -87,7 +85,6 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
       const historyItems = await getHistoryStrict(requestedUserId);
       if (activeUserIdRef.current !== requestedUserId) return;
       setHistory(historyItems);
-      setFilteredHistory(historyItems);
     } catch (error) {
       if (activeUserIdRef.current !== requestedUserId) return;
       setLoadError(true);
@@ -99,10 +96,8 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   }, [currentUser?.uid]);
 
   useEffect(() => {
-    setHistory([]);
-    setFilteredHistory([]);
-    void loadHistory();
-  }, [loadHistory]);
+    void Promise.resolve().then(loadHistory);
+  }, [loadHistory, currentUser?.uid]);
 
   useEffect(() => {
     const handleHistoryChanged = () => {
@@ -116,22 +111,17 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
 
     window.addEventListener('local:data_cleared', handleLocalDataCleared);
     window.addEventListener('sync:data_refreshed', handleHistoryChanged);
+    const unsubscribe = subscribeStorageChanges((event) => {
+      const scope = currentUser?.uid ? `user:${currentUser.uid}` : 'guest';
+      if (event.type === 'history' && event.scope === scope) void loadHistory();
+    });
 
     return () => {
       window.removeEventListener('local:data_cleared', handleLocalDataCleared);
       window.removeEventListener('sync:data_refreshed', handleHistoryChanged);
+      unsubscribe();
     };
-  }, [loadHistory]);
-
-  // 监听收藏状态变化，同步更新历史记录中的心形图标
-  useEffect(() => {
-    const handleFavoritesChanged = () => {
-      setHistory((prev) => [...prev]);
-    };
-
-    window.addEventListener('favorites_changed', handleFavoritesChanged);
-    return () => window.removeEventListener('favorites_changed', handleFavoritesChanged);
-  }, []);
+  }, [loadHistory, currentUser?.uid]);
 
   const formatCompactTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -140,34 +130,6 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${month}-${day}  ${hours}:${minutes}`;
-  };
-
-  // 处理下载功能
-  const handleDownload = async (track) => {
-    try {
-      // 使用下载服务模块处理下载
-      setDownloading(true);
-      setCurrentDownloadingTrack(track);
-
-      await downloadTrack(
-        track,
-        999, // 使用无损音质
-        null, // 下载开始回调
-        () => {
-          // 下载结束回调
-          setDownloading(false);
-          setCurrentDownloadingTrack(null);
-        }
-      );
-    } catch (error) {
-      logger.error('Download error:', error);
-      toast.error('下载失败，请稍后重试', {
-        icon: '❌',
-        autoClose: 3000,
-      });
-      setDownloading(false);
-      setCurrentDownloadingTrack(null);
-    }
   };
 
   // 渲染登录提醒组件
@@ -255,11 +217,7 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
 
                     <MusicCardActions
                       track={track}
-                      isDownloading={
-                        downloading &&
-                        currentDownloadingTrack &&
-                        getTrackKey(currentDownloadingTrack) === getTrackKey(track)
-                      }
+                      isDownloading={isTrackDownloading(track)}
                       onDownload={handleDownload}
                     />
                   </div>
@@ -273,4 +231,8 @@ const History = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   );
 };
 
+const History = (props) => {
+  const { currentUser } = useAuth();
+  return <HistoryContent key={currentUser?.uid || 'guest'} {...props} />;
+};
 export default History;

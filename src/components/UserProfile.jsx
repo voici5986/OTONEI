@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFavorites } from '../contexts/FavoritesContext';
 import { useAuth } from '../contexts/AuthContext';
 import {
   getFavorites,
@@ -6,7 +7,7 @@ import {
   getHistory,
   incrementPendingChanges,
   MAX_FAVORITES_ITEMS,
-  saveFavorites,
+  importFavorites,
 } from '../services/storage';
 import {
   FaHeart,
@@ -35,7 +36,8 @@ import { getTrackKey } from '../utils/trackIdentity';
 
 const UserProfile = ({ onTabChange }) => {
   const { currentUser, signOut } = useAuth();
-  const [favoritesCount, setFavoritesCount] = useState(0);
+  const { favorites } = useFavorites();
+  const favoritesCount = favorites.length;
   const [historyCount, setHistoryCount] = useState(0);
   const [syncCooldown, setSyncCooldown] = useState(false);
 
@@ -53,7 +55,9 @@ const UserProfile = ({ onTabChange }) => {
   const importTriggerRef = React.useRef(null);
   const syncCooldownTimerRef = React.useRef(null);
   const activeUserIdRef = React.useRef(currentUser?.uid);
-  activeUserIdRef.current = currentUser?.uid;
+  useEffect(() => {
+    activeUserIdRef.current = currentUser?.uid;
+  }, [currentUser?.uid]);
 
   // 使用同步上下文
   const { syncStatus, handleSyncComplete, updatePendingChanges } = useSync();
@@ -61,12 +65,8 @@ const UserProfile = ({ onTabChange }) => {
   // 加载收藏和历史记录计数
   const loadCounts = useCallback(async () => {
     const requestedUserId = currentUser?.uid;
-    const [favorites, history] = await Promise.all([
-      getFavorites(requestedUserId),
-      getHistory(requestedUserId),
-    ]);
+    const history = await getHistory(requestedUserId);
     if (activeUserIdRef.current !== requestedUserId) return;
-    setFavoritesCount(favorites.length);
     setHistoryCount(history.length);
   }, [currentUser?.uid]);
 
@@ -81,19 +81,18 @@ const UserProfile = ({ onTabChange }) => {
 
     // 监听同步刷新、收藏变化及本地数据清除事件
     const handleDataRefreshed = () => refreshData();
-    const handleFavoritesChanged = () => refreshData();
     const handleDataCleared = () => {
       refreshData();
       toast.info('本地数据已更新');
     };
 
     window.addEventListener('sync:data_refreshed', handleDataRefreshed);
-    window.addEventListener('favorites_changed', handleFavoritesChanged);
+    window.addEventListener('history_changed', handleDataRefreshed);
     window.addEventListener('local:data_cleared', handleDataCleared);
 
     return () => {
       window.removeEventListener('sync:data_refreshed', handleDataRefreshed);
-      window.removeEventListener('favorites_changed', handleFavoritesChanged);
+      window.removeEventListener('history_changed', handleDataRefreshed);
       window.removeEventListener('local:data_cleared', handleDataCleared);
     };
   }, [loadCounts, updatePendingChanges]);
@@ -305,6 +304,7 @@ const UserProfile = ({ onTabChange }) => {
     try {
       const currentFavorites = await getFavoritesStrict(importUserId);
       const newFavorites = [...currentFavorites];
+      const matchedFavorites = [];
       const newStatus = [...importStatus];
       let importedCount = 0;
 
@@ -357,7 +357,9 @@ const UserProfile = ({ onTabChange }) => {
               (item) => getTrackKey(item) === getTrackKey(matchedTrack)
             );
             if (!isDuplicate) {
-              newFavorites.unshift({ ...matchedTrack, modifiedAt: Date.now() });
+              const importedTrack = { ...matchedTrack, modifiedAt: Date.now() };
+              newFavorites.unshift(importedTrack);
+              matchedFavorites.push(importedTrack);
               importedCount++;
               newStatus[i] = { status: 'success', message: `匹配: ${matchedTrack.source}` };
             } else {
@@ -370,7 +372,7 @@ const UserProfile = ({ onTabChange }) => {
           newStatus[i] = { status: 'error', message: '出错' };
         }
         setImportStatus([...newStatus]);
-        // 循环内不落盘，统一在循环结束后 saveFavorites 一次（见下方）
+        // 循环内不落盘，统一在循环结束后 importFavorites 一次（见下方）
       }
 
       if (importedCount > 0) {
@@ -378,9 +380,15 @@ const UserProfile = ({ onTabChange }) => {
           toast.warning('账号已切换，本次导入未保存');
           return;
         }
-        const saved = await saveFavorites(newFavorites, importUserId);
-        if (!saved) {
+        const saved = await importFavorites(matchedFavorites, importUserId);
+        if (!saved || (typeof saved === 'object' && !saved.success)) {
           toast.error('保存导入收藏失败，请重试');
+          return;
+        }
+        if (typeof saved === 'object') importedCount = saved.addedCount;
+        if (importedCount === 0) {
+          toast.info('没有新增歌曲：收藏已存在或已达到上限');
+          setImportProgress(100);
           return;
         }
         if (importUserId && !importUser.isLocal) {
@@ -392,7 +400,6 @@ const UserProfile = ({ onTabChange }) => {
           await triggerDelayedSync(importUserId, 'favorites');
         }
         loadCounts();
-        window.dispatchEvent(new Event('favorites_changed'));
         toast.success(`成功导入 ${importedCount} 首歌曲`);
       } else {
         toast.info('没有新增歌曲');

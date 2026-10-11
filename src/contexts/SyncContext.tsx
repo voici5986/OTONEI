@@ -5,6 +5,7 @@ import {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
   type Dispatch,
   type ReactNode,
   type SetStateAction,
@@ -89,6 +90,7 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
   const { currentUser } = useAuth() as { currentUser?: AppUser | null };
   // 按触发原因分别节流：foreground 与 online 各有一个窗口。
   // 否则回前台时仍离线（SKIPPED）会占用共享窗口，把 500ms 后的网络恢复同步吞掉。
+  const generation = useRef(0);
   const lastImmediateSyncRef = useRef<Record<string, number>>({});
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({
@@ -102,6 +104,21 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
     message: '',
     timestamp: null,
   });
+
+  useEffect(() => {
+    const token = ++generation.current;
+    queueMicrotask(() => {
+      if (token !== generation.current) return;
+      setLastSyncTime(null);
+      setPendingChanges({ favorites: 0, history: 0 });
+      setIsSyncing(false);
+      setSyncStatus({ loading: false, success: null, message: '', timestamp: null });
+      lastImmediateSyncRef.current = {};
+    });
+    return () => {
+      generation.current += 1;
+    };
+  }, [currentUser]);
 
   const updateSyncStatus = useCallback(
     async (newStatus: SyncStatus): Promise<void> => {
@@ -126,6 +143,7 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
   const updatePendingChanges = useCallback(async (): Promise<void> => {
     if (!currentUser || currentUser.isLocal) return;
 
+    const token = generation.current;
     try {
       const lastSync = await getLastSyncTime(currentUser.uid);
       const localChanges = (await getLocalChangesSince(lastSync, currentUser.uid)) as {
@@ -141,6 +159,7 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
       // 但仍能通过 lastSyncTime 检出，所以取两者的较大值。
       // 取消收藏同样产生待同步变更，tombstones 需要一并计入，否则极端竞态下
       // “未同步的取消收藏”可能显示为 0。
+      if (token !== generation.current) return;
       setPendingChanges({
         favorites: Math.max(
           pendingCounter?.favorites ?? 0,
@@ -155,6 +174,7 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
 
   const handleSyncComplete = useCallback(
     async (success: boolean, message: string | null = null): Promise<void> => {
+      const token = generation.current;
       const newStatus: SyncStatus = {
         loading: false,
         success,
@@ -166,11 +186,13 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
 
       if (success && currentUser) {
         const lastSync = await getLastSyncTime(currentUser.uid);
+        if (token !== generation.current) return;
         if (lastSync) setLastSyncTime(new Date(Number.parseInt(String(lastSync), 10)));
       }
 
       // pending 的清理由 syncService 统一负责，这里只重新读取并展示，
       // 避免成为第二个 reset 来源。
+      if (token !== generation.current) return;
       void updatePendingChanges();
       setIsSyncing(false);
     },
@@ -178,17 +200,21 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
+    const token = generation.current;
     const loadSyncStatus = async () => {
       if (!currentUser || currentUser.isLocal) return;
 
       try {
         const lastSync = await getLastSyncTime(currentUser.uid);
+        if (token !== generation.current) return;
         if (lastSync) setLastSyncTime(new Date(Number.parseInt(String(lastSync), 10)));
 
         const status = (await getSyncStatus(currentUser.uid)) as SyncStatus;
+        if (token !== generation.current) return;
         setSyncStatus(status);
 
         const changes = (await getPendingSyncChanges(currentUser.uid)) as PendingChanges | null;
+        if (token !== generation.current) return;
         if (changes) {
           setPendingChanges({ favorites: changes.favorites, history: changes.history });
         }
@@ -287,18 +313,31 @@ export const SyncProvider = ({ children }: { children: ReactNode }) => {
     [pendingChanges]
   );
 
-  const contextValue: SyncContextValue = {
-    lastSyncTime,
-    pendingChanges,
-    isSyncing,
-    syncStatus,
-    setIsSyncing,
-    updateSyncStatus,
-    startSync,
-    handleSyncComplete,
-    updatePendingChanges,
-    getTotalPendingChanges,
-  };
+  const contextValue: SyncContextValue = useMemo(
+    () => ({
+      lastSyncTime,
+      pendingChanges,
+      isSyncing,
+      syncStatus,
+      setIsSyncing,
+      updateSyncStatus,
+      startSync,
+      handleSyncComplete,
+      updatePendingChanges,
+      getTotalPendingChanges,
+    }),
+    [
+      lastSyncTime,
+      pendingChanges,
+      isSyncing,
+      syncStatus,
+      updateSyncStatus,
+      startSync,
+      handleSyncComplete,
+      updatePendingChanges,
+      getTotalPendingChanges,
+    ]
+  );
 
   return <SyncContext.Provider value={contextValue}>{children}</SyncContext.Provider>;
 };

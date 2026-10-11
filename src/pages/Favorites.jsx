@@ -1,5 +1,6 @@
+import { subscribeStorageChanges } from '../services/storage';
 import PageStatus from '../components/PageStatus';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import MusicCardActions from '../components/MusicCardActions';
 import { getFavoritesStrict } from '../services/storage';
 import { toast } from 'react-toastify';
@@ -10,7 +11,7 @@ import logger from '../utils/logger.js';
 import { getTrackKey } from '../utils/trackIdentity';
 import { getTrackArtist } from '../utils/trackFormatter';
 
-const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
+const FavoritesContent = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   // 检查字符串是否匹配查询词
   const isMatch = useCallback(function match(text, query) {
     // 处理null/undefined
@@ -71,7 +72,9 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   // 从AuthContext获取用户状态
   const { currentUser } = useAuth();
   const activeUserIdRef = useRef(currentUser?.uid);
-  activeUserIdRef.current = currentUser?.uid;
+  useEffect(() => {
+    activeUserIdRef.current = currentUser?.uid;
+  }, [currentUser?.uid]);
 
   // 从DownloadContext获取下载状态和方法
   const { isTrackDownloading, handleDownload } = useDownload();
@@ -79,8 +82,6 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-
-  const [filteredFavorites, setFilteredFavorites] = useState([]);
 
   // 定义loadFavorites函数在useEffect之前
   const loadFavorites = useCallback(async () => {
@@ -91,7 +92,6 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
       const favItems = await getFavoritesStrict(requestedUserId);
       if (activeUserIdRef.current !== requestedUserId) return;
       setFavorites(favItems);
-      setFilteredFavorites(favItems); // 初始化过滤结果
     } catch (error) {
       if (activeUserIdRef.current !== requestedUserId) return;
       setLoadError(true);
@@ -103,10 +103,8 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   }, [currentUser?.uid]);
 
   useEffect(() => {
-    setFavorites([]);
-    setFilteredFavorites([]);
-    void loadFavorites();
-  }, [loadFavorites]);
+    void Promise.resolve().then(loadFavorites);
+  }, [loadFavorites, currentUser?.uid]);
 
   useEffect(() => {
     const handleDataChanged = () => {
@@ -118,16 +116,19 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
       }
     };
 
-    window.addEventListener('favorites_changed', handleDataChanged);
+    const unsubscribe = subscribeStorageChanges((event) => {
+      const scope = currentUser?.uid ? `user:${currentUser.uid}` : 'guest';
+      if (event.type === 'favorites' && event.scope === scope) void loadFavorites();
+    });
     window.addEventListener('local:data_cleared', handleLocalDataCleared);
     window.addEventListener('sync:data_refreshed', handleDataChanged);
 
     return () => {
-      window.removeEventListener('favorites_changed', handleDataChanged);
+      unsubscribe();
       window.removeEventListener('local:data_cleared', handleLocalDataCleared);
       window.removeEventListener('sync:data_refreshed', handleDataChanged);
     };
-  }, [loadFavorites]);
+  }, [loadFavorites, currentUser?.uid]);
 
   // 专门检查艺术家字段的匹配
   const isArtistMatch = useCallback(
@@ -218,8 +219,7 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
     (query, currentFavorites) => {
       const trimmedQuery = query.trim();
       if (!trimmedQuery) {
-        setFilteredFavorites(currentFavorites);
-        return;
+        return currentFavorites;
       }
 
       const filtered = currentFavorites.filter((track) => {
@@ -228,17 +228,15 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
         }
         return isArtistMatch(track, trimmedQuery);
       });
-      setFilteredFavorites(filtered);
+      return filtered;
     },
     [isMatch, isArtistMatch]
   );
 
-  // 监听全局搜索
-  useEffect(() => {
-    if (globalSearchQuery !== undefined) {
-      performSearch(globalSearchQuery, favorites);
-    }
-  }, [globalSearchQuery, favorites, performSearch]);
+  const filteredFavorites = useMemo(
+    () => performSearch(globalSearchQuery || '', favorites),
+    [globalSearchQuery, favorites, performSearch]
+  );
 
   // 渲染登录提醒组件
   const renderLoginReminder = () => {
@@ -341,4 +339,8 @@ const Favorites = ({ globalSearchQuery, onTabChange, onClearSearch }) => {
   );
 };
 
+const Favorites = (props) => {
+  const { currentUser } = useAuth();
+  return <FavoritesContent key={currentUser?.uid || 'guest'} {...props} />;
+};
 export default Favorites;

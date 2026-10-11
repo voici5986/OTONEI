@@ -6,11 +6,11 @@ import { clearMemoryCache } from '../services/memoryCache';
 import {
   clearHistory,
   clearSearchHistory,
-  saveFavorites,
+  clearLocalFavorites,
   resetPendingChanges,
 } from '../services/storage';
 import { clearSyncTimestamp } from '../services/syncService';
-import { clearBrowserCaches } from '../utils/cacheStorage';
+import { clearBrowserCaches, clearApplicationCaches } from '../utils/cacheStorage';
 import { useAuth } from '../contexts/AuthContext';
 import logger from '../utils/logger.js';
 
@@ -34,14 +34,12 @@ const ClearDataButton = ({
     syncTimestamp: true,
   });
   const dialogRef = useRef(null);
-  const triggerRef = useRef(null);
 
   const { currentUser } = useAuth();
 
   const handleClose = () => setShowModal(false);
   const handleShow = (e) => {
     if (e) e.stopPropagation();
-    if (e?.currentTarget) triggerRef.current = e.currentTarget;
     if (onClick) onClick();
     setShowModal(true);
   };
@@ -80,7 +78,7 @@ const ClearDataButton = ({
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      (triggerRef.current || previous)?.focus?.();
+      previous?.focus?.();
     };
   }, [showModal]);
 
@@ -98,7 +96,7 @@ const ClearDataButton = ({
 
       // 清除收藏
       if (selectedOptions.favorites) {
-        operations.push(saveFavorites([], currentUser?.uid));
+        operations.push(clearLocalFavorites(currentUser?.uid));
       }
 
       // 清除历史记录
@@ -115,6 +113,7 @@ const ClearDataButton = ({
       if (selectedOptions.cache) {
         operations.push(Promise.resolve(clearMemoryCache()));
         operations.push(clearBrowserCaches());
+        operations.push(clearApplicationCaches());
       }
 
       // 清除同步时间戳
@@ -153,174 +152,169 @@ const ClearDataButton = ({
   };
 
   // 模态框渲染逻辑 (解耦遮罩和内容，使用 Portal 挂载到 body)
-  const renderModal = () => {
-    if (!showModal) return null;
+  const modalContent = showModal ? (
+    <>
+      {/* 背景遮罩 - 独立层 */}
+      <div className="modal-overlay-custom" onClick={handleClose} />
 
-    const modalContent = (
-      <>
-        {/* 背景遮罩 - 独立层 */}
-        <div className="modal-overlay-custom" onClick={handleClose} />
-
-        {/* 弹窗内容 - 独立层，确保不响应父级点击 */}
+      {/* 弹窗内容 - 独立层，确保不响应父级点击 */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 'var(--z-index-modal-content)',
+          pointerEvents: 'none', // 让容器本身不响应点击，只响应子元素
+        }}
+      >
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 'var(--z-index-modal-content)',
-            pointerEvents: 'none', // 让容器本身不响应点击，只响应子元素
-          }}
+          className="modal-container-custom"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="clear-data-modal-title"
+          tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
+          style={{ pointerEvents: 'auto' }} // 恢复子元素的交互
         >
-          <div
-            className="modal-container-custom"
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="clear-data-modal-title"
-            tabIndex={-1}
-            onClick={(e) => e.stopPropagation()}
-            style={{ pointerEvents: 'auto' }} // 恢复子元素的交互
-          >
-            <div className="modal-header-custom border-0 pb-0">
-              <h5 id="clear-data-modal-title" className="modal-title-custom fw-bold">
-                清除本地数据
-              </h5>
-              <button
-                type="button"
-                aria-label="关闭清除本地数据对话框"
-                className="modal-close-custom"
-                onClick={handleClose}
-              >
-                <FaTimes size={18} />
-              </button>
-            </div>
-            <div className="modal-body-custom py-4">
-              <p className="text-muted small mb-4">请选择要从当前设备移除的数据：</p>
+          <div className="modal-header-custom border-0 pb-0">
+            <h5 id="clear-data-modal-title" className="modal-title-custom fw-bold">
+              清除本地数据
+            </h5>
+            <button
+              type="button"
+              aria-label="关闭清除本地数据对话框"
+              className="modal-close-custom"
+              onClick={handleClose}
+            >
+              <FaTimes size={18} />
+            </button>
+          </div>
+          <div className="modal-body-custom py-4">
+            <p className="text-muted small mb-4">请选择要从当前设备移除的数据：</p>
 
-              <div className="d-flex flex-column gap-2">
-                {[
-                  { id: 'clearFavorites', key: 'favorites', label: '收藏的歌曲' },
-                  { id: 'clearHistory', key: 'history', label: '播放历史' },
-                  { id: 'clearSearchHistory', key: 'searchHistory', label: '搜索历史' },
-                  { id: 'clearCache', key: 'cache', label: '缓存数据 (封面、结果等)' },
-                  {
-                    id: 'clearSyncTimestamp',
-                    key: 'syncTimestamp',
-                    label: '同步游标（下次重新核对云端）',
-                  },
-                ].map((option) => (
-                  <div
-                    key={option.id}
-                    className="form-check custom-checkbox-notion p-2 rounded d-flex align-items-center"
+            <div className="d-flex flex-column gap-2">
+              {[
+                { id: 'clearFavorites', key: 'favorites', label: '收藏的歌曲' },
+                { id: 'clearHistory', key: 'history', label: '播放历史' },
+                { id: 'clearSearchHistory', key: 'searchHistory', label: '搜索历史' },
+                { id: 'clearCache', key: 'cache', label: '缓存数据 (头像、封面、歌词、结果等)' },
+                {
+                  id: 'clearSyncTimestamp',
+                  key: 'syncTimestamp',
+                  label: '同步游标（下次重新核对云端）',
+                },
+              ].map((option) => (
+                <div
+                  key={option.id}
+                  className="form-check custom-checkbox-notion p-2 rounded d-flex align-items-center"
+                  style={{
+                    transition: 'background 0.2s',
+                    backgroundColor: 'var(--color-background-alt)',
+                    marginBottom: 'var(--spacing-xs)',
+                    border: '1px solid var(--color-border)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    className="form-check-input ms-0 me-3 mt-0"
+                    id={option.id}
+                    checked={selectedOptions[option.key]}
+                    onChange={() => handleOptionChange(option.key)}
                     style={{
-                      transition: 'background 0.2s',
-                      backgroundColor: 'var(--color-background-alt)',
-                      marginBottom: 'var(--spacing-xs)',
-                      border: '1px solid var(--color-border)',
+                      cursor: 'pointer',
+                      width: '18px',
+                      height: '18px',
+                      flexShrink: 0,
                     }}
+                  />
+                  <label
+                    className="form-check-label small mb-0 w-100"
+                    htmlFor={option.id}
+                    style={{ cursor: 'pointer', color: 'var(--color-text-secondary)' }}
                   >
-                    <input
-                      type="checkbox"
-                      className="form-check-input ms-0 me-3 mt-0"
-                      id={option.id}
-                      checked={selectedOptions[option.key]}
-                      onChange={() => handleOptionChange(option.key)}
-                      style={{
-                        cursor: 'pointer',
-                        width: '18px',
-                        height: '18px',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <label
-                      className="form-check-label small mb-0 w-100"
-                      htmlFor={option.id}
-                      style={{ cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-                    >
-                      {option.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
+                    {option.label}
+                  </label>
+                </div>
+              ))}
+            </div>
 
-              <div
-                className="mt-4 p-3 rounded"
-                style={{
-                  backgroundColor: 'rgba(231, 76, 60, 0.05)',
-                  border: '1px solid rgba(231, 76, 60, 0.1)',
-                }}
-              >
-                <div className="d-flex align-items-start text-danger">
-                  <div className="small fw-bold" style={{ whiteSpace: 'nowrap' }}>
-                    注意:
-                  </div>
-                  <div className="ms-2 small">
-                    此操作无法撤销。这里只清除当前设备的本地副本，不会删除云端数据；重置同步游标后，
-                    下次同步可能重新下载云端内容。
-                  </div>
+            <div
+              className="mt-4 p-3 rounded"
+              style={{
+                backgroundColor: 'rgba(231, 76, 60, 0.05)',
+                border: '1px solid rgba(231, 76, 60, 0.1)',
+              }}
+            >
+              <div className="d-flex align-items-start text-danger">
+                <div className="small fw-bold" style={{ whiteSpace: 'nowrap' }}>
+                  注意:
+                </div>
+                <div className="ms-2 small">
+                  此操作无法撤销。这里只清除当前设备的本地副本，不会删除云端数据；重置同步游标后，
+                  下次同步可能重新下载云端内容。
                 </div>
               </div>
             </div>
-            <div className="modal-footer-custom border-0 pt-0">
-              <button
-                className="minimal-action-btn"
-                onClick={handleClose}
-                style={{ padding: 'var(--spacing-sm) var(--spacing-md)' }}
-              >
-                取消
-              </button>
-              <button
-                className="btn-danger-notion text-white border-0"
-                onClick={handleClearData}
-                disabled={loading || !Object.values(selectedOptions).some((v) => v)}
-                style={{
-                  padding: 'var(--spacing-sm) 20px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'var(--color-danger-dark)',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.9rem',
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = 'var(--color-danger-hover)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.backgroundColor = 'var(--color-danger-dark)';
-                  }
-                }}
-              >
-                {loading ? (
-                  <span className="spinner-custom" style={{ width: '1rem', height: '1rem' }}></span>
-                ) : (
-                  '确认清除'
-                )}
-              </button>
-            </div>
+          </div>
+          <div className="modal-footer-custom border-0 pt-0">
+            <button
+              className="minimal-action-btn"
+              onClick={handleClose}
+              style={{ padding: 'var(--spacing-sm) var(--spacing-md)' }}
+            >
+              取消
+            </button>
+            <button
+              className="btn-danger-notion text-white border-0"
+              onClick={handleClearData}
+              disabled={loading || !Object.values(selectedOptions).some((v) => v)}
+              style={{
+                padding: 'var(--spacing-sm) 20px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--color-danger-dark)',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.9rem',
+              }}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = 'var(--color-danger-hover)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = 'var(--color-danger-dark)';
+                }
+              }}
+            >
+              {loading ? (
+                <span className="spinner-custom" style={{ width: '1rem', height: '1rem' }}></span>
+              ) : (
+                '确认清除'
+              )}
+            </button>
           </div>
         </div>
-      </>
-    );
-
-    return ReactDOM.createPortal(modalContent, document.body);
-  };
+      </div>
+    </>
+  ) : null;
+  const modal = showModal ? ReactDOM.createPortal(modalContent, document.body) : null;
 
   // 如果提供了 children，则使用自定义触发器
   if (children) {
     return (
       <>
         {React.cloneElement(children, { onClick: handleShow })}
-        {renderModal()}
+        {modal}
       </>
     );
   }
@@ -338,7 +332,7 @@ const ClearDataButton = ({
         >
           {icon} {text}
         </button>
-        {renderModal()}
+        {modal}
       </>
     );
   }
@@ -347,7 +341,6 @@ const ClearDataButton = ({
   return (
     <>
       <button
-        ref={triggerRef}
         type="button"
         className={`minimal-action-btn ${variant === 'danger' ? 'text-danger' : ''} d-flex align-items-center justify-content-center ${className}`}
         onClick={handleShow}
@@ -374,7 +367,7 @@ const ClearDataButton = ({
       >
         {icon} {text}
       </button>
-      {renderModal()}
+      {modal}
     </>
   );
 };

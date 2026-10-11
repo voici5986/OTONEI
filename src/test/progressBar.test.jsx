@@ -16,7 +16,7 @@ const { usePlayer, audioEngine, audioStateManager } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('../contexts/PlayerContext', () => ({ usePlayer }));
+vi.mock('../contexts/PlayerContext', () => ({ usePlayer, usePlayerProgress: () => usePlayer() }));
 vi.mock('../services/AudioEngine', () => ({ default: audioEngine }));
 vi.mock('../services/audioStateManager', () => ({ default: audioStateManager }));
 
@@ -158,9 +158,10 @@ describe('ProgressBar playback controls', () => {
       totalSeconds: 200,
       playProgress: 0,
     });
-    expect(slider.getAttribute('aria-valuenow')).toBe('0');
+    const nextSlider = container.querySelector('[role="slider"]');
+    expect(nextSlider.getAttribute('aria-valuenow')).toBe('0');
     await act(async () =>
-      slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
+      nextSlider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))
     );
     expect(player.seekTo).toHaveBeenLastCalledWith(0);
   });

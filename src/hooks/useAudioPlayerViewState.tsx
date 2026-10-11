@@ -3,6 +3,7 @@ import { usePlayer } from '../contexts/PlayerContext';
 import { FaRandom, FaRedo } from 'react-icons/fa';
 import { MdRepeatOne } from 'react-icons/md';
 import logger from '../utils/logger.js';
+import audioEngine from '../services/AudioEngine';
 import { getTrackArtist } from '../utils/trackFormatter';
 import { getTrackCoverUrl } from '../utils/trackCover';
 import { alignTranslatedLyrics } from '../utils/lyricAlignment';
@@ -19,8 +20,6 @@ interface PlayerViewContext {
   coverCache: Record<string, string>;
   currentPlaylist: Track[];
   playMode: PlayMode;
-  playedSeconds: number;
-  totalSeconds: number;
   togglePlay: () => void;
   toggleLyric: () => void;
   handlePrevious: () => void;
@@ -65,8 +64,6 @@ const useAudioPlayerViewState = (): AudioPlayerViewState => {
     coverCache,
     currentPlaylist,
     playMode,
-    playedSeconds,
-    totalSeconds,
     togglePlay,
     toggleLyric,
     handlePrevious,
@@ -78,6 +75,7 @@ const useAudioPlayerViewState = (): AudioPlayerViewState => {
   } = usePlayer() as PlayerViewContext;
 
   const [showMobileLyrics, setShowMobileLyrics] = useState(false);
+  if (!lyricExpanded && showMobileLyrics) setShowMobileLyrics(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffsetY, setDragOffsetY] = useState(0);
   const [startY, setStartY] = useState(0);
@@ -86,7 +84,6 @@ const useAudioPlayerViewState = (): AudioPlayerViewState => {
     if (lyricExpanded) {
       document.body.classList.add('player-expanded');
     } else {
-      setShowMobileLyrics(false);
       document.body.classList.remove('player-expanded');
     }
   }, [lyricExpanded]);
@@ -128,18 +125,23 @@ const useAudioPlayerViewState = (): AudioPlayerViewState => {
   }, [currentTrack, coverCache, currentPlaylist, togglePlay, handlePrevious, handleNext, seekTo]);
 
   useEffect(() => {
-    if ('mediaSession' in navigator && totalSeconds > 0) {
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: totalSeconds,
-          playbackRate: 1,
-          position: Math.min(playedSeconds, totalSeconds),
-        });
-      } catch (error) {
-        logger.error('[MediaSession] setPositionState failed:', error);
+    const updatePosition = () => {
+      const totalSeconds = audioEngine.duration;
+      const playedSeconds = audioEngine.currentTime;
+      if ('mediaSession' in navigator && totalSeconds > 0) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: totalSeconds,
+            playbackRate: 1,
+            position: Math.min(playedSeconds, totalSeconds),
+          });
+        } catch (error) {
+          logger.error('[MediaSession] setPositionState failed:', error);
+        }
       }
-    }
-  }, [playedSeconds, totalSeconds]);
+    };
+    return audioEngine.on('timeupdate', updatePosition);
+  }, []);
 
   useEffect(() => {
     if ('mediaSession' in navigator) {

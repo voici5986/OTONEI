@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { FaSync, FaTimes } from 'react-icons/fa';
 import logger from '../utils/logger.js';
@@ -11,6 +11,7 @@ import { useDevice } from '../contexts/DeviceContext';
 const UpdateNotification = () => {
   const { isMobile, isTablet } = useDevice();
   const isMobileModal = isMobile || isTablet;
+  const dialogRef = useRef(null);
   // useRegisterSW 返回 needRefresh: [boolean, setNeedRefresh] 元组，
   // 不能把整个元组当布尔用，否则数组恒为 truthy 导致每次都误弹更新提示。
   const {
@@ -34,11 +35,35 @@ const UpdateNotification = () => {
   useEffect(() => {
     if (!needRefresh || !isMobileModal) return;
     const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
+    const dialog = dialogRef.current;
+    dialog?.querySelector('button')?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setNeedRefresh(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const buttons = dialog?.querySelectorAll('button');
+      if (!buttons?.length) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-  }, [needRefresh, isMobileModal]);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [needRefresh, isMobileModal, setNeedRefresh]);
 
   // 无 waiting Service Worker 时不渲染
   if (!needRefresh) {
@@ -65,6 +90,10 @@ const UpdateNotification = () => {
       >
         <div
           className="toast-custom"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="app-update-title"
           style={{
             width: '100%',
             maxWidth: '320px',
@@ -73,7 +102,9 @@ const UpdateNotification = () => {
           }}
         >
           <div className="toast-header-custom" style={{ padding: '15px' }}>
-            <span style={{ fontSize: '1.1rem' }}>发现新版本</span>
+            <span id="app-update-title" style={{ fontSize: '1.1rem' }}>
+              发现新版本
+            </span>
             <button
               onClick={close}
               style={{
@@ -134,6 +165,7 @@ const UpdateNotification = () => {
           <span>发现新版本</span>
           <button
             onClick={close}
+            aria-label="关闭更新提示"
             style={{
               background: 'none',
               border: 'none',

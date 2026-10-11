@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback, memo } from 'react';
-import { usePlayer } from '../contexts/PlayerContext';
+import { usePlayer, usePlayerProgress } from '../contexts/PlayerContext';
 import audioStateManager from '../services/audioStateManager';
 import { getTrackKey } from '../utils/trackIdentity';
 
-const ProgressBar = () => {
-  const { currentTrack, playProgress, totalSeconds, seekTo, formatTime, isPlaying } = usePlayer();
+const ProgressBarContent = () => {
+  const { currentTrack, seekTo, formatTime, isPlaying } = usePlayer();
+  const { playProgress, totalSeconds } = usePlayerProgress();
   const trackKey = currentTrack ? getTrackKey(currentTrack) : null;
 
   const [isDragging, setIsDragging] = useState(false);
@@ -14,16 +15,16 @@ const ProgressBar = () => {
   const [isFocused, setIsFocused] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const [lastReleasedProgress, setLastReleasedProgress] = useState(null);
+  const [keyboardBaseline, setKeyboardBaseline] = useState(null);
 
-  const justReleasedRef = useRef(false);
-  const keyboardProgressBaselineRef = useRef(null);
   const releaseTimeoutRef = useRef(null);
   const wasPlayingRef = useRef(false);
   const dragTrackKeyRef = useRef(null);
   const latestTrackKeyRef = useRef(trackKey);
-  const transientTrackKeyRef = useRef(trackKey);
   const progressBarRef = useRef(null);
-  latestTrackKeyRef.current = trackKey;
+  useEffect(() => {
+    latestTrackKeyRef.current = trackKey;
+  }, [trackKey]);
 
   const releaseDragPause = useCallback(() => {
     const shouldResume = wasPlayingRef.current;
@@ -49,32 +50,6 @@ const ProgressBar = () => {
     [releaseDragPause]
   );
 
-  useEffect(() => {
-    clearTimeout(releaseTimeoutRef.current);
-    justReleasedRef.current = false;
-    keyboardProgressBaselineRef.current = null;
-    wasPlayingRef.current = false;
-    dragTrackKeyRef.current = null;
-    transientTrackKeyRef.current = trackKey;
-    dragProgressRef.current = 0;
-    setIsDragging(false);
-    setIsTouched(false);
-    setDragProgress(0);
-    setLastReleasedProgress(null);
-  }, [trackKey]);
-
-  useEffect(() => {
-    if (
-      keyboardProgressBaselineRef.current !== null &&
-      keyboardProgressBaselineRef.current !== playProgress
-    ) {
-      clearTimeout(releaseTimeoutRef.current);
-      keyboardProgressBaselineRef.current = null;
-      justReleasedRef.current = false;
-      setLastReleasedProgress(null);
-    }
-  }, [playProgress]);
-
   // 全局事件处理：处理拖拽过程和结束
   useEffect(() => {
     if (!isDragging) return;
@@ -97,11 +72,9 @@ const ProgressBar = () => {
     const handleDragEnd = () => {
       // 兼容触摸结束（用 ref 读取最新进度，避免闭包拿到旧值）
       setLastReleasedProgress(dragProgressRef.current);
-      justReleasedRef.current = true;
 
       if (releaseTimeoutRef.current) clearTimeout(releaseTimeoutRef.current);
       releaseTimeoutRef.current = setTimeout(() => {
-        justReleasedRef.current = false;
         setLastReleasedProgress(null);
       }, 1000);
 
@@ -134,7 +107,7 @@ const ProgressBar = () => {
       // e.preventDefault();
 
       wasPlayingRef.current = isPlaying;
-      keyboardProgressBaselineRef.current = null;
+      setKeyboardBaseline(null);
       dragTrackKeyRef.current = trackKey;
       if (isPlaying) audioStateManager.pause();
       setIsDragging(true);
@@ -152,19 +125,12 @@ const ProgressBar = () => {
     [currentTrack, trackKey, isPlaying, seekTo, totalSeconds]
   );
 
-  const hasCurrentTransientProgress = transientTrackKeyRef.current === trackKey;
-  const hasPendingKeyboardProgress =
-    keyboardProgressBaselineRef.current === null ||
-    keyboardProgressBaselineRef.current === playProgress;
-  const displayProgress =
-    hasCurrentTransientProgress && isDragging
-      ? dragProgress
-      : hasCurrentTransientProgress &&
-          hasPendingKeyboardProgress &&
-          justReleasedRef.current &&
-          lastReleasedProgress !== null
-        ? lastReleasedProgress
-        : playProgress;
+  const displayProgress = isDragging
+    ? dragProgress
+    : lastReleasedProgress !== null &&
+        (keyboardBaseline === null || keyboardBaseline === playProgress)
+      ? lastReleasedProgress
+      : playProgress;
 
   const currentTimeInSeconds = (totalSeconds * displayProgress) / 100;
   const canSeek = Boolean(currentTrack) && Number.isFinite(totalSeconds) && totalSeconds > 0;
@@ -194,14 +160,12 @@ const ProgressBar = () => {
 
     event.preventDefault();
     const clampedTime = Math.max(0, Math.min(totalSeconds, nextTime));
-    keyboardProgressBaselineRef.current = playProgress;
+    setKeyboardBaseline(playProgress);
     seekTo(clampedTime);
     setLastReleasedProgress((clampedTime / totalSeconds) * 100);
-    justReleasedRef.current = true;
     clearTimeout(releaseTimeoutRef.current);
     releaseTimeoutRef.current = setTimeout(() => {
-      keyboardProgressBaselineRef.current = null;
-      justReleasedRef.current = false;
+      setKeyboardBaseline(null);
       setLastReleasedProgress(null);
     }, 1000);
   };
@@ -328,4 +292,8 @@ const ProgressBar = () => {
   );
 };
 
+const ProgressBar = () => {
+  const { currentTrack } = usePlayer();
+  return <ProgressBarContent key={currentTrack ? getTrackKey(currentTrack) : 'empty'} />;
+};
 export default memo(ProgressBar);

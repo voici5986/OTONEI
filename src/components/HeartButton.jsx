@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useFavorites } from '../contexts/FavoritesContext';
@@ -54,4 +54,4 @@ const HeartButton = ({ track, className = '', size = 'sm', onToggle }) => {
   );
 };
 
-export default HeartButton;
+export default memo(HeartButton);

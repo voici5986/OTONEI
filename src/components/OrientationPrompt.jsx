@@ -9,19 +9,10 @@ import { FaMobileAlt } from 'react-icons/fa';
  */
 const OrientationPrompt = () => {
   const deviceInfo = useDevice();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => getCurrentOrientation() === 'landscape');
 
   // 监听屏幕方向变化
   useEffect(() => {
-    // 只在移动设备和平板上启用
-    if (!deviceInfo.isMobile && !deviceInfo.isTablet) {
-      return;
-    }
-
-    // 初始检查
-    const currentOrientation = getCurrentOrientation();
-    setVisible(currentOrientation === 'landscape');
-
     // 添加监听器
     const removeListener = addOrientationChangeListener((newOrientation) => {
       setVisible(newOrientation === 'landscape');
@@ -31,7 +22,7 @@ const OrientationPrompt = () => {
     return () => {
       removeListener();
     };
-  }, [deviceInfo.isMobile, deviceInfo.isTablet]);
+  }, []);
 
   // 如果不是移动设备或平板，或者当前是竖屏，则不显示提示
   if ((!deviceInfo.isMobile && !deviceInfo.isTablet) || !visible) {

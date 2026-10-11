@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaDownload, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { useDevice } from '../contexts/DeviceContext';
 import logger from '../utils/logger.js';
 
 /**
@@ -11,19 +10,14 @@ import logger from '../utils/logger.js';
 const InstallPWA = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallToast, setShowInstallToast] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-  useDevice();
+  const [isInstalled, setIsInstalled] = useState(
+    () =>
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+  );
 
   // 检测是否为已安装的PWA
   useEffect(() => {
-    // 通过显示模式检测是否为PWA
-    if (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true
-    ) {
-      setIsInstalled(true);
-    }
-
     // 防止重复显示安装提示
     const hasPromptedBefore = localStorage.getItem('pwaPromptDismissed');
     if (hasPromptedBefore && Date.now() - parseInt(hasPromptedBefore) < 7 * 24 * 60 * 60 * 1000) {
@@ -31,6 +25,7 @@ const InstallPWA = () => {
       return;
     }
 
+    let promptTimer;
     // 监听beforeinstallprompt事件
     const handler = (e) => {
       // 阻止Chrome自动显示安装提示
@@ -38,7 +33,8 @@ const InstallPWA = () => {
       // 保存事件，以便稍后触发
       setDeferredPrompt(e);
       // 显示自定义安装提示
-      setTimeout(() => {
+      clearTimeout(promptTimer);
+      promptTimer = setTimeout(() => {
         setShowInstallToast(true);
       }, 3000); // 延迟3秒显示，避免打扰用户
     };
@@ -46,6 +42,7 @@ const InstallPWA = () => {
     window.addEventListener('beforeinstallprompt', handler);
 
     return () => {
+      clearTimeout(promptTimer);
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);

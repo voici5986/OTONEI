@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { FaDownload, FaTrash } from 'react-icons/fa';
 import HeartButton from './HeartButton';
 
@@ -60,4 +60,4 @@ const MusicCardActions = ({
   );
 };
 
-export default MusicCardActions;
+export default memo(MusicCardActions);

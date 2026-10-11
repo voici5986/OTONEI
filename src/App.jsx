@@ -57,9 +57,6 @@ const AppContent = () => {
 
   // 关键修复：解决跨 Tab 切换时滚动位置继承的问题
   useEffect(() => {
-    // 强制页面回到顶部
-    window.scrollTo(0, 0);
-
     // 如果主内容区域有内部滚动容器，也需要重置
     const mainContent = document.querySelector('.main-content');
     if (mainContent) {
@@ -152,27 +149,22 @@ const AppContent = () => {
 
   useEffect(() => {
     const trimmedQuery = query.trim();
-    if (!trimmedQuery) {
-      setLocalSuggestions({ favorites: [], history: [] });
-      setLocalSuggestionsLoading(false);
-      return;
-    }
-
     let active = true;
-    setLocalSuggestionsLoading(true);
     const timer = setTimeout(() => {
+      if (!trimmedQuery) {
+        setLocalSuggestions({ favorites: [], history: [] });
+        setLocalSuggestionsLoading(false);
+        return;
+      }
+      setLocalSuggestionsLoading(true);
       SearchService.searchLocal(trimmedQuery)
         .then((result) => {
           if (!active) return;
-          logger.log(
-            `[Search Debug] SearchService 返回结果: 收藏=${result.favorites.length}, 历史=${result.history.length}`
-          );
           setLocalSuggestions(result);
           setLocalSuggestionsLoading(false);
         })
         .catch(() => {
-          if (!active) return;
-          setLocalSuggestionsLoading(false);
+          if (active) setLocalSuggestionsLoading(false);
         });
     }, 200);
 
@@ -572,7 +564,7 @@ const AppContent = () => {
       />
       <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-      <div className={!deviceInfo.isMobile ? 'main-content' : 'main-content'}>
+      <div className="main-content">
         <div className={!deviceInfo.isMobile ? 'content-area' : 'content-area'}>
           {renderContent()}
         </div>

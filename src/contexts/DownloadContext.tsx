@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react';
 import { downloadTrack } from '../services/downloadService';
 import type { Track } from '../types';
 import { getTrackKey } from '../utils/trackIdentity';
@@ -34,6 +42,7 @@ export const useDownload = (): DownloadContextValue => {
 };
 
 export const DownloadProvider = ({ children }: { children: ReactNode }) => {
+  const downloadInFlightRef = useRef(false);
   const [downloading, setDownloading] = useState(false);
   const [currentDownloadingTrack, setCurrentDownloadingTrack] = useState<Track | null>(null);
   const { isOnline } = useNetworkStatus({
@@ -43,9 +52,10 @@ export const DownloadProvider = ({ children }: { children: ReactNode }) => {
 
   const handleDownload = useCallback(
     async (track: Track, quality = 999): Promise<void> => {
-      if (!checkDownloadStatus(downloading)) return;
+      if (!checkDownloadStatus(downloadInFlightRef.current)) return;
       if (!checkNetworkStatus(isOnline, '下载音乐')) return;
 
+      downloadInFlightRef.current = true;
       try {
         setDownloading(true);
         setCurrentDownloadingTrack(track);
@@ -53,11 +63,12 @@ export const DownloadProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         handleError(toError(error), ErrorTypes.DOWNLOAD, ErrorSeverity.ERROR, '下载失败，请重试');
       } finally {
+        downloadInFlightRef.current = false;
         setDownloading(false);
         setCurrentDownloadingTrack(null);
       }
     },
-    [downloading, isOnline]
+    [isOnline]
   );
 
   const isTrackDownloading = useCallback(
@@ -68,11 +79,9 @@ export const DownloadProvider = ({ children }: { children: ReactNode }) => {
     [downloading, currentDownloadingTrack]
   );
 
-  return (
-    <DownloadContext.Provider
-      value={{ downloading, currentDownloadingTrack, handleDownload, isTrackDownloading }}
-    >
-      {children}
-    </DownloadContext.Provider>
+  const value = useMemo(
+    () => ({ downloading, currentDownloadingTrack, handleDownload, isTrackDownloading }),
+    [downloading, currentDownloadingTrack, handleDownload, isTrackDownloading]
   );
+  return <DownloadContext.Provider value={value}>{children}</DownloadContext.Provider>;
 };

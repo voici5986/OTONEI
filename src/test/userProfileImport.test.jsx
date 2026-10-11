@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   getFavorites: vi.fn(),
   getFavoritesStrict: vi.fn(),
   getHistory: vi.fn(),
-  saveFavorites: vi.fn(),
+  importFavorites: vi.fn(),
   searchMusic: vi.fn(),
   updatePendingChanges: vi.fn(),
   toast: { info: vi.fn(), error: vi.fn(), success: vi.fn(), warning: vi.fn() },
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../contexts/AuthContext', () => ({ useAuth: mocks.useAuth }));
+vi.mock('../contexts/FavoritesContext', () => ({ useFavorites: () => ({ favorites: [] }) }));
 vi.mock('../contexts/SyncContext', () => ({
   useSync: () => ({ syncStatus: {}, updatePendingChanges: mocks.updatePendingChanges }),
 }));
@@ -21,7 +22,7 @@ vi.mock('../services/storage', () => ({
   getFavorites: mocks.getFavorites,
   getFavoritesStrict: mocks.getFavoritesStrict,
   getHistory: mocks.getHistory,
-  saveFavorites: mocks.saveFavorites,
+  importFavorites: mocks.importFavorites,
   incrementPendingChanges: vi.fn(),
   MAX_FAVORITES_ITEMS: 1000,
 }));
@@ -68,7 +69,7 @@ beforeEach(() => {
   mocks.getFavorites.mockResolvedValue([]);
   mocks.getFavoritesStrict.mockResolvedValue([]);
   mocks.getHistory.mockResolvedValue([]);
-  mocks.saveFavorites.mockResolvedValue(true);
+  mocks.importFavorites.mockResolvedValue(true);
   mocks.searchMusic.mockResolvedValue([track]);
 });
 
@@ -110,12 +111,12 @@ describe('UserProfile import lifecycle', () => {
       expect(screen.getByText('检测到 1 首歌曲')).toBeInTheDocument();
       fireEvent.click(start);
       expect(mocks.searchMusic).toHaveBeenCalledTimes(1);
-      expect(mocks.saveFavorites).not.toHaveBeenCalled();
+      expect(mocks.importFavorites).not.toHaveBeenCalled();
 
       await act(async () => search.resolve([track]));
       await waitFor(() => expect(screen.getByRole('button', { name: '开始导入' })).toBeEnabled());
-      expect(mocks.saveFavorites).toHaveBeenCalledTimes(1);
-      expect(mocks.saveFavorites).toHaveBeenCalledWith(
+      expect(mocks.importFavorites).toHaveBeenCalledTimes(1);
+      expect(mocks.importFavorites).toHaveBeenCalledWith(
         [expect.objectContaining(track)],
         localUser.uid
       );
@@ -126,11 +127,11 @@ describe('UserProfile import lifecycle', () => {
 
   it('keeps the dialog locked until favorites persistence completes', async () => {
     const save = deferred();
-    mocks.saveFavorites.mockReturnValue(save.promise);
+    mocks.importFavorites.mockReturnValue(save.promise);
     const { container } = render(<UserProfile />);
     const dialog = await openImport(container);
     fireEvent.click(screen.getByRole('button', { name: '开始导入' }));
-    await waitFor(() => expect(mocks.saveFavorites).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.importFavorites).toHaveBeenCalledTimes(1));
     fireEvent.keyDown(document, { key: 'Escape' });
     fireEvent.click(dialog.parentElement);
     expect(screen.getByRole('dialog')).toBe(dialog);
@@ -150,15 +151,15 @@ describe('UserProfile import lifecycle', () => {
       if (failure === 'read rejection') {
         mocks.getFavoritesStrict.mockRejectedValueOnce(new Error('Read failed'));
       } else if (failure === 'save rejection') {
-        mocks.saveFavorites.mockRejectedValueOnce(new Error('Save failed'));
+        mocks.importFavorites.mockRejectedValueOnce(new Error('Save failed'));
       } else {
-        mocks.saveFavorites.mockResolvedValueOnce(false);
+        mocks.importFavorites.mockResolvedValueOnce(false);
       }
 
       fireEvent.click(screen.getByRole('button', { name: '开始导入' }));
       await waitFor(() => expect(mocks.toast.error).toHaveBeenCalled());
       if (failure === 'read rejection') {
-        expect(mocks.saveFavorites).not.toHaveBeenCalled();
+        expect(mocks.importFavorites).not.toHaveBeenCalled();
         expect(mocks.searchMusic).not.toHaveBeenCalled();
       }
       expect(screen.getByRole('button', { name: '开始导入' })).toBeEnabled();
@@ -179,7 +180,7 @@ describe('UserProfile import lifecycle', () => {
     mocks.useAuth.mockReturnValue({ currentUser: { ...localUser, uid: 'another-user' } });
     rerender(<UserProfile />);
     await act(async () => search.resolve([track]));
-    expect(mocks.saveFavorites).not.toHaveBeenCalled();
+    expect(mocks.importFavorites).not.toHaveBeenCalled();
     expect(mocks.toast.warning).toHaveBeenCalledWith('账号已切换，本次导入未保存');
     expect(screen.getByRole('button', { name: '开始导入' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: '取消' }));
