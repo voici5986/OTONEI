@@ -32,6 +32,15 @@ vi.mock('../services/audioStateManager', () => ({
   default: { loadTrack, setError },
 }));
 
+// 生产模块的 logger 会真实写 console：getLyrics 的 100ms 延迟清理与
+// playMusic 后台封面链在文件 teardown 之后仍可能输出一行，触发 vitest
+// 已知的竞态（vitest-dev/vitest#11153：onUserConsoleLog pending →
+// EnvironmentTeardownError，测试全过但退出码非 0，间歇性）。
+// 与 useSearch.test.jsx 相同约定：整块 mock 掉，切断迟到日志源。
+vi.mock('../utils/logger', () => ({
+  default: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}));
+
 vi.mock('../utils/dataValidator', () => ({
   validateSearchResults: (results) => results,
 }));
