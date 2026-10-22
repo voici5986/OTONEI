@@ -18,7 +18,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-tertiary);
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-height: var(--control-hit-size-coarse);
+  color: var(--color-text-secondary);
   text-decoration: none;
   transition: var(--transition-fast);
   position: relative;
@@ -27,6 +30,11 @@
   background: transparent;
   font: inherit;
   cursor: pointer;
+}
+
+.mobile-tab-label {
+  font-size: var(--font-size-2xs);
+  line-height: var(--line-height-base);
 }
 
 /* 底部导航贴屏幕下沿，外扩的焦点环会被裁切，因此这一处改用内缩偏移。

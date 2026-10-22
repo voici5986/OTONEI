@@ -16,7 +16,8 @@ const MobileBottomNav = ({ activeTab, handleNavItemClick, navItems }) => {
             aria-current={activeTab === item.id ? 'page' : undefined}
             title={item.title}
           >
-            <Icon />
+            <Icon aria-hidden="true" />
+            <span className="mobile-tab-label">{item.id === 'history' ? '历史' : item.title}</span>
           </button>
         );
       })}
@@ -29,7 +30,8 @@ const MobileBottomNav = ({ activeTab, handleNavItemClick, navItems }) => {
         aria-current={activeTab === 'user' ? 'page' : undefined}
         title="我的"
       >
-        <FaUser />
+        <FaUser aria-hidden="true" />
+        <span className="mobile-tab-label">我的</span>
       </button>
     </nav>
   );
