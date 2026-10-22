@@ -8,5 +8,7 @@ ignoredBuiltDependencies:
   - protobufjs
 minimumReleaseAgeExclude:
   - vite@8.1.2
+  - '@firebase/firestore@4.19.0'
+  - firebase@13.1.0
 overrides:
   '@grpc/grpc-js': '1.14.6'
