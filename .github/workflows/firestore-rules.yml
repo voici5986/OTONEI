@@ -25,8 +25,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FIREBASE_TOOLS_VERSION: '15.30.0'
+  FIREBASE_TOOLS_VERSION: '15.34.1'
   FIREBASE_RULES_TESTING_VERSION: '6.0.0'
+  # 必须与 package.json#dependencies.firebase 解析出的大版本一致：
+  # @firebase/rules-unit-testing 的 peer 会按 firebase 大版本卡死，
+  # 这里独立 npm install，不与 pnpm-lock.yaml 联动，升 firebase 时要同步改。
+  FIREBASE_SDK_VERSION: '13.1.0'
 
 jobs:
   validate:
@@ -39,22 +43,23 @@ jobs:
           persist-credentials: false
 
       - name: Set up Java (Firestore emulator)
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          # @firebase/rules-unit-testing@6 要求 node >= 24.12，与项目 engines (>=26 <27) 对齐
-          node-version: '26'
+          # @firebase/rules-unit-testing@6 要求 node >= 24.12。取 .node-version，
+          # 与 deploy job、项目 engines (>=26 <27) 共用同一个版本来源
+          node-version-file: .node-version
 
       - name: Install Firestore rules behavior test dependencies
         run: >-
           npm install --no-save --no-package-lock --ignore-scripts
           "@firebase/rules-unit-testing@${FIREBASE_RULES_TESTING_VERSION}"
-          "firebase@13.0.0"
+          "firebase@${FIREBASE_SDK_VERSION}"
 
       # 模拟器启动同时覆盖规则语法，脚本再覆盖关键 allow/deny 场景。
       - name: Test Firestore rules behavior
@@ -78,7 +83,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # 与 ci.yml / main.yml 一样取 .node-version，避免同一文件里两个 job
           # 各写一个版本号。main.yml 会断言 .node-version 匹配 ^26。
