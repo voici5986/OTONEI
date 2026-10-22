@@ -1,9 +1,11 @@
+import { resetGuidance } from '../services/guidanceStorage';
 import { clearCoverCache } from '../services/storage';
 import { clearAvatarCache } from './avatarCache';
 
 export const clearApplicationCaches = async () => {
   await clearCoverCache();
   clearAvatarCache();
+  resetGuidance();
   for (const key of Object.keys(localStorage)) {
     if (key.startsWith('sonicflow_lyric_')) localStorage.removeItem(key);
   }

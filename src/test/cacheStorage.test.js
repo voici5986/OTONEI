@@ -1,3 +1,6 @@
+import { act, renderHook, cleanup } from '@testing-library/react';
+import useGuidanceDismissal from '../hooks/useGuidanceDismissal';
+import { MOBILE_PLAYER_HINT_STORAGE_KEY } from '../services/guidanceStorage';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearBrowserCaches, clearApplicationCaches } from '../utils/cacheStorage';
 
@@ -5,6 +8,7 @@ vi.mock('../services/storage', () => ({ clearCoverCache: vi.fn().mockResolvedVal
 
 describe('browser cache cleanup', () => {
   afterEach(() => {
+    cleanup();
     vi.unstubAllGlobals();
   });
 
@@ -12,7 +16,11 @@ describe('browser cache cleanup', () => {
     localStorage.setItem('avatar-cache:user', 'avatar');
     localStorage.setItem('sonicflow_lyric_song', 'lyrics');
     localStorage.setItem('account', 'retained');
-    await clearApplicationCaches();
+    const { result } = renderHook(() => useGuidanceDismissal(MOBILE_PLAYER_HINT_STORAGE_KEY));
+    act(() => result.current[1]());
+    await act(async () => clearApplicationCaches());
+    expect(result.current[0]).toBe(false);
+    expect(localStorage.getItem(MOBILE_PLAYER_HINT_STORAGE_KEY)).toBeNull();
     expect(localStorage.getItem('avatar-cache:user')).toBeNull();
     expect(localStorage.getItem('sonicflow_lyric_song')).toBeNull();
     expect(localStorage.getItem('account')).toBe('retained');

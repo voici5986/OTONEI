@@ -1,3 +1,4 @@
+import { resetGuidance } from '../services/guidanceStorage';
 import React, { useState, useEffect } from 'react';
 import UserProfile from '../components/UserProfile';
 import AuthContainer from '../components/AuthContainer';
@@ -7,8 +8,9 @@ import { getFavorites, getHistory } from '../services/storage';
 import { FaHeart, FaHistory } from 'react-icons/fa';
 import '../styles/User.mobile.css'; // 引入新的移动端优先样式
 import '../styles/User.notion.css'; // 引入桌面端类 Notion 样式
+import '../styles/UserGuidance.css';
 
-const User = ({ onTabChange }) => {
+const User = ({ onTabChange, onOpenGuide }) => {
   const { currentUser } = useAuth();
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [historyCount, setHistoryCount] = useState(0);
@@ -50,114 +52,126 @@ const User = ({ onTabChange }) => {
     }
   };
 
-  // 已登录状态下，显示用户资料
-  if (currentUser) {
-    return (
-      <div className="user-page page-content-wrapper">
-        <UserProfile onTabChange={onTabChange} />
-      </div>
-    );
-  }
-
   // 未登录状态下，显示登录表单和统计卡片
   // 移动端视图：只显示登录表单
   // 桌面端视图：显示两栏布局
   return (
     <div className="user-page page-content-wrapper">
-      {/* 桌面端布局 */}
-      <div className="d-none d-lg-block">
-        <div className="d-flex gap-4 align-items-stretch">
-          {/* 左侧：登录/注册表单 */}
-          <div className="flex-grow-1" style={{ maxWidth: '480px' }}>
-            <AuthContainer onAuthSuccess={handleAuthSuccess} />
-          </div>
-
-          {/* 右侧：统计与设置 */}
-          <div className="d-flex flex-column gap-3" style={{ width: '320px' }}>
-            {/* 本地统计 */}
-            <div className="stats-card-notion p-4 h-100 d-flex flex-column">
-              <div className="mb-4">
-                <h5
-                  className="fw-bold mb-1"
-                  style={{ color: 'var(--color-text-primary)', fontSize: '1.1rem' }}
-                >
-                  本地统计
-                </h5>
-                <p className="text-muted small mb-0">数据仅存储在当前设备</p>
+      <div className="user-guide-entry">
+        <button type="button" className="ui-button ui-button--secondary" onClick={onOpenGuide}>
+          使用帮助
+        </button>
+        <button
+          type="button"
+          className="ui-text-button"
+          onClick={() => {
+            resetGuidance();
+            onOpenGuide?.();
+          }}
+        >
+          重新查看引导
+        </button>
+      </div>
+      {currentUser ? (
+        <UserProfile onTabChange={onTabChange} />
+      ) : (
+        <>
+          {/* 桌面端布局 */}
+          <div className="d-none d-lg-block">
+            <div className="d-flex gap-4 align-items-stretch">
+              {/* 左侧：登录/注册表单 */}
+              <div className="flex-grow-1" style={{ maxWidth: '480px' }}>
+                <AuthContainer onAuthSuccess={handleAuthSuccess} />
               </div>
 
-              <div className="d-flex flex-column gap-2 flex-grow-1">
-                <button
-                  type="button"
-                  className="stats-item-notion clickable"
-                  onClick={() => handleStatsCardClick('favorites')}
-                >
-                  <div className="stats-icon-wrapper">
-                    <FaHeart className="text-danger" size={16} />
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="stats-label-notion">我的收藏</div>
-                  </div>
-                  <div className="stats-value-notion">{favoritesCount}</div>
-                </button>
-
-                <button
-                  type="button"
-                  className="stats-item-notion clickable"
-                  onClick={() => handleStatsCardClick('history')}
-                >
-                  <div className="stats-icon-wrapper">
-                    <FaHistory className="text-primary" size={16} />
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="stats-label-notion">播放历史</div>
-                  </div>
-                  <div className="stats-value-notion">{historyCount}</div>
-                </button>
-              </div>
-
-              {/* 隐私与存储 - 移入统计卡片底部或单独放置 */}
-              <div className="mt-auto pt-4 border-top">
-                <div className="d-flex flex-column gap-2">
-                  <div className="d-flex align-items-center justify-content-between mb-1">
-                    <span
-                      className="fw-bold"
-                      style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}
+              {/* 右侧：统计与设置 */}
+              <div className="d-flex flex-column gap-3" style={{ width: '320px' }}>
+                {/* 本地统计 */}
+                <div className="stats-card-notion p-4 h-100 d-flex flex-column">
+                  <div className="mb-4">
+                    <h5
+                      className="fw-bold mb-1"
+                      style={{ color: 'var(--color-text-primary)', fontSize: '1.1rem' }}
                     >
-                      隐私与存储
-                    </span>
+                      本地统计
+                    </h5>
+                    <p className="text-muted small mb-0">数据仅存储在当前设备</p>
                   </div>
-                  <p
-                    className="text-muted"
-                    style={{
-                      fontSize: 'var(--font-size-2xs)',
-                      lineHeight: '1.4',
-                      marginBottom: 'var(--spacing-compact)',
-                    }}
-                  >
-                    清除所有本地缓存、收藏和历史记录。此操作不可撤销。
-                  </p>
-                  <ClearDataButton
-                    className="w-100"
-                    style={{
-                      justifyContent: 'center',
-                      backgroundColor: 'var(--color-background-alt)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: 'var(--font-size-sm)',
-                    }}
-                  />
+
+                  <div className="d-flex flex-column gap-2 flex-grow-1">
+                    <button
+                      type="button"
+                      className="stats-item-notion clickable"
+                      onClick={() => handleStatsCardClick('favorites')}
+                    >
+                      <div className="stats-icon-wrapper">
+                        <FaHeart className="text-danger" size={16} />
+                      </div>
+                      <div className="flex-grow-1">
+                        <div className="stats-label-notion">我的收藏</div>
+                      </div>
+                      <div className="stats-value-notion">{favoritesCount}</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="stats-item-notion clickable"
+                      onClick={() => handleStatsCardClick('history')}
+                    >
+                      <div className="stats-icon-wrapper">
+                        <FaHistory className="text-primary" size={16} />
+                      </div>
+                      <div className="flex-grow-1">
+                        <div className="stats-label-notion">播放历史</div>
+                      </div>
+                      <div className="stats-value-notion">{historyCount}</div>
+                    </button>
+                  </div>
+
+                  {/* 隐私与存储 - 移入统计卡片底部或单独放置 */}
+                  <div className="mt-auto pt-4 border-top">
+                    <div className="d-flex flex-column gap-2">
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <span
+                          className="fw-bold"
+                          style={{ fontSize: '0.9rem', color: 'var(--color-text-primary)' }}
+                        >
+                          隐私与存储
+                        </span>
+                      </div>
+                      <p
+                        className="text-muted"
+                        style={{
+                          fontSize: 'var(--font-size-2xs)',
+                          lineHeight: '1.4',
+                          marginBottom: 'var(--spacing-compact)',
+                        }}
+                      >
+                        清除所有本地缓存、收藏和历史记录。此操作不可撤销。
+                      </p>
+                      <ClearDataButton
+                        className="w-100"
+                        style={{
+                          justifyContent: 'center',
+                          backgroundColor: 'var(--color-background-alt)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: 'var(--font-size-sm)',
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* 移动端布局 */}
-      <div className="d-block d-lg-none">
-        <AuthContainer onAuthSuccess={handleAuthSuccess} />
-      </div>
+          {/* 移动端布局 */}
+          <div className="d-block d-lg-none">
+            <AuthContainer onAuthSuccess={handleAuthSuccess} />
+          </div>
+        </>
+      )}
     </div>
   );
 };
