@@ -33,9 +33,12 @@ export const DeviceProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
-    const removeListener = addDeviceChangeListener((newDeviceInfo: DeviceInfo) => {
-      setDeviceInfo(newDeviceInfo);
-    });
+    const removeListener = addDeviceChangeListener(
+      (newDeviceInfo: DeviceInfo) => {
+        setDeviceInfo(newDeviceInfo);
+      },
+      { includeViewportChanges: true, coalesceResize: true }
+    );
 
     return () => {
       removeListener?.();
@@ -50,3 +53,5 @@ export const useDevice = (): DeviceInfo => {
   if (!context) throw new Error('useDevice must be used within a DeviceProvider');
   return context;
 };
+
+export const useViewportWidth = (): number => useDevice().viewportInfo.width;

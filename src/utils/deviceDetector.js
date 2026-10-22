@@ -24,7 +24,12 @@ export const detectDevice = () => {
   const now = Date.now();
 
   // 如果有缓存且未过期，直接返回缓存结果
-  if (deviceInfoCache && now - lastDetectionTime < CACHE_TTL) {
+  if (
+    deviceInfoCache &&
+    now - lastDetectionTime < CACHE_TTL &&
+    deviceInfoCache.viewportInfo.width === window.innerWidth &&
+    deviceInfoCache.viewportInfo.height === window.innerHeight
+  ) {
     return deviceInfoCache;
   }
 
@@ -187,29 +192,56 @@ const refreshDeviceInfo = () => {
 /**
  * 添加设备类型变化监听器
  * @param {Function} callback 当设备类型变化时调用的回调函数
+ * @param {{ includeViewportChanges?: boolean, coalesceResize?: boolean }} options 视口通知及逐帧合并选项
  * @returns {Function} 移除监听器的函数
  */
-export const addDeviceChangeListener = (callback) => {
+export const addDeviceChangeListener = (
+  callback,
+  { includeViewportChanges = false, coalesceResize = false } = {}
+) => {
   let currentDevice = detectDevice();
+  let pendingFrame = null;
+  let active = true;
 
-  const handleResize = () => {
+  const updateDevice = () => {
+    if (!active) return;
     // 强制刷新设备信息
     const newDevice = refreshDeviceInfo();
 
     // 检查设备类型或方向是否发生变化
     if (
       currentDevice.deviceType !== newDevice.deviceType ||
-      currentDevice.orientation !== newDevice.orientation
+      currentDevice.orientation !== newDevice.orientation ||
+      (includeViewportChanges &&
+        (currentDevice.viewportInfo.width !== newDevice.viewportInfo.width ||
+          currentDevice.viewportInfo.height !== newDevice.viewportInfo.height))
     ) {
       currentDevice = newDevice;
       callback(newDevice);
     }
   };
 
+  const handleResize = () => {
+    if (!coalesceResize) {
+      updateDevice();
+      return;
+    }
+    if (pendingFrame !== null) return;
+    pendingFrame = window.requestAnimationFrame(() => {
+      pendingFrame = null;
+      updateDevice();
+    });
+  };
+
   window.addEventListener('resize', handleResize);
 
   // 返回移除监听器的函数
   return () => {
+    active = false;
     window.removeEventListener('resize', handleResize);
+    if (pendingFrame !== null) {
+      window.cancelAnimationFrame(pendingFrame);
+      pendingFrame = null;
+    }
   };
 };
