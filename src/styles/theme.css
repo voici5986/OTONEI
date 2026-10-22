@@ -195,6 +195,9 @@
   --z-index-modal-content: 10011;
   --z-index-notification: 11000;
 
+  /* 全局引导：高于移动端全屏控件，交互仅限提示关闭按钮。 */
+  --z-index-guidance: 20010;
+
   /* 移动端全屏模式专有层级 (20000系列) */
   --z-index-mobile-expanded-base: 20000;
   --z-index-mobile-expanded-content: 20001;

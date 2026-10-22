@@ -1,30 +1,39 @@
 # OTONEI Z-Index 层级审计
 
-最近复核：2026-09-19。
+最近复核：2026-10-22。
 
 组件层的 `z-index` 已全部改为 `theme.css` 中的语义令牌。唯一保留的硬编码是 `index.html` 首屏 Loading 的 `9999`：它执行在 CSS 变量加载之前，属于启动阶段例外。
 
 ## 1. 令牌表
 
-| 变量名                      |    数值 | 主要引用                       | 用途               |
-| :-------------------------- | ------: | :----------------------------- | :----------------- |
-| `--z-index-negative`        |    `-1` | `Navigation.mobile.css`        | 底部导航装饰伪元素 |
-| `--z-index-base`            |     `1` | 移动导航、播放器、账号输入图标 | 基础叠层           |
-| `--z-index-above`           |    `10` | 播放器控件、进度条、迷你播放器 | 基础交互元素       |
-| `--z-index-interaction`     |   `100` | 播放器关闭歌词按钮             | 组件内交互反馈     |
-| `--z-index-sidebar`         |   `100` | `App.css` 侧边栏               | 桌面侧边栏         |
-| `--z-index-player-base`     |  `1000` | 播放器基础容器                 | 播放器收起态       |
-| `--z-index-navbar`          |  `1020` | 桌面导航、两套 Header          | 顶部导航           |
-| `--z-index-fixed-bottom`    |  `1030` | `index.css` `.fixed-bottom`    | 固定底部元素兼容层 |
-| `--z-index-suggestions`     |  `1100` | 桌面 / 移动搜索联想框          | 搜索浮层           |
-| `--z-index-mobile-nav`      |  `1050` | 移动底部导航                   | 移动导航           |
-| `--z-index-player-backdrop` |  `9000` | 播放器背景                     | 全屏播放遮罩       |
-| `--z-index-player-expanded` |  `9500` | 播放器展开视图                 | 展开态容器         |
-| `--z-index-overlay`         |  `9999` | 旋转提示、开发调试层           | 通用覆盖层         |
-| `--z-index-player-force`    | `10000` | 展开播放器强制层               | 播放器最高层       |
-| `--z-index-modal`           | `10010` | 模态遮罩                       | 高于播放器的模态层 |
-| `--z-index-modal-content`   | `10011` | 模态内容                       | 遮罩上方一层       |
-| `--z-index-notification`    | `11000` | 更新通知、安装提示             | 全局通知           |
+| 变量名                              |    数值 | 主要引用                       | 用途               |
+| :---------------------------------- | ------: | :----------------------------- | :----------------- |
+| `--z-index-negative`                |    `-1` | `Navigation.mobile.css`        | 底部导航装饰伪元素 |
+| `--z-index-base`                    |     `1` | 移动导航、播放器、账号输入图标 | 基础叠层           |
+| `--z-index-above`                   |    `10` | 播放器控件、进度条、迷你播放器 | 基础交互元素       |
+| `--z-index-interaction`             |   `100` | 播放器关闭歌词按钮             | 组件内交互反馈     |
+| `--z-index-sidebar`                 |   `100` | `App.css` 侧边栏               | 桌面侧边栏         |
+| `--z-index-player-base`             |  `1000` | 播放器基础容器                 | 播放器收起态       |
+| `--z-index-navbar`                  |  `1020` | 桌面导航、两套 Header          | 顶部导航           |
+| `--z-index-fixed-bottom`            |  `1030` | `index.css` `.fixed-bottom`    | 固定底部元素兼容层 |
+| `--z-index-suggestions`             |  `1100` | 桌面 / 移动搜索联想框          | 搜索浮层           |
+| `--z-index-mobile-nav`              |  `1050` | 移动底部导航                   | 移动导航           |
+| `--z-index-player-backdrop`         |  `9000` | 播放器背景                     | 全屏播放遮罩       |
+| `--z-index-player-expanded`         |  `9500` | 播放器展开视图                 | 展开态容器         |
+| `--z-index-overlay`                 |  `9999` | 旋转提示、开发调试层           | 通用覆盖层         |
+| `--z-index-player-force`            | `10000` | 展开播放器强制层               | 播放器最高层       |
+| `--z-index-modal`                   | `10010` | 模态遮罩                       | 高于播放器的模态层 |
+| `--z-index-modal-content`           | `10011` | 模态内容                       | 遮罩上方一层       |
+| `--z-index-notification`            | `11000` | 更新通知、安装提示             | 全局通知           |
+| `--z-index-mobile-expanded-base`    | `20000` | 移动全屏播放器                 | 移动全屏基础层     |
+| `--z-index-mobile-expanded-content` | `20001` | 移动全屏播放器                 | 移动全屏内容层     |
+| `--z-index-mobile-expanded-info`    | `20003` | 移动全屏播放器                 | 移动全屏信息层     |
+| `--z-index-mobile-expanded-top`     | `20005` | 移动全屏播放器                 | 移动全屏顶部控件   |
+| `--z-index-guidance`                | `20010` | 上下文提示、帮助兼容模态层     | 全局使用引导       |
+
+上下文提示通过 body portal 显示，层级高于移动全屏控件（`20005`）。提示层、轮廓和文字不拦截指针，只有关闭按钮接收指针；模态打开时提示暂停。接受少量提示文字与短暂通知重叠的可能，避免全屏播放器遮住提示。通知不作为放置障碍。
+
+帮助弹窗优先使用原生 dialog 顶层；能力不足时使用 body portal 中的独立 backdrop 元素承载兼容弹窗，使用 `--z-index-guidance`，关闭后移除遮罩并恢复焦点及背景交互。
 
 移动端全屏播放器使用 `20000` 系列令牌：`--z-index-mobile-expanded-base`、`--z-index-mobile-expanded-content`、`--z-index-mobile-expanded-info`、`--z-index-mobile-expanded-top`。它们只负责展开播放器内部的固定层级。
 

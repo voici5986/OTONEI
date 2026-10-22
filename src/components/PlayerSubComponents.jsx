@@ -18,6 +18,7 @@ export const LyricToggleButton = ({
       className={`${className} control-button ui-icon-button`}
       aria-label={expanded ? '收起歌词' : '展开歌词'}
       title={expanded ? '收起歌词' : '展开歌词'}
+      data-coachmark="lyric-toggle"
     >
       {customIcon ? (
         customIcon

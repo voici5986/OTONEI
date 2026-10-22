@@ -33,6 +33,7 @@ const MobileMiniPlayer = ({
           className="col-8 d-flex align-items-center p-0 overflow-hidden player-track-summary"
           onClick={toggleLyric}
           aria-label="展开播放器和歌词"
+          data-coachmark="player-summary"
         >
           <MobileAlbumCover track={currentTrack} size="small" imgSize={500} />
           <div className="track-info-container flex-grow-1 ms-2">

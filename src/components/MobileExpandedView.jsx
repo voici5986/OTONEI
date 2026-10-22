@@ -2,7 +2,7 @@ import React from 'react';
 import { FaChevronLeft, FaTimes } from 'react-icons/fa';
 import MobileAlbumCover from './MobileAlbumCover';
 import { LyricLine } from './PlayerSubComponents';
-import { VIEWPORT_BREAKPOINTS } from '../config/responsive.mjs';
+import { getPlayerViewportLayout } from '../config/responsive.mjs';
 
 /**
  * 移动端全屏展开视图组件
@@ -47,13 +47,14 @@ const MobileExpandedView = ({
         <button
           type="button"
           className="album-info-section"
+          data-coachmark="cover-lyrics"
           aria-label={showMobileLyrics ? '显示专辑信息' : '显示歌词'}
           onClick={() => {
-            if (window.innerWidth <= VIEWPORT_BREAKPOINTS.md)
+            if (getPlayerViewportLayout(true, window.innerWidth).usesCoverLyricsToggle)
               setShowMobileLyrics(!showMobileLyrics);
           }}
         >
-          <div className="album-cover-container">
+          <div className="album-cover-container" data-coachmark-anchor>
             <MobileAlbumCover
               track={currentTrack}
               size="large"
