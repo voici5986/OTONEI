@@ -8,6 +8,8 @@ import AudioPlayer from './components/AudioPlayer';
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import PageStatus from './components/PageStatus';
+import QuickStart from './components/QuickStart';
+import UserGuide from './components/UserGuide';
 import { useDevice } from './contexts/DeviceContext';
 import { usePlayer } from './contexts/PlayerContext';
 import { lockToPortrait } from './utils/orientationManager';
@@ -50,6 +52,9 @@ const User = React.lazy(() => import('./pages/User'));
 
 const AppContent = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const [guideOpen, setGuideOpen] = useState(false);
+  const openGuide = useCallback(() => setGuideOpen(true), []);
+  const closeGuide = useCallback(() => setGuideOpen(false), []);
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
@@ -417,12 +422,7 @@ const AppContent = () => {
               onAction={focusVisibleSearchInput}
             />
           ) : (
-            <PageStatus
-              title="开始你的音乐搜索"
-              description="输入歌曲、歌手或专辑名称，按回车开始搜索。"
-              action="搜索音乐"
-              onAction={focusVisibleSearchInput}
-            />
+            <QuickStart onOpenGuide={openGuide} onSearch={focusVisibleSearchInput} />
           )
         ) : null}
         {!loading && results.length > 0 ? (
@@ -489,7 +489,7 @@ const AppContent = () => {
       case 'user':
         return (
           <Suspense fallback={loadingFallback}>
-            <User onTabChange={handleTabChange} />
+            <User onTabChange={handleTabChange} onOpenGuide={openGuide} />
           </Suspense>
         );
       default:
@@ -570,7 +570,8 @@ const AppContent = () => {
         </div>
       </div>
 
-      <AudioPlayer />
+      <AudioPlayer guideOpen={guideOpen} />
+      <UserGuide open={guideOpen} onClose={closeGuide} />
 
       <InstallPWA />
       <UpdateNotification />

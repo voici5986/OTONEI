@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer';
+
 export const fixtureTrack = {
   id: 'fixture-1',
   name: 'Fixture Song',
@@ -10,6 +12,21 @@ export const fixtureTrack = {
 
 const fixtureCover =
   'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32"%3E%3Crect width="32" height="32" fill="%23f0f0f0"/%3E%3C/svg%3E';
+
+// A decodable silent WAV prevents native preload errors from the fixture URL.
+const fixtureAudio = Buffer.alloc(44 + 8000 * 2);
+fixtureAudio.write('RIFF', 0);
+fixtureAudio.writeUInt32LE(fixtureAudio.length - 8, 4);
+fixtureAudio.write('WAVEfmt ', 8);
+fixtureAudio.writeUInt32LE(16, 16);
+fixtureAudio.writeUInt16LE(1, 20);
+fixtureAudio.writeUInt16LE(1, 22);
+fixtureAudio.writeUInt32LE(8000, 24);
+fixtureAudio.writeUInt32LE(16000, 28);
+fixtureAudio.writeUInt16LE(2, 32);
+fixtureAudio.writeUInt16LE(16, 34);
+fixtureAudio.write('data', 36);
+fixtureAudio.writeUInt32LE(fixtureAudio.length - 44, 40);
 
 const respondWithFixture = async (route) => {
   const requestUrl = new URL(route.request().url());
@@ -69,6 +86,10 @@ export const installDeterministicBrowser = async (page) => {
 export const installApiFixtures = async (page) => {
   await page.route('**/*', async (route) => {
     const requestUrl = new URL(route.request().url());
+    if (requestUrl.pathname === '/fixtures/audio.mp3') {
+      await route.fulfill({ status: 200, contentType: 'audio/wav', body: fixtureAudio });
+      return;
+    }
     if (await respondWithFixture(route)) return;
 
     const isLocalApp =

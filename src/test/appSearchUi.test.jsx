@@ -1,14 +1,24 @@
 import React from 'react';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render as testingRender,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
-import { useDevice } from '../contexts/DeviceContext';
+import { DeviceProvider, useDevice } from '../contexts/DeviceContext';
 import Favorites from '../pages/Favorites';
 import History from '../pages/History';
 import { searchMusic } from '../services/musicApiService';
 import { getFavoritesStrict, getHistoryStrict } from '../services/storage';
 
-vi.mock('../contexts/DeviceContext', () => ({ useDevice: vi.fn() }));
+vi.mock('../contexts/DeviceContext', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useDevice: vi.fn(),
+}));
 vi.mock('../contexts/AuthContext', () => ({ useAuth: () => ({ currentUser: null }) }));
 vi.mock('../contexts/PlayerContext', () => ({
   usePlayer: () => ({ handlePlay: vi.fn(), currentTrack: null }),
@@ -54,7 +64,16 @@ vi.mock('../components/Navigation', () => ({
     </nav>
   ),
 }));
-vi.mock('../pages/User', () => ({ default: () => <div>账号页面</div> }));
+vi.mock('../pages/User', () => ({
+  default: ({ onOpenGuide }) => (
+    <div>
+      账号页面
+      <button type="button" onClick={onOpenGuide}>
+        我的页面使用帮助
+      </button>
+    </div>
+  ),
+}));
 vi.mock('../components/SearchResultItem', () => ({
   default: ({ track }) => <div>{track.name}</div>,
 }));
@@ -67,13 +86,16 @@ vi.mock('../components/UpdateNotification', () => ({ default: () => null }));
 vi.mock('../components/DeviceDebugger', () => ({ default: () => null }));
 
 const mobileInput = () => document.querySelector('.mobile-search-input');
+const render = (ui, options) => testingRender(ui, { wrapper: DeviceProvider, ...options });
 const submitSearch = (query) => {
   fireEvent.change(mobileInput(), { target: { value: query } });
   fireEvent.submit(mobileInput().closest('form'));
 };
 
+const dialogDescriptors = Object.getOwnPropertyDescriptors(HTMLDialogElement.prototype);
 beforeEach(() => {
   vi.resetAllMocks();
+  localStorage.clear();
   useDevice.mockReturnValue({ isMobile: true });
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
   vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function () {
@@ -85,14 +107,45 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  for (const key of ['showModal', 'close']) {
+    if (dialogDescriptors[key])
+      Object.defineProperty(HTMLDialogElement.prototype, key, dialogDescriptors[key]);
+    else delete HTMLDialogElement.prototype[key];
+  }
 });
 
 describe('search page UI', () => {
+  it('focuses search from the permanent first-search state and keeps help available on the guest account page', async () => {
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+      configurable: true,
+      value: function showModal() {
+        this.open = true;
+      },
+    });
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+      configurable: true,
+      value: function close() {
+        this.open = false;
+      },
+    });
+    render(<App />);
+    expect(screen.getByRole('heading', { name: '搜索你想听的音乐' })).toBeInTheDocument();
+    expect(screen.getByText('输入歌曲、歌手或专辑名称。')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '搜索音乐' }));
+    expect(mobileInput()).toHaveFocus();
+    expect(screen.getByRole('heading', { name: '搜索你想听的音乐' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '使用帮助' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'user', exact: true }));
+    await screen.findByText('账号页面');
+    fireEvent.click(screen.getByRole('button', { name: '我的页面使用帮助' }));
+    expect(screen.getByRole('dialog', { name: '使用帮助' })).toBeInTheDocument();
+  });
+
   it('focuses the visible mobile header for both status actions on a narrow desktop', async () => {
     useDevice.mockReturnValue({ isMobile: false });
     searchMusic.mockResolvedValueOnce([]);
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: '搜索音乐', exact: true }));
+    mobileInput().focus();
     expect(mobileInput()).toHaveFocus();
     expect(document.querySelector('.header-search-input')).not.toHaveFocus();
     submitSearch('无结果');
@@ -110,7 +163,7 @@ describe('search page UI', () => {
       })
     );
     render(<App />);
-    expect(screen.getByText('开始你的音乐搜索')).toBeInTheDocument();
+    expect(screen.getByText('搜索你想听的音乐')).toBeInTheDocument();
     expect(screen.queryByText('没有找到相关歌曲')).not.toBeInTheDocument();
     submitSearch('不存在的歌曲');
     expect(screen.getByText('正在搜索音乐')).toBeInTheDocument();
