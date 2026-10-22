@@ -136,6 +136,46 @@ describe('music API service', () => {
     expect(apiGet).toHaveBeenCalledTimes(3);
   });
 
+  it.each([false, true])(
+    'retries a rejected coalesced audio request with forceRefresh=%s',
+    async (forceRefresh) => {
+      const track = { id: `network-retry-${forceRefresh}`, source: 'netease' };
+      const quality = 320;
+      if (forceRefresh) {
+        apiGet.mockResolvedValueOnce({ data: { url: '/old.mp3' } });
+        await getAudioUrl(track, quality);
+        apiGet.mockClear();
+      }
+
+      let rejectAudio;
+      apiGet.mockReturnValueOnce(
+        new Promise((_, reject) => {
+          rejectAudio = reject;
+        })
+      );
+      const error = Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' });
+      const consumers = Promise.allSettled([
+        getAudioUrl(track, quality, forceRefresh),
+        getAudioUrl(track, quality, forceRefresh),
+      ]);
+      expect(apiGet).toHaveBeenCalledTimes(1);
+
+      rejectAudio(error);
+      await expect(consumers).resolves.toEqual([
+        { status: 'rejected', reason: error },
+        { status: 'rejected', reason: error },
+      ]);
+
+      apiGet.mockResolvedValueOnce({ data: { url: '/retry.mp3' } });
+      await expect(getAudioUrl(track, quality, forceRefresh)).resolves.toEqual({
+        url: '/retry.mp3',
+      });
+      expect(apiGet).toHaveBeenCalledTimes(2);
+      await expect(getAudioUrl(track, quality)).resolves.toEqual({ url: '/retry.mp3' });
+      expect(apiGet).toHaveBeenCalledTimes(2);
+    }
+  );
+
   it.each([null, { code: -1 }, { url: 42 }, { url: ' ' }, { url: 'javascript:alert(1)' }])(
     'rejects invalid audio payload without poisoning cache: %j',
     async (data) => {
